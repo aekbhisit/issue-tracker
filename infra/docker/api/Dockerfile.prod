@@ -82,10 +82,24 @@ RUN echo "🔨 Building TypeScript..." && \
     echo "📋 Build log:" && cat /tmp/build.log && \
     echo "✅ TypeScript build completed successfully" || \
     (echo "❌ TypeScript build failed!" && echo "📋 Build log:" && cat /tmp/build.log && exit 1)
-# Verify build output was created
+# Verify build output was created and reorganize if needed
+# TypeScript may output to dist/apps/api/src/ when rootDir is inferred from monorepo
 RUN echo "🔍 Verifying build output..." && \
+    echo "📁 Checking dist structure..." && \
+    find dist -name "index.js" -type f 2>/dev/null | head -5 && \
+    if [ -f dist/apps/api/src/index.js ]; then \
+      echo "📦 Reorganizing build output (monorepo structure detected)..." && \
+      mkdir -p dist.tmp && \
+      mv dist/apps/api/src/* dist.tmp/ 2>/dev/null || true && \
+      rm -rf dist && \
+      mv dist.tmp dist; \
+    elif [ -d dist/src ]; then \
+      echo "📦 Reorganizing build output (src subdirectory detected)..." && \
+      mv dist/src/* dist/ 2>/dev/null || true && \
+      rmdir dist/src 2>/dev/null || true; \
+    fi && \
     test -d dist || (echo "❌ dist directory not found" && ls -la . && exit 1) && \
-    test -f dist/index.js || (echo "❌ dist/index.js not found" && ls -la dist/ 2>&1 || echo "dist/ does not exist" && exit 1) && \
+    test -f dist/index.js || (echo "❌ dist/index.js not found" && echo "📁 dist contents:" && find dist -type f | head -10 && exit 1) && \
     echo "✅ Build output verified:" && ls -la dist/ | head -10
 
 # ===========================================
