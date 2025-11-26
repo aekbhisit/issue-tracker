@@ -1,0 +1,7 @@
+PHASE IC-7 — NOTIFICATIONS & INTEGRATIONS
+
+Detailed tasks:
+- Slack integration
+- Email notifications
+- Webhooks
+- Rules per project

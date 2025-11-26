@@ -1,0 +1,41 @@
+// Admin Menu Management Model
+
+model AdminMenu {
+  id        Int      @id @default(autoincrement())
+  icon      String?
+  path      String?
+  parentId  Int?     @map("parent_id")
+  sequence  Int      @default(0)
+  module    String?
+  type      String?
+  group     String?  @map("required_group")
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent   AdminMenu?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children AdminMenu[] @relation("MenuTree")
+
+  // Translations
+  translates AdminMenuTranslate[]
+
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([module, type])
+  @@map("admin_menus")
+}
+
+model AdminMenuTranslate {
+  id        Int       @id @default(autoincrement())
+  menuId    Int       @map("menu_id")
+  lang      String
+  name      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  menu      AdminMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@unique([menuId, lang])
+  @@index([menuId])
+  @@index([lang])
+  @@map("admin_menu_translate")
+}

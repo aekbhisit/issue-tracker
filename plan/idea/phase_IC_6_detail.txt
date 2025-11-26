@@ -1,0 +1,8 @@
+PHASE IC-6 — ISSUE DASHBOARD (DEVELOPER UI)
+
+Detailed tasks:
+- Issue list with filters
+- Issue detail view
+- Screenshot viewer
+- Log viewer
+- Status/assignee workflow

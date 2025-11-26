@@ -1,0 +1,47 @@
+// Banner Management Model
+
+model Banner {
+  id         Int               @id @default(autoincrement())
+  type       String?
+  style      String?
+  image      String?
+  mobile     String?
+  youtube    String?
+  video      String?
+  link       String?
+  target     Boolean           @default(false)
+  view       Int               @default(0)
+  section    String?
+  sequence   Int               @default(0)
+  status     Boolean           @default(true)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  deletedAt  DateTime?         @map("deleted_at")
+  translates BannerTranslate[]
+
+  @@index([type])
+  @@index([section])
+  @@index([sequence])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("banners")
+}
+
+model BannerTranslate {
+  id        Int      @id @default(autoincrement())
+  bannerId  Int      @map("banner_id")
+  lang      String
+  name      String?
+  desc      String?
+  detail    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  banner    Banner   @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+
+  @@unique([bannerId, lang])
+  @@index([bannerId])
+  @@index([lang])
+  @@map("banners_translate")
+}

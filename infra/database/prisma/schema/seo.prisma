@@ -1,0 +1,26 @@
+// SEO Management Model (Polymorphic)
+// Supports multiple modules: content_category, content, banner, etc.
+
+model Seo {
+  id               Int      @id @default(autoincrement())
+  module           String // Module name: 'content_category', 'content', 'banner', etc.
+  type             String? // Content type (optional)
+  data_id          Int      @map("data_id") // ID of the record in the module
+  lang             String // Language: 'th', 'en', etc.
+  slug             String? // URL-friendly version
+  meta_title       String?  @map("meta_title") // SEO title
+  meta_description String?  @map("meta_description") @db.Text // SEO description
+  meta_keyword     String?  @map("meta_keyword") // Comma-separated keywords
+  meta_image       String?  @map("meta_image") // Image path/URL for social sharing
+  status           Boolean  @default(true) // SEO status - active/inactive
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@unique([module, type, data_id, lang])
+  @@index([module, data_id])
+  @@index([slug])
+  @@index([lang])
+  @@index([module, type])
+  @@index([status])
+  @@map("seo")
+}

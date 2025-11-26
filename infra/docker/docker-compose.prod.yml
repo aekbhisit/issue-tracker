@@ -1,0 +1,288 @@
+# ========================================
+# Production Docker Compose
+# For Lobby AI Concierge
+# ========================================
+#
+# TROUBLESHOOTING:
+# If API container fails healthcheck, check logs:
+#   docker logs lobby-concierge-api
+#
+# Common causes:
+#   1. Missing required environment variables:
+#      - OPENAI_API_KEY (required in production, unless SKIP_VALIDATION=1)
+#      - EXTERNAL_RAG_API_URL (required in production, unless SKIP_VALIDATION=1)
+#      - EXTERNAL_RAG_API_KEY (required in production, unless SKIP_VALIDATION=1)
+#      - JWT_SECRET (required in production, min 32 chars, unless SKIP_VALIDATION=1)
+#      - SESSION_SECRET (required in production, min 32 chars, unless SKIP_VALIDATION=1)
+#      - CORS_ORIGIN (optional - only affects browser CORS, not container startup)
+#        Can use IP addresses if no domain: http://YOUR_IP:3400,http://YOUR_IP:3412
+#   0. For initial container testing:
+#      - Set SKIP_VALIDATION=1 to allow container to start without required env vars
+#      - Empty strings for optional URLs are now accepted (will be treated as undefined)
+#   2. Database connection issues (check postgres container logs)
+#   3. Port conflicts (check if ports 3401, 3402, 3400 are already in use)
+#   4. Logs directory permission issues:
+#      - If you see "EACCES: permission denied, mkdir 'logs'" in logs:
+#        The volume mount and command override should handle this, but if issues persist,
+#        rebuild Harbor images with updated Dockerfile that includes logs directory creation
+#
+# ========================================
+
+services:
+  # PostgreSQL Database (with pgvector and PostGIS support)
+  postgres:
+    # Option 1: Use pre-built image from Harbor (recommended for Portainer)
+    # Build and push image first: docker build -f infra/docker/postgres/Dockerfile.prod -t ${HARBOR_URL}/${HARBOR_PROJECT}/postgres-pgvector-postgis:17.6 infra/docker/postgres && docker push ${HARBOR_URL}/${HARBOR_PROJECT}/postgres-pgvector-postgis:17.6
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/postgres-pgvector-postgis:17.6
+    # Option 2: Build from local context (for local development only - doesn't work in Portainer)
+    # Uncomment below and comment image above if building locally
+    # build:
+    #   context: ./postgres
+    #   dockerfile: Dockerfile.prod
+    container_name: issue-collector-postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-lobby_concierge}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts are included in the Docker image, so no volume mount needed
+      # If you need custom init scripts, uncomment below and ensure path is accessible in Portainer
+      # - ./postgres/initdb:/docker-entrypoint-initdb.d
+    ports:
+      # Expose PostgreSQL port for external connections (SSH tunnel, remote clients)
+      # Access via: ssh -L 5435:localhost:5435 user@server
+      # Using port 5435 to avoid conflict with existing PostgreSQL on host (default 5432)
+      - "127.0.0.1:${DATABASE_PORT_EXTERNAL:-5435}:5432"  # Only bind to localhost for security
+    healthcheck:
+      # Check readiness via pg_isready so dependent services wait for DB availability.
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-lobby_concierge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - lobby-concierge-network
+
+  # Redis Cache
+  # Note: Redis is only used internally by containers, no external port mapping
+  # to avoid conflict with existing Redis instance on host
+  redis:
+    image: redis:7-alpine
+    container_name: issue-collector-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    # No port mapping - only accessible within Docker network
+    # Uncomment below if you need external access (change port to avoid conflict)
+    # ports:
+    #   - "${REDIS_PORT_EXTERNAL:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - lobby-concierge-network
+
+  # API Backend
+  api:
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-api:${IMAGE_TAG:-latest}
+    container_name: issue-collector-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Application
+      NODE_ENV: production
+      API_PORT: 3401
+      API_HOST: 0.0.0.0
+      # Set SKIP_VALIDATION=1 to allow container to start without required env vars (for initial testing only)
+      SKIP_VALIDATION: ${SKIP_VALIDATION:-}
+
+      # Database
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-lobby_concierge}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-lobby_concierge}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # OpenAI Configuration (REQUIRED for Voice Chat)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}  # Required - OpenAI API key for Realtime Voice Mode
+
+      # External RAG API (REQUIRED for AI responses)
+      EXTERNAL_RAG_API_URL: ${EXTERNAL_RAG_API_URL}
+      EXTERNAL_RAG_API_KEY: ${EXTERNAL_RAG_API_KEY}
+      EXTERNAL_RAG_API_TIMEOUT: ${EXTERNAL_RAG_API_TIMEOUT:-30000}
+
+      # External Context API (optional - for hotel info, FAQs)
+      EXTERNAL_CONTEXT_API_URL: ${EXTERNAL_CONTEXT_API_URL:-}
+      EXTERNAL_CONTEXT_API_KEY: ${EXTERNAL_CONTEXT_API_KEY:-}
+
+      # External Data API (optional - for hotel services, bookings)
+      EXTERNAL_DATA_API_URL: ${EXTERNAL_DATA_API_URL:-}
+      EXTERNAL_DATA_API_KEY: ${EXTERNAL_DATA_API_KEY:-}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET}  # Required - minimum 32 characters
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      SESSION_SECRET: ${SESSION_SECRET}  # Required - minimum 32 characters
+
+      # CORS (Optional - only affects browser requests, NOT container startup)
+      # CORS_ORIGIN controls which origins can make browser requests to the API
+      # Containers will run fine without this - it only matters for browser CORS security
+      # 
+      # If you don't have a domain yet, you can:
+      # 1. Leave it unset (uses default: localhost) - works for testing
+      # 2. Use IP addresses: CORS_ORIGIN=http://192.168.1.100:3400,http://192.168.1.100:3402
+      # 3. Set it later when you have a domain: CORS_ORIGIN=https://yourdomain.com,https://admin.yourdomain.com
+      #
+      # Note: This does NOT affect container startup or internal container-to-container communication
+      # Must include both frontend (3400) and admin (3402) origins
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3400,http://localhost:3402}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+
+      # Upload
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+
+    volumes:
+      - api_uploads:/app/uploads
+      - api_logs:/app/logs
+
+    ports:
+      - "${API_PORT:-3401}:3401"
+    
+    # Ensure logs directory exists before starting
+    # This is a workaround for Harbor images that may not have the logs directory pre-created
+    # The volume mount ensures the directory exists, but we create it explicitly to avoid permission issues
+    # Note: If container runs as non-root user (honojs), the volume will be owned by root initially
+    # The mkdir command will fail silently if permissions are wrong, but the volume mount should handle it
+    # For permanent fix: Rebuild Harbor images with updated Dockerfile that creates /app/logs with proper permissions
+    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && exec node apps/api/dist/index.js"]
+
+    healthcheck:
+      # Simple healthcheck - checks if /health endpoint returns 200
+      # If healthcheck fails, check container logs: docker logs lobby-concierge-api
+      # Common issues: Missing OPENAI_API_KEY, EXTERNAL_RAG_API_URL, JWT_SECRET, or SESSION_SECRET
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3401/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s  # Increased to allow API to fully start and connect to DB
+
+    restart: unless-stopped
+    networks:
+      - lobby-concierge-network
+
+  # Admin Dashboard
+  admin:
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-admin:${IMAGE_TAG:-latest}
+    container_name: issue-collector-admin
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3402
+      HOSTNAME: "0.0.0.0"
+      
+      # Admin API URL (⚠️ IMPORTANT)
+      # For Docker internal networking: Use http://api:3401 (container-to-container)
+      # For browser requests: Use public URL from NEXT_PUBLIC_ADMIN_API_URL env var
+      # The admin code appends /api to this URL, so use base domain only
+      # Example: https://kiosk-agent.haahii.com (admin will call https://kiosk-agent.haahii.com/api)
+      NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-}
+      
+      # AI Chatbot Feature (Optional - Enable/disable AI chatbot in admin)
+      # Set to "true" to enable AI chatbot features in admin dashboard
+      # Set to "false" or leave empty to disable
+      # ⚠️ DISABLED: API endpoints not yet implemented
+      NEXT_PUBLIC_ADMIN_AI_CHATBOT_ENABLED: ${NEXT_PUBLIC_ADMIN_AI_CHATBOT_ENABLED:-false}
+      
+      # Admin Asset Prefix (Optional - for static assets)
+      # Set to '/admin' if using path-based routing (e.g., https://domain.com/admin)
+      # Set to empty string if using subdomain-based routing (e.g., https://admin.domain.com)
+      # This controls where Next.js static assets (_next/static) are loaded from
+      NEXT_PUBLIC_ADMIN_ASSET_PREFIX: ${NEXT_PUBLIC_ADMIN_ASSET_PREFIX:-/admin}
+      
+      # Base path for route utilities and redirects
+      NEXT_PUBLIC_ADMIN_BASE_PATH: ${NEXT_PUBLIC_ADMIN_BASE_PATH:-/admin}
+      
+      # Disable Next.js telemetry
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "${ADMIN_PORT:-3402}:3402"
+    healthcheck:
+      # Health check for admin Next.js app
+      # Root path redirects to /login, so we check /login which returns 200
+      # Alternative: Accept redirects (307/308) as healthy by checking statusCode < 400
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3402/login', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - lobby-concierge-network
+
+  # Frontend App
+  frontend:
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-frontend:${IMAGE_TAG:-latest}
+    container_name: issue-collector-frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3400
+      HOSTNAME: "0.0.0.0"
+      # Frontend API URL (⚠️ IMPORTANT)
+      # For Docker internal networking: Use http://api:3401 (container-to-container)
+      # For browser requests: Use public URL from NEXT_PUBLIC_FRONTEND_API_URL env var
+      # The frontend code appends /api to this URL, so use base domain only
+      # Example: https://kiosk-agent.haahii.com (frontend will call https://kiosk-agent.haahii.com/api)
+      NEXT_PUBLIC_FRONTEND_API_URL: ${NEXT_PUBLIC_FRONTEND_API_URL:-http://api:3401}
+    ports:
+      - "${FRONTEND_PORT:-3400}:3400"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3400/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - lobby-concierge-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  api_uploads:
+    driver: local
+  api_logs:
+    driver: local
+
+networks:
+  lobby-concierge-network:
+    driver: bridge

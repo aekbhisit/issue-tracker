@@ -1,0 +1,187 @@
+pipeline {
+    agent any
+    
+    environment {
+        NODE_VERSION = '18'
+        PNPM_VERSION = '8.15.0'
+        DOCKER_REGISTRY = 'your-registry.com'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        APP_NAME = 'frontend'
+        PORT = '3002'
+    }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 25, unit: 'MINUTES')
+        timestamps()
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                script {
+                    sh '''
+                        # Install Node.js
+                        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
+                        sudo apt-get install -y nodejs
+                        
+                        # Install pnpm
+                        npm install -g pnpm@${PNPM_VERSION}
+                        
+                        # Verify installations
+                        node --version
+                        npm --version
+                        pnpm --version
+                    '''
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    sh '''
+                        # Install root dependencies
+                        pnpm install --frozen-lockfile
+                        
+                        # Install frontend dependencies
+                        cd apps/frontend
+                        pnpm install --frozen-lockfile
+                    '''
+                }
+            }
+        }
+        
+        stage('Lint & Type Check') {
+            steps {
+                script {
+                    sh '''
+                        # Lint frontend
+                        cd apps/frontend
+                        pnpm lint
+                        
+                        # Type check frontend
+                        pnpm typecheck
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                script {
+                    sh '''
+                        # Build frontend application
+                        cd apps/frontend
+                        pnpm build
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                        # Build Frontend Docker image
+                        docker build -f apps/frontend/Dockerfile \
+                            -t ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG} \
+                            -t ${DOCKER_REGISTRY}/${APP_NAME}:latest \
+                            .
+                    '''
+                }
+            }
+        }
+        
+        stage('Test Docker Image') {
+            steps {
+                script {
+                    sh '''
+                        # Test the Docker image
+                        docker run --rm -d --name test-${APP_NAME} \
+                            -p ${PORT}:${PORT} \
+                            ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+                        
+                        # Wait for container to start
+                        sleep 15
+                        
+                        # Test if the application is running
+                        curl -f http://localhost:${PORT} || exit 1
+                        
+                        # Stop test container
+                        docker stop test-${APP_NAME}
+                    '''
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    sh '''
+                        # Login to Docker registry
+                        echo $DOCKER_PASSWORD | docker login ${DOCKER_REGISTRY} -u $DOCKER_USERNAME --password-stdin
+                        
+                        # Push Frontend image
+                        docker push ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKER_REGISTRY}/${APP_NAME}:latest
+                        
+                        # Logout from Docker registry
+                        docker logout ${DOCKER_REGISTRY}
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                // Clean up Docker containers and images
+                sh '''
+                    # Remove test containers
+                    docker ps -a --filter "name=test-${APP_NAME}" -q | xargs -r docker rm -f
+                    
+                    # Remove dangling images
+                    docker image prune -f
+                '''
+            }
+        }
+        
+        success {
+            script {
+                echo "✅ Frontend Build ${env.BUILD_NUMBER} completed successfully!"
+                echo "📦 Image: ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG}"
+            }
+        }
+        
+        failure {
+            script {
+                echo "❌ Frontend Build ${env.BUILD_NUMBER} failed!"
+            }
+        }
+        
+        cleanup {
+            cleanWs()
+        }
+    }
+}

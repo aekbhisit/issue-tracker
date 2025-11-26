@@ -1,0 +1,6 @@
+PHASE IC-10 — HEATMAP / SESSION REPLAY / RAGE CLICK (FUTURE)
+
+Detailed tasks:
+- Heatmap collection
+- Rage click detection
+- Lightweight session replay

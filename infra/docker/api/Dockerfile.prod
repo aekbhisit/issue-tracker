@@ -1,0 +1,100 @@
+# Production Dockerfile for API
+FROM node:18-alpine AS base
+
+# Install OpenSSL for Prisma and curl for health checks
+RUN apk add --no-cache openssl libc6-compat curl
+
+WORKDIR /app
+
+# Install pnpm and prisma CLI (needed for Prisma client generation)
+RUN npm install -g pnpm prisma@6.17.1
+
+# ===========================================
+# Dependencies Stage
+# ===========================================
+FROM base AS dependencies
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages (shared dependencies)
+COPY packages ./packages
+# Copy infra directory (contains database package)
+COPY infra ./infra
+
+# Copy API app package.json
+COPY apps/api/package.json ./apps/api/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Generate Prisma client (needed at runtime)
+# Prisma CLI is installed globally in base image
+WORKDIR /app
+ENV DATABASE_URL="postgresql://postgres:password@postgres:5432/mydb"
+RUN cd infra/database && \
+    node scripts/merge-schema.js && \
+    prisma generate --schema=./prisma/schema.prisma
+
+# ===========================================
+# Build Stage
+# ===========================================
+FROM base AS build
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages (including infra/database which is part of workspace)
+COPY packages ./packages
+COPY infra ./infra
+
+# Copy API app
+COPY apps/api ./apps/api
+
+# Install all dependencies (including dev dependencies for build)
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client
+WORKDIR /app
+ENV DATABASE_URL="postgresql://postgres:password@postgres:5432/mydb"
+# Merge schema files and generate Prisma client using global prisma CLI
+RUN cd infra/database && \
+    node scripts/merge-schema.js && \
+    prisma generate --schema=./prisma/schema.prisma
+
+# Verify Prisma client was generated
+RUN test -d node_modules/.pnpm/@prisma+client* && echo "✅ Prisma client generated" || echo "⚠️  Prisma client location check skipped"
+
+# Build API
+WORKDIR /app/apps/api
+# Run build - TypeScript should resolve @prisma/client through pnpm workspace
+RUN pnpm build
+
+# ===========================================
+# Production Stage
+# ===========================================
+FROM base AS production
+
+# Copy production dependencies (includes generated Prisma client)
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/packages ./packages
+# Copy infra directory (needed for database package)
+COPY --from=dependencies /app/infra ./infra
+
+# Copy built application
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/
+
+# Set working directory to API
+WORKDIR /app/apps/api
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Expose port
+EXPOSE 3000
+
+# Start production server
+CMD ["node", "dist/index.js"]

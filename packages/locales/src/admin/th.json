@@ -1,0 +1,836 @@
+{
+  "admin": {
+    "auth": {
+      "signIn": "เข้าสู่ระบบ",
+      "signUp": "สมัครสมาชิก",
+      "signOut": "ออกจากระบบ",
+      "forgotPassword": "ลืมรหัสผ่าน?",
+      "rememberMe": "จำฉันไว้",
+      "enterEmail": "กรอกอีเมลของคุณ",
+      "enterPassword": "กรอกรหัสผ่านของคุณ",
+      "loginSuccess": "เข้าสู่ระบบสำเร็จ",
+      "loginFailed": "เข้าสู่ระบบไม่สำเร็จ",
+      "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+      "backToDashboard": "กลับสู่แดชบอร์ด",
+      "dontHaveAccount": "ยังไม่มีบัญชี?",
+      "alreadyHaveAccount": "มีบัญชีอยู่แล้ว?",
+      "signInMessage": "กรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ!",
+      "signInWithGoogle": "เข้าสู่ระบบด้วย Google",
+      "signInWithX": "เข้าสู่ระบบด้วย X",
+      "or": "หรือ"
+    },
+    "menu": {
+      "dashboard": "แดชบอร์ด",
+      "ecommerce": "อีคอมเมิร์ซ",
+      "calendar": "ปฏิทิน",
+      "profile": "โปรไฟล์",
+      "userProfile": "โปรไฟล์ผู้ใช้",
+      "forms": "ฟอร์ม",
+      "formElements": "องค์ประกอบฟอร์ม",
+      "tables": "ตาราง",
+      "basicTables": "ตารางพื้นฐาน",
+      "pages": "หน้า",
+      "blankPage": "หน้าว่าง",
+      "error404": "ข้อผิดพลาด 404",
+      "charts": "กราฟ",
+      "lineChart": "กราฟเส้น",
+      "barChart": "กราฟแท่ง",
+      "uiElements": "องค์ประกอบ UI",
+      "alerts": "การแจ้งเตือน",
+      "avatar": "รูปโปรไฟล์",
+      "badge": "ป้ายชื่อ",
+      "buttons": "ปุ่ม",
+      "images": "รูปภาพ",
+      "videos": "วิดีโอ",
+      "authentication": "การยืนยันตัวตน",
+      "signIn": "เข้าสู่ระบบ",
+      "signUp": "สมัครสมาชิก",
+      "menu": "เมนู",
+      "others": "อื่นๆ",
+      "systemMenu": "เมนูระบบ",
+      "admin_menu": "จัดการเมนู",
+      "user_management": "จัดการผู้ใช้",
+      "file_manager": "จัดการไฟล์",
+      "roles": "บทบาท",
+      "permissions": "สิทธิ์การใช้งาน",
+      "activity_logs": "บันทึกกิจกรรม",
+      "projects": "โปรเจ็กต์",
+      "issues": "ปัญหา",
+      "fallback": {
+        "menu": "เมนู",
+        "subMenu": "เมนูย่อย",
+        "noMenuItems": "ไม่มีรายการเมนู"
+      },
+      "badges": {
+        "new": "ใหม่",
+        "pro": "โปร"
+      }
+    },
+    "fileManager": {
+      "pageTitle": "จัดการไฟล์",
+      "pageDescription": "อัปโหลด จัดการ และค้นหาไฟล์ภายในระบบผู้ดูแล",
+      "toolbar": {
+        "back": "ย้อนกลับ",
+        "searchPlaceholder": "ค้นหาไฟล์หรือโฟลเดอร์",
+        "searchAria": "ค้นหา",
+        "toggleColumns": "สลับจำนวนคอลัมน์",
+        "refresh": "รีเฟรช",
+        "newFolder": "โฟลเดอร์ใหม่",
+        "upload": "อัปโหลด"
+      },
+      "grid": {
+        "emptyTitle": "ยังไม่มีไฟล์หรือโฟลเดอร์",
+        "emptyDescription": "อัปโหลดไฟล์หรือสร้างโฟลเดอร์ใหม่เพื่อเริ่มต้น",
+        "folderLabel": "โฟลเดอร์"
+      },
+      "preview": {
+        "empty": "เลือกไฟล์เพื่อดูรายละเอียด",
+        "typeFallback": "ไฟล์",
+        "close": "ปิด",
+        "fileSize": "ขนาดไฟล์: {{value}}",
+        "lastUpdated": "อัปเดตล่าสุด: {{value}}",
+        "previewUnavailable": "ไม่สามารถพรีวิวไฟล์ประเภทนี้ได้",
+        "open": "เปิดไฟล์",
+        "download": "ดาวน์โหลด",
+        "use": "ใช้ไฟล์นี้"
+      },
+      "modals": {
+        "createTitle": "สร้างโฟลเดอร์ใหม่",
+        "createDescription": "ตั้งชื่อโฟลเดอร์ที่จะสร้างในตำแหน่งปัจจุบัน",
+        "createPlaceholder": "ชื่อโฟลเดอร์",
+        "renameTitle": "เปลี่ยนชื่อ",
+        "renameDescriptionFolder": "ระบุชื่อใหม่สำหรับโฟลเดอร์",
+        "renameDescriptionFile": "ระบุชื่อใหม่สำหรับไฟล์",
+        "renamePlaceholder": "ชื่อใหม่"
+      },
+      "notifications": {
+        "loadError": "โหลดข้อมูลไม่สำเร็จ",
+        "openUnsupported": "ไฟล์นี้ไม่รองรับการเปิดในแท็บใหม่",
+        "downloadUnsupported": "ดาวน์โหลดได้เฉพาะไฟล์ที่มี URL",
+        "copyUrlSuccess": "คัดลอก URL แล้ว",
+        "copyUrlError": "คัดลอก URL ไม่สำเร็จ",
+        "createSuccess": "สร้างโฟลเดอร์ \"{{name}}\" สำเร็จ",
+        "createError": "สร้างโฟลเดอร์ไม่สำเร็จ",
+        "renameSuccess": "เปลี่ยนชื่อสำเร็จ",
+        "renameError": "เปลี่ยนชื่อไม่สำเร็จ",
+        "deleteSuccess": "ลบสำเร็จ",
+        "deleteError": "ลบไม่สำเร็จ",
+        "uploadSuccess": "อัปโหลดไฟล์สำเร็จ",
+        "uploadError": "อัปโหลดไม่สำเร็จ"
+      },
+      "contextMenu": {
+        "openFolder": "เปิดโฟลเดอร์",
+        "openFile": "เปิดในแท็บใหม่",
+        "rename": "เปลี่ยนชื่อ",
+        "download": "ดาวน์โหลด",
+        "copyUrl": "คัดลอก URL",
+        "delete": "ลบ"
+      },
+      "confirm": {
+        "deleteTitle": "ยืนยันการลบ",
+        "deleteFolderMessage": "คุณต้องการลบโฟลเดอร์ \"{{name}}\" และข้อมูลทั้งหมดภายในหรือไม่?",
+        "deleteFileMessage": "คุณต้องการลบไฟล์ \"{{name}}\" หรือไม่?",
+        "deleteConfirm": "ลบ"
+      },
+      "breadcrumb": {
+        "root": "ราก"
+      },
+      "search": {
+        "results": "ผลการค้นหาสำหรับ \"{{keyword}}\""
+      },
+      "dropzone": {
+        "hint": "ปล่อยไฟล์เพื่ออัปโหลด"
+      },
+      "page": {
+        "title": "จัดการไฟล์",
+        "description": "อัปโหลด จัดการ และค้นหาไฟล์ภายในระบบผู้ดูแล"
+      },
+      "picker": {
+        "title": "เลือกจากคลัง",
+        "description": "เลือกไฟล์เพื่อใช้งานในคอนเทนต์",
+        "close": "ปิด"
+      },
+      "inputModal": {
+        "confirm": "บันทึก",
+        "cancel": "ยกเลิก"
+      }
+    },
+    "textEditor": {
+      "buttons": {
+        "viewSource": "ดูซอร์สโค้ด",
+        "exitSource": "กลับสู่โหมดปกติ"
+      },
+      "linkModal": {
+        "title": "แทรกลิงก์",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://example.com",
+        "textLabel": "ข้อความที่แสดง",
+        "textPlaceholder": "ข้อความลิงก์",
+        "cancel": "ยกเลิก",
+        "insert": "แทรก"
+      }
+    },
+    "banner": {
+      "pageTitle": "จัดการแบนเนอร์",
+      "pageDescription": "สร้างและจัดการแบนเนอร์สำหรับหน้าเว็บไซต์",
+      "title": "จัดการแบนเนอร์",
+      "manageBanners": "จัดการและจัดระเบียบแบนเนอร์ของคุณ",
+      "selectType": "เลือกประเภทแบนเนอร์",
+      "filters": "ตัวกรอง",
+      "search": "ค้นหา",
+      "searchPlaceholder": "ค้นหาแบนเนอร์...",
+      "status": "สถานะ",
+      "section": "ส่วน",
+      "allStatus": "ทุกสถานะ",
+      "allSections": "ทุกส่วน",
+      "clearFilters": "ล้างตัวกรอง",
+      "add": "เพิ่มแบนเนอร์",
+      "edit": "แก้ไข",
+      "delete": "ลบ",
+      "duplicate": "คัดลอก",
+      "active": "เปิดใช้งาน",
+      "inactive": "ปิดใช้งาน",
+      "loading": "กำลังโหลด...",
+      "duplicateSuccess": "คัดลอกแบนเนอร์สำเร็จ",
+      "duplicateError": "ไม่สามารถคัดลอกแบนเนอร์ได้",
+      "noUrlAvailable": "ไม่มี URL สำหรับแบนเนอร์นี้",
+      "sequence": "ลำดับ",
+      "moveUp": "เลื่อนขึ้น",
+      "moveDown": "เลื่อนลง",
+      "sequenceMoveUp": "เลื่อนขึ้น",
+      "sequenceMoveDown": "เลื่อนลง",
+      "sequenceInputLabel": "ตำแหน่งลำดับ",
+      "moveUpSuccess": "เลื่อนลำดับขึ้นสำเร็จ",
+      "moveDownSuccess": "เลื่อนลำดับลงสำเร็จ",
+      "moveUpError": "ไม่สามารถเลื่อนลำดับขึ้นได้",
+      "moveDownError": "ไม่สามารถเลื่อนลำดับลงได้",
+      "noData": "ไม่พบแบนเนอร์",
+      "noResults": "ไม่พบผลลัพธ์",
+      "actions": "การดำเนินการ",
+      "view": "ดู",
+      "all": "ทั้งหมด",
+      "newTab": "แท็บใหม่",
+      "sameTab": "แท็บเดิม",
+      "types": {
+        "hero": "แบนเนอร์หลัก",
+        "course": "หลักสูตร",
+        "ads": "โฆษณา",
+        "contact": "ติดต่อ",
+        "news": "ข่าวสาร",
+        "about": "เกี่ยวกับ",
+        "research": "งานวิจัย",
+        "department_category": "หมวดหมู่หน่วยงาน",
+        "promotion": "โปรโมชั่น",
+        "category": "หมวดหมู่",
+        "product": "สินค้า",
+        "announcement": "ประกาศ"
+      },
+      "field": {
+        "section": "ส่วน",
+        "youtube": "ลิงก์ YouTube",
+        "video": "วิดีโอ"
+      },
+      "basicSettings": "การตั้งค่าพื้นฐาน",
+      "mediaSettings": "การตั้งค่าสื่อ",
+      "translations": "การแปลภาษา",
+      "editBanner": "แก้ไขแบนเนอร์",
+      "addBanner": "เพิ่มแบนเนอร์",
+      "editBannerDesc": "แก้ไขข้อมูลและตั้งค่าแบนเนอร์",
+      "addBannerDesc": "สร้างแบนเนอร์ใหม่พร้อมเนื้อหาและสื่อ",
+      "cancel": "ยกเลิก",
+      "save": "บันทึก",
+      "saving": "กำลังบันทึก...",
+      "confirmDelete": "คุณแน่ใจหรือไม่ที่จะลบแบนเนอร์นี้?",
+      "form": {
+        "title": "ฟอร์มแบนเนอร์",
+        "addTitle": "เพิ่มแบนเนอร์",
+        "editTitle": "แก้ไขแบนเนอร์",
+        "contentTab": "เนื้อหา",
+        "mediaTab": "สื่อ",
+        "successAdd": "เพิ่มแบนเนอร์สำเร็จ",
+        "successEdit": "แก้ไขแบนเนอร์สำเร็จ",
+        "errorAdd": "เพิ่มแบนเนอร์ไม่สำเร็จ",
+        "errorEdit": "แก้ไขแบนเนอร์ไม่สำเร็จ",
+        "confirmCancel": "ยืนยันการยกเลิก",
+        "confirmCancelMessage": "คุณแน่ใจหรือไม่ที่จะยกเลิก? การเปลี่ยนแปลงจะไม่ถูกบันทึก",
+        "manageBanner": "จัดการแบนเนอร์ของคุณ",
+        "translationStatus": "สถานะการแปล",
+        "complete": "เสร็จสมบูรณ์",
+        "incomplete": "ยังไม่เสร็จ",
+        "currentStyle": "รูปแบบปัจจุบัน",
+        "mediaDescription": "เลือกและอัปโหลดสื่อสำหรับแบนเนอร์",
+        "placeholder": {
+          "name": "กรอกชื่อแบนเนอร์",
+          "desc": "กรอกคำอธิบายแบนเนอร์",
+          "detail": "กรอกรายละเอียดแบนเนอร์"
+        },
+        "help": {
+          "language": "สลับภาษาเพื่อกรอกเนื้อหาในแต่ละภาษา",
+          "media": "เลือกประเภทสื่อที่ต้องการใช้",
+          "save": "บันทึกการเปลี่ยนแปลง",
+          "image": "อัปโหลดรูปภาพสำหรับแบนเนอร์",
+          "mobile": "อัปโหลดรูปภาพสำหรับมือถือ (ไม่บังคับ)",
+          "youtube": "กรอกลิงก์ YouTube ของวิดีโอ",
+          "video": "อัปโหลดไฟล์วิดีโอ"
+        },
+        "validation": {
+          "nameRequired": "กรุณากรอกชื่อแบนเนอร์",
+          "imageRequired": "กรุณาอัปโหลดรูปภาพ",
+          "youtubeRequired": "กรุณากรอกลิงก์ YouTube",
+          "youtubeInvalid": "รูปแบบลิงก์ YouTube ไม่ถูกต้อง",
+          "videoRequired": "กรุณาอัปโหลดวิดีโอ",
+          "linkInvalid": "รูปแบบลิงก์ไม่ถูกต้อง",
+          "validationErrors": "กรุณาแก้ไขข้อผิดพลาดในการตรวจสอบก่อนบันทึก"
+        },
+        "validationErrors": "พบข้อผิดพลาดในการตรวจสอบ",
+        "languageSwitch": "เปลี่ยนภาษา",
+        "languageSwitchMessage": "เปลี่ยนไปยังภาษา {{language}} เพื่อแก้ไขข้อผิดพลาด",
+        "savingInProgress": "กำลังบันทึกข้อมูล กรุณารอสักครู่",
+        "loadingBanner": "กำลังโหลดข้อมูลแบนเนอร์...",
+        "updatingBanner": "กำลังอัปเดตแบนเนอร์...",
+        "creatingBanner": "กำลังสร้างแบนเนอร์...",
+        "redirecting": "กำลังเปลี่ยนหน้า...",
+        "loadingPage": "กำลังโหลดหน้า..."
+      },
+      "style": {
+        "image": "รูปภาพ",
+        "youtube": "YouTube",
+        "video": "วิดีโอ"
+      }
+    },
+    "content": {
+      "pageTitle": "จัดการคอนเทนต์",
+      "pageDescription": "อัปโหลดและดูแลเนื้อหาภายในระบบผู้ดูแล",
+      "sequence": {
+        "moveUp": "เลื่อนขึ้น",
+        "moveDown": "เลื่อนลง",
+        "inputLabel": "ตำแหน่งลำดับ"
+      },
+      "form": {
+        "upload": {
+          "empty": "ยังไม่มีการตั้งค่าสื่อสำหรับประเภทเนื้อหานี้"
+        },
+        "seo": {
+          "empty": "การตั้งค่า SEO ไม่พร้อมใช้งานสำหรับประเภทเนื้อหานี้"
+        }
+      }
+    },
+    "content_category": {
+      "pageTitle": "จัดการหมวดหมู่คอนเทนต์",
+      "pageDescription": "จัดกลุ่มและเรียงหมวดหมู่สำหรับคอนเทนต์ทั้งหมด",
+      "types": {
+        "product": "สินค้า",
+        "news": "ข่าว",
+        "article": "บทความ"
+      },
+      "toolbar": {
+        "title": "หมวดหมู่เนื้อหา {{type}}",
+        "subtitle": "รวมทั้งหมด {{count}} รายการ • แสดง {{from}}-{{to}}",
+        "add": "เพิ่มหมวดหมู่",
+        "categoryFilter": "ตัวกรองหมวดหมู่",
+        "categoryFilterDisabled": "ไม่มีตัวกรองหมวดหมู่ให้ใช้งาน",
+        "parentFilter": "หมวดหมู่หลัก",
+        "parentPlaceholder": "ทุกหมวดหมู่"
+      },
+      "table": {
+        "title": "รายการหมวดหมู่เนื้อหา",
+        "parentLabel": "หมวดหมู่หลัก"
+      },
+      "labels": {
+        "default": "ค่าเริ่มต้น"
+      },
+      "tree": {
+        "title": "เรียงลำดับหมวดหมู่",
+        "description": "ลากและวางหมวดหมู่เพื่ออัปเดตลำดับชั้นและการเรียงลำดับ การเปลี่ยนแปลงจะมีผลเฉพาะภายในประเภทหมวดหมู่นี้",
+        "saveSuccess": "อัปเดตลำดับหมวดหมู่สำเร็จ",
+        "unsavedChanges": "คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก อย่าลืมบันทึกการอัปเดตของคุณ",
+        "empty": "ไม่มีหมวดหมู่สำหรับประเภทนี้"
+      },
+      "tabs": {
+        "translate": "การแปลภาษา",
+        "upload": "อัปโหลดสื่อ",
+        "seo": "SEO"
+      },
+      "form": {
+        "title": "หมวดหมู่เนื้อหา",
+        "addTitle": "สร้างหมวดหมู่เนื้อหา",
+        "editTitle": "แก้ไขหมวดหมู่เนื้อหา",
+        "description": "จัดการการแปลภาษาและสื่อของหมวดหมู่นี้",
+        "name": "ชื่อ",
+        "desc": "คำอธิบาย",
+        "detail": "รายละเอียด",
+        "text": "เนื้อหา",
+        "location": "สถานที่",
+        "image": "รูปภาพ",
+        "imageHelper": "ใส่ลิงก์รูปภาพหรืออัปโหลดที่แท็บสื่อ",
+        "placeholder": {
+          "name": "กรอกชื่อหมวดหมู่",
+          "desc": "กรอกคำอธิบายสั้น ๆ",
+          "detail": "กรอกรายละเอียดเนื้อหา",
+          "text": "กรอกข้อความ",
+          "location": "กรอกสถานที่"
+        },
+        "save": "บันทึก",
+        "cancel": "ยกเลิก",
+        "saving": "กำลังบันทึกหมวดหมู่...",
+        "updateSuccess": "อัปเดตหมวดหมู่สำเร็จ",
+        "createSuccess": "สร้างหมวดหมู่สำเร็จ",
+        "error": "ไม่สามารถบันทึกหมวดหมู่ได้",
+        "languageHelper": "สลับภาษาเพื่อกรอกข้อมูลตามภาษา",
+        "confirmCancelTitle": "ต้องการยกเลิกการแก้ไขหรือไม่?",
+        "confirmCancelMessage": "หากออกจากหน้านี้ ข้อมูลที่ยังไม่บันทึกจะหายไป",
+        "confirmCancelConfirm": "ยกเลิกการแก้ไข",
+        "saveHeader": "บันทึก",
+        "validationSummary": "กรุณาตรวจสอบฟิลด์ที่ไฮไลต์ก่อนบันทึก",
+        "upload": {
+          "addItem": "เพิ่มรายการ",
+          "removeItem": "ลบ",
+          "empty": "ยังไม่มีการตั้งค่าสื่อสำหรับหมวดหมู่นี้",
+          "placeholder": {
+            "gallery": "เพิ่มสื่อแกลเลอรี",
+            "image": "อัปโหลดหรือกรอกเส้นทางรูปภาพ",
+            "video": "อัปโหลดไฟล์วิดีโอ",
+            "youtube": "วางลิงก์ YouTube",
+            "file": "อัปโหลดไฟล์"
+          }
+        },
+        "seo": {
+          "empty": "การตั้งค่า SEO ไม่พร้อมใช้งานสำหรับประเภทเนื้อหานี้"
+        }
+      },
+      "sidebar": {
+        "statusTitle": "การแสดงผล",
+        "status": "เผยแพร่",
+        "default": "ตั้งเป็นค่าเริ่มต้น",
+        "parentTitle": "หมวดหมู่หลัก",
+        "parent": "ID หมวดหมู่หลัก",
+        "parentHelper": "ปล่อยว่างหากเป็นหมวดหมู่หลัก",
+        "languageTitle": "ภาษา",
+        "languageHelper": "สลับภาษาที่ใช้งานอย่างรวดเร็ว"
+      },
+      "confirm": {
+        "deleteTitle": "ลบหมวดหมู่",
+        "deleteMessage": "คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่นี้?",
+        "bulkDeleteTitle": "ลบหมวดหมู่ {{count}} รายการ",
+        "bulkDeleteMessage": "การดำเนินการนี้ไม่สามารถย้อนกลับได้ ต้องการดำเนินการต่อหรือไม่?"
+      },
+      "success": {
+        "deleted": "ลบหมวดหมู่สำเร็จ",
+        "duplicated": "คัดลอกหมวดหมู่สำเร็จ",
+        "bulkStatus": "อัปเดตสถานะสำเร็จ",
+        "bulkDelete": "ลบหมวดหมู่ที่เลือกสำเร็จ"
+      },
+      "errors": {
+        "load": "ไม่สามารถโหลดหมวดหมู่เนื้อหาได้",
+        "delete": "ไม่สามารถลบหมวดหมู่ได้",
+        "updateStatus": "ไม่สามารถอัปเดตสถานะได้",
+        "duplicate": "ไม่สามารถคัดลอกหมวดหมู่ได้",
+        "sequence": "ไม่สามารถอัปเดตลำดับได้",
+        "bulkStatus": "ไม่สามารถอัปเดตสถานะของหมวดหมู่ที่เลือกได้"
+      }
+    },
+    "dashboard": {
+      "title": "แดชบอร์ด",
+      "welcome": "ยินดีต้อนรับ",
+      "overview": "ภาพรวม",
+      "statistics": "สถิติ",
+      "recentActivity": "กิจกรรมล่าสุด",
+      "totalUsers": "ผู้ใช้ทั้งหมด",
+      "totalOrders": "คำสั่งซื้อทั้งหมด",
+      "totalRevenue": "รายได้ทั้งหมด",
+      "newCustomers": "ลูกค้าใหม่",
+      "metrics": {
+        "projects": "โปรเจกต์ทั้งหมด",
+        "issues": "ปัญหาทั้งหมด",
+        "users": "ผู้ใช้ทั้งหมด",
+        "openIssues": "ปัญหาที่เปิดอยู่"
+      },
+      "sections": {
+        "recentIssues": "ปัญหาล่าสุด",
+        "recentActivity": "กิจกรรมล่าสุด",
+        "issuesByStatus": "ปัญหาตามสถานะ",
+        "issuesBySeverity": "ปัญหาตามระดับความรุนแรง"
+      },
+      "status": {
+        "open": "เปิด",
+        "inProgress": "กำลังดำเนินการ",
+        "resolved": "แก้ไขแล้ว",
+        "closed": "ปิด"
+      },
+      "severity": {
+        "low": "ต่ำ",
+        "medium": "ปานกลาง",
+        "high": "สูง",
+        "critical": "วิกฤต"
+      }
+    },
+    "user": {
+      "pageTitle": "จัดการผู้ใช้",
+      "pageDescription": "ดูแลบัญชีผู้ดูแลและสถานะการใช้งาน",
+      "profile": "โปรไฟล์",
+      "settings": "ตั้งค่า",
+      "myProfile": "โปรไฟล์ของฉัน",
+      "accountSettings": "ตั้งค่าบัญชี",
+      "toolbar": {
+        "title": "จัดการผู้ดูแลระบบ",
+        "subtitle": "ทั้งหมด {{count}} รายการ • แสดง {{from}}-{{to}} ({{totalPages}} หน้า)",
+        "searchPlaceholder": "ค้นหาผู้ใช้งาน...",
+        "addUser": "เพิ่มผู้ใช้",
+        "roleFilter": "บทบาท",
+        "roleAll": "ทุกบทบาท"
+      },
+      "table": {
+        "title": "ผู้ใช้",
+        "username": "ชื่อผู้ใช้",
+        "role": "บทบาท",
+        "roleNone": "ไม่มีบทบาท",
+        "lastLogin": "เข้าสู่ระบบล่าสุด"
+      },
+      "notifications": {
+        "loadError": "ไม่สามารถโหลดข้อมูลผู้ใช้ได้",
+        "rolesError": "ไม่สามารถโหลดข้อมูลบทบาทได้",
+        "statusUpdated": "อัปเดตสถานะผู้ใช้เรียบร้อย",
+        "statusError": "อัปเดตสถานะผู้ใช้ไม่สำเร็จ",
+        "roleUpdated": "อัปเดตบทบาทผู้ใช้เรียบร้อย",
+        "roleError": "อัปเดตบทบาทผู้ใช้ไม่สำเร็จ",
+        "deleteSuccess": "ลบผู้ใช้เรียบร้อย",
+        "deleteError": "ลบผู้ใช้ไม่สำเร็จ",
+        "bulkStatusSuccess": "อัปเดตสถานะผู้ใช้ที่เลือกเรียบร้อย",
+        "bulkStatusError": "อัปเดตสถานะผู้ใช้ที่เลือกไม่สำเร็จ",
+        "bulkDeleteSuccess": "ลบผู้ใช้ที่เลือกเรียบร้อย",
+        "bulkDeleteError": "ลบผู้ใช้ที่เลือกไม่สำเร็จ"
+      },
+      "confirm": {
+        "deleteTitle": "ลบผู้ใช้",
+        "deleteMessage": "คุณต้องการลบ \"{{name}}\" หรือไม่?",
+        "bulkDeleteTitle": "ลบผู้ใช้ {{count}} รายการ",
+        "bulkDeleteMessage": "การกระทำนี้ไม่สามารถยกเลิกได้ ต้องการดำเนินการต่อหรือไม่?"
+      },
+      "form": {
+        "editTitle": "แก้ไขผู้ใช้",
+        "addTitle": "เพิ่มผู้ใช้",
+        "description": "จัดการข้อมูลผู้ดูแลระบบและสิทธิ์การใช้งาน",
+        "successUpdate": "บันทึกการแก้ไขผู้ใช้เรียบร้อย",
+        "successCreate": "สร้างผู้ใช้ \"{{name}}\" เรียบร้อย",
+        "errorSave": "ไม่สามารถบันทึกผู้ใช้ได้",
+        "confirmCancelTitle": "ยกเลิกการแก้ไข?",
+        "confirmCancelMessage": "หากออกจากหน้านี้ ข้อมูลที่ยังไม่ได้บันทึกจะหายไป",
+        "confirmCancelConfirm": "ยกเลิกการเปลี่ยนแปลง",
+        "errors": {
+          "passwordRequired": "กรุณากรอกรหัสผ่าน",
+          "passwordLength": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+          "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
+          "validation": "กรุณาตรวจสอบข้อมูลให้ครบถ้วน",
+          "usernameInvalid": "ชื่อผู้ใช้ต้องเป็นตัวอักษรหรือเลขเท่านั้น",
+          "emailInvalid": "กรุณากรอกอีเมลให้ถูกต้อง",
+          "passwordInvalid": "รหัสผ่านต้องมี 8-15 ตัวอักษร และใช้เฉพาะตัวอักษร ตัวเลข หรือ !@#$%",
+          "confirmPasswordRequired": "กรุณายืนยันรหัสผ่าน"
+        },
+        "fields": {
+          "name": "ชื่อ-นามสกุล",
+          "username": "ชื่อผู้ใช้",
+          "email": "อีเมล",
+          "avatar": "รูปโปรไฟล์",
+          "avatarAlt": "ข้อความอธิบายรูป",
+          "password": "รหัสผ่าน",
+          "confirmPassword": "ยืนยันรหัสผ่าน",
+          "role": "บทบาท",
+          "language": "ภาษา"
+        },
+        "placeholders": {
+          "name": "กรอกชื่อ-นามสกุล",
+          "username": "กรอกชื่อผู้ใช้",
+          "email": "กรอกอีเมล",
+          "avatar": "อัปโหลดหรือกรอกเส้นทางรูปภาพ",
+          "avatarAlt": "อธิบายรูปภาพ (ไม่บังคับ)",
+          "password": "กรอกรหัสผ่าน",
+          "confirmPassword": "กรอกยืนยันรหัสผ่าน",
+          "role": "เลือกบทบาท"
+        },
+        "helpers": {
+          "avatarAlt": "ข้อความ Alt ช่วยเพิ่มการเข้าถึงและ SEO"
+        }
+      }
+    },
+    "theme": {
+      "light": "สว่าง",
+      "dark": "มืด",
+      "system": "ตามระบบ"
+    },
+    "notification": {
+      "ok": "ตกลง",
+      "cancel": "ยกเลิก",
+      "confirm": {
+        "title": "ยืนยันการดำเนินการ",
+        "button": "ยืนยัน"
+      },
+      "processing": "กำลังดำเนินการ...",
+      "success": {
+        "title": "สำเร็จ"
+      },
+      "error": {
+        "title": "ข้อผิดพลาด"
+      },
+      "warning": {
+        "title": "คำเตือน"
+      },
+      "info": {
+        "title": "ข้อมูล"
+      }
+    },
+    "permission": {
+      "pageTitle": "จัดการสิทธิ์การใช้งาน",
+      "pageDescription": "จัดการสิทธิ์การใช้งานในระบบ",
+      "toolbar": {
+        "generate": "สร้างสิทธิ์การใช้งาน",
+        "scopeFilter": "ขอบเขต",
+        "moduleFilter": "โมดูล",
+        "groupFilter": "กลุ่ม",
+        "allScopes": "ทุกขอบเขต",
+        "allModules": "ทุกโมดูล",
+        "allGroups": "ทุกกลุ่ม"
+      },
+      "table": {
+        "title": "สิทธิ์การใช้งาน",
+        "scope": "ขอบเขต",
+        "method": "เมธอด",
+        "module": "โมดูล",
+        "type": "ประเภท",
+        "group": "กลุ่ม",
+        "action": "การกระทำ",
+        "path": "เส้นทาง",
+        "metaName": "ชื่อ Meta"
+      },
+      "notifications": {
+        "loadError": "ไม่สามารถโหลดข้อมูลสิทธิ์การใช้งานได้",
+        "generateSuccess": "สร้างสิทธิ์การใช้งานสำเร็จ",
+        "generateError": "ไม่สามารถสร้างสิทธิ์การใช้งานได้",
+        "statusUpdated": "อัปเดตสถานะสิทธิ์การใช้งานสำเร็จ",
+        "statusError": "ไม่สามารถอัปเดตสถานะสิทธิ์การใช้งานได้"
+      }
+    },
+    "role": {
+      "pageTitle": "จัดการบทบาทผู้ใช้",
+      "pageDescription": "กำหนดสิทธิ์และลำดับบทบาทในระบบผู้ดูแล",
+      "toolbar": {},
+      "table": {
+        "title": "บทบาท",
+        "name": "บทบาท",
+        "scope": "ขอบเขต",
+        "users": "ผู้ใช้",
+        "moveUp": "เลื่อนขึ้น",
+        "moveDown": "เลื่อนลง",
+        "sequenceInput": "ตำแหน่งลำดับ"
+      },
+      "form": {
+        "editTitle": "แก้ไขบทบาท",
+        "addTitle": "สร้างบทบาทใหม่",
+        "description": "กำหนดชื่อบทบาทและมอบหมายสิทธิ์สำหรับขอบเขตนี้",
+        "validationError": "กรุณาแก้ไขฟิลด์ที่ไฮไลต์",
+        "updateSuccess": "อัปเดตบทบาทสำเร็จ",
+        "createSuccess": "สร้างบทบาท {{name}} สำเร็จ",
+        "errorSave": "ไม่สามารถบันทึกบทบาทได้",
+        "confirmCancelTitle": "ยกเลิกการเปลี่ยนแปลง?",
+        "confirmCancelMessage": "การเปลี่ยนแปลงของคุณจะหายไป คุณต้องการดำเนินการต่อหรือไม่?",
+        "confirmCancelConfirm": "ยกเลิก",
+        "fields": {
+          "name": "ชื่อบทบาท"
+        },
+        "placeholders": {
+          "name": "กรอกชื่อบทบาท"
+        }
+      },
+      "permissions": {
+        "actions": "การกระทำ",
+        "groupCount": "{{count}} กลุ่ม",
+        "selectAll": "เลือกทั้งหมด",
+        "selectedCount": "เลือก {{count}} สิทธิ์",
+        "noPermissions": "ไม่มีสิทธิ์ให้ใช้งาน",
+        "defaultType": "ค่าเริ่มต้น",
+        "helper": "เลือกกลุ่มเพื่อมอบหมายการกระทำทั้งหมดภายใน",
+        "moduleCount": "{{count}} โมดูล"
+      },
+      "notifications": {
+        "loadError": "ไม่สามารถโหลดบทบาทได้",
+        "statusUpdated": "อัปเดตสถานะบทบาทสำเร็จ",
+        "statusError": "ไม่สามารถอัปเดตสถานะบทบาทได้",
+        "deleteSuccess": "ลบบทบาทสำเร็จ",
+        "deleteError": "ไม่สามารถลบบทบาทได้",
+        "sequenceInvalid": "กรุณากรอกหมายเลขลำดับที่ถูกต้อง",
+        "sequenceUpdated": "อัปเดตลำดับบทบาทสำเร็จ",
+        "sequenceError": "ไม่สามารถอัปเดตลำดับได้"
+      },
+      "confirm": {
+        "deleteTitle": "ลบบทบาท?",
+        "deleteMessage": "คุณแน่ใจหรือไม่ว่าต้องการลบ {{name}}? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+      }
+    },
+    "admin_menu": {
+      "pageTitle": "จัดการเมนูแอดมิน",
+      "pageDescription": "ตั้งค่ารายการเมนูและการเรียงลำดับสำหรับระบบผู้ดูแล",
+      "toolbar": {
+        "title": "จัดการเมนูแอดมิน",
+        "subtitle": "รวมทั้งหมด {{count}} รายการ • แสดง {{from}}-{{to}}"
+      },
+      "filters": {
+        "parent": "เมนูหลัก",
+        "parentPlaceholder": "เลือกเมนูหลัก"
+      },
+      "table": {
+        "path": "เส้นทาง",
+        "module": "โมดูล",
+        "parentLabel": "เมนูหลัก"
+      },
+      "form": {
+        "addTitle": "สร้างรายการเมนู",
+        "editTitle": "แก้ไขรายการเมนู",
+        "description": "จัดการรายการเมนูสำหรับแถบด้านข้างแอดมิน",
+        "icon": "ไอคอน",
+        "path": "เส้นทาง",
+        "module": "โมดูล",
+        "parentMenu": "เมนูหลัก"
+      },
+      "error": {
+        "pathFormat": "เส้นทางต้องขึ้นต้นด้วย /"
+      },
+      "confirm": {
+        "deleteTitle": "ลบรายการเมนู",
+        "deleteMessage": "คุณแน่ใจหรือไม่ว่าต้องการลบ \"{{name}}\"?",
+        "bulkDeleteTitle": "ลบรายการเมนู {{count}} รายการ",
+        "bulkDeleteMessage": "การดำเนินการนี้ไม่สามารถย้อนกลับได้ ต้องการดำเนินการต่อหรือไม่?",
+        "bulkActivateTitle": "เปิดใช้งานรายการเมนู {{count}} รายการ",
+        "bulkActivateMessage": "คุณแน่ใจหรือไม่ว่าต้องการเปิดใช้งานรายการเมนู {{count}} รายการ?",
+        "bulkDeactivateTitle": "ปิดใช้งานรายการเมนู {{count}} รายการ",
+        "bulkDeactivateMessage": "คุณแน่ใจหรือไม่ว่าต้องการปิดใช้งานรายการเมนู {{count}} รายการ?"
+      },
+      "success": {
+        "delete": "ลบรายการเมนูสำเร็จ",
+        "activate": "เปิดใช้งานรายการเมนูสำเร็จ",
+        "deactivate": "ปิดใช้งานรายการเมนูสำเร็จ",
+        "updateSequence": "อัปเดตลำดับสำเร็จ",
+        "bulkActivate": "เปิดใช้งานรายการเมนูสำเร็จ",
+        "bulkDeactivate": "ปิดใช้งานรายการเมนูสำเร็จ",
+        "bulkDelete": "ลบรายการเมนูสำเร็จ"
+      },
+      "errors": {
+        "load": "ไม่สามารถโหลดรายการเมนูได้",
+        "delete": "ไม่สามารถลบรายการเมนูได้",
+        "update": "ไม่สามารถอัปเดตรายการเมนูได้",
+        "updateSequence": "ไม่สามารถอัปเดตลำดับได้",
+        "bulkActivate": "ไม่สามารถเปิดใช้งานรายการเมนูได้",
+        "bulkDeactivate": "ไม่สามารถปิดใช้งานรายการเมนูได้",
+        "bulkDelete": "ไม่สามารถลบรายการเมนูได้"
+      }
+    },
+    "project": {
+      "toolbar": {
+        "subtitle": "จัดการโปรเจกต์และสภาพแวดล้อม",
+        "addProject": "สร้างโปรเจกต์"
+      },
+      "form": {
+        "editTitle": "แก้ไขโปรเจกต์",
+        "addTitle": "สร้างโปรเจกต์ใหม่",
+        "editDescription": "อัปเดตรายละเอียดและการตั้งค่าโปรเจกต์",
+        "addDescription": "ลงทะเบียนโปรเจกต์ใหม่สำหรับการรวบรวมปัญหา",
+        "basicInformation": "ข้อมูลพื้นฐาน",
+        "projectName": "ชื่อโปรเจกต์",
+        "projectNamePlaceholder": "กรอกชื่อโปรเจกต์",
+        "descriptionPlaceholder": "กรอกคำอธิบายโปรเจกต์ (ไม่บังคับ)",
+        "status": "สถานะ",
+        "active": "ใช้งาน",
+        "inactive": "ไม่ใช้งาน",
+        "allowedDomains": "โดเมนที่อนุญาต",
+        "allowedDomainsPlaceholder": "example.com หรือ *.example.com",
+        "allowedDomainsHelper": "กรอกโดเมนที่แน่นอน (เช่น app.example.com) หรือใช้ wildcard (เช่น *.example.com)",
+        "environments": "สภาพแวดล้อม",
+        "environmentsDescription": "กำหนดค่าขั้นตอนการปรับใช้ที่แตกต่างกัน (dev, staging, prod) ด้วย URL API และต้นทางที่อนุญาตแยกต่างหาก สภาพแวดล้อมเป็นทางเลือกและช่วยให้คุณจัดการการตั้งค่าโปรเจกต์สำหรับขั้นตอนการปรับใช้ที่แตกต่างกัน",
+        "editEnvironment": "แก้ไขสภาพแวดล้อม",
+        "addEnvironment": "เพิ่มสภาพแวดล้อม",
+        "environmentName": "ชื่อสภาพแวดล้อม",
+        "environmentNamePlaceholder": "เลือกสภาพแวดล้อม",
+        "apiUrl": "URL API",
+        "apiUrlPlaceholder": "https://api.example.com (ไม่บังคับ)",
+        "allowedOrigins": "ต้นทางที่อนุญาต",
+        "allowedOriginsPlaceholder": "https://app.example.com หรือ https://*.example.com",
+        "allowedOriginsHelper": "กรอกต้นทางที่แน่นอน (เช่น https://app.example.com) หรือใช้ wildcard (เช่น https://*.example.com)",
+        "add": "เพิ่ม",
+        "remove": "ลบ"
+      },
+      "table": {
+        "issues": "ปัญหา",
+        "pending": "รอดำเนินการ",
+        "total": "ทั้งหมด",
+        "allowedDomains": "โดเมนที่อนุญาต",
+        "domain": "domain(s)",
+        "domainsCount": "โดเมน"
+      }
+    },
+    "issue": {
+      "pageTitle": "การจัดการปัญหา",
+      "pageDescription": "ดูและจัดการปัญหาที่รายงาน",
+      "toolbar": {
+        "title": "ปัญหา",
+        "subtitle": "ดูและจัดการปัญหาที่รายงาน",
+        "searchPlaceholder": "ค้นหาปัญหาตามชื่อหรือคำอธิบาย...",
+        "allProjects": "โปรเจกต์ทั้งหมด"
+      },
+      "form": {
+        "editTitle": "แก้ไขปัญหา",
+        "addTitle": "สร้างปัญหา"
+      },
+      "table": {
+        "id": "ID",
+        "title": "หัวข้อ",
+        "project": "โปรเจกต์",
+        "severity": "ระดับความรุนแรง",
+        "status": "สถานะ",
+        "assignee": "ผู้รับผิดชอบ",
+        "createdAt": "วันที่สร้าง",
+        "unassigned": "ไม่ได้มอบหมาย",
+        "pending": "รอดำเนินการ",
+        "total": "ทั้งหมด"
+      }
+    },
+    "activityLog": {
+      "pageTitle": "บันทึกกิจกรรม",
+      "pageDescription": "ดูบันทึกกิจกรรมทั้งหมดของระบบ",
+      "toolbar": {
+        "searchPlaceholder": "ค้นหาบันทึก...",
+        "action": "การดำเนินการ",
+        "model": "โมดูล",
+        "user": "ผู้ใช้",
+        "allActions": "การดำเนินการทั้งหมด",
+        "allModels": "โมดูลทั้งหมด",
+        "allUsers": "ผู้ใช้ทั้งหมด",
+        "dateFrom": "วันที่เริ่มต้น",
+        "dateTo": "วันที่สิ้นสุด"
+      },
+      "actions": {
+        "create": "สร้าง",
+        "update": "อัปเดต",
+        "delete": "ลบ"
+      },
+      "models": {
+        "user": "ผู้ใช้",
+        "role": "บทบาท",
+        "content": "เนื้อหา",
+        "banner": "แบนเนอร์",
+        "permission": "สิทธิ์",
+        "contentCategory": "หมวดหมู่เนื้อหา",
+        "adminMenu": "เมนูแอดมิน",
+        "page": "หน้า"
+      },
+      "table": {
+        "action": "การดำเนินการ",
+        "user": "ผู้ใช้",
+        "model": "โมดูล",
+        "modelId": "รหัสโมดูล",
+        "timestamp": "วันที่และเวลา"
+      },
+      "notifications": {
+        "loadError": "ไม่สามารถโหลดบันทึกกิจกรรมได้"
+      }
+    }
+  }
+}
+

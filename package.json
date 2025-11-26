@@ -1,0 +1,66 @@
+{
+  "name": "nodejs-mwz-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo project with API, Admin, and Frontend",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "node infra/scripts/setup.js",
+    "setup:symlinks": "node scripts/setup-symlinks-production.js",
+    "dev": "turbo run dev",
+    "dev:all": "turbo run dev --filter=api --filter=admin --filter=frontend",
+    "dev:api": "turbo run dev --filter=api",
+    "dev:admin": "turbo run dev --filter=admin",
+    "dev:frontend": "turbo run dev --filter=frontend",
+    "dev:kill": "node scripts/kill-dev-servers.js",
+    "build": "turbo run build",
+    "build:api": "turbo run build --filter=api",
+    "build:admin": "turbo run build --filter=admin",
+    "build:frontend": "turbo run build --filter=frontend",
+    "build:sdk": "pnpm --filter collector-sdk build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:ps": "docker-compose ps",
+    "db:setup": "bash scripts/setup-database.sh",
+    "db:merge": "cd infra/database && pnpm db:merge",
+    "db:generate": "cd infra/database && pnpm db:generate",
+    "db:push": "cd infra/database && pnpm db:push",
+    "db:migrate": "cd infra/database && pnpm db:migrate:deploy",
+    "db:migrate:dev": "cd infra/database && pnpm db:migrate",
+    "db:studio": "cd infra/database && pnpm db:studio",
+    "db:seed": "cd infra/database && pnpm prisma db seed",
+    "db:reset": "cd infra/database && pnpm prisma migrate reset --schema=./prisma/schema.prisma --force",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "clean:deps": "rm -rf node_modules apps/*/node_modules packages/*/node_modules .pnpm-store"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.56.0",
+    "fs-extra": "^11.2.0",
+    "prettier": "^3.1.1",
+    "prompts": "^2.4.2",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "dependencies": {
+    "lucide-static": "^0.553.0"
+  }
+}

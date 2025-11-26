@@ -1,0 +1,81 @@
+# Production Dockerfile for Frontend
+FROM node:18-alpine AS base
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# ===========================================
+# Dependencies Stage
+# ===========================================
+FROM base AS dependencies
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages (shared dependencies)
+COPY packages ./packages
+
+# Copy Frontend app package.json
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# ===========================================
+# Build Stage
+# ===========================================
+FROM base AS build
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages
+COPY packages ./packages
+
+# Copy Frontend app
+COPY apps/frontend ./apps/frontend
+
+# Install all dependencies (including dev dependencies for build)
+RUN pnpm install --frozen-lockfile
+
+# Build Frontend
+WORKDIR /app/apps/frontend
+# Ensure public directory exists (Next.js may not create it)
+RUN mkdir -p public || true
+# Create storage directory (symlink won't work in Docker, create empty dir instead)
+RUN rm -f storage 2>/dev/null || true && mkdir -p storage || true
+RUN pnpm build
+
+# ===========================================
+# Production Stage
+# ===========================================
+FROM base AS production
+
+# Copy production dependencies
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/packages ./packages
+
+# Copy built application
+COPY --from=build /app/apps/frontend/.next ./.next
+# Copy public directory (created in build stage if it didn't exist)
+COPY --from=build /app/apps/frontend/public ./public
+COPY --from=build /app/apps/frontend/package.json ./
+
+# Set working directory to Frontend
+WORKDIR /app/apps/frontend
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Expose port
+EXPOSE 3002
+
+# Start production server
+CMD ["pnpm", "start"]

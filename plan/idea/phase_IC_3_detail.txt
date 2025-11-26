@@ -1,0 +1,8 @@
+PHASE IC-3 — INSPECT MODE + SCREENSHOT CAPTURE
+
+Detailed tasks:
+- DOM highlight overlay
+- Element selection
+- html2canvas screenshot
+- Element selector + HTML snippet
+- Preview modal

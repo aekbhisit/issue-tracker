@@ -1,0 +1,8 @@
+PHASE IC-1 — PROJECT REGISTRATION SYSTEM
+
+Detailed tasks:
+- Project table schema
+- Environment mapping
+- Public/private key generation
+- Project CRUD API
+- Dashboard page for project management

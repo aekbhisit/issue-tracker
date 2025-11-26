@@ -1,0 +1,39 @@
+FROM postgres:17.6
+
+# Ensure pg_config points to PostgreSQL 17 during build
+ENV PG_CONFIG=/usr/lib/postgresql/17/bin/pg_config
+
+# Install PostGIS + pgvector for PostgreSQL 17
+# This ensures production PostgreSQL has the same extensions as local development
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      # Install build dependencies for pgvector (needed to compile from source)
+      build-essential \
+      git \
+      ca-certificates \
+      postgresql-server-dev-17 \
+      # Install PostGIS extension packages
+      postgresql-17-postgis-3 \
+      postgresql-17-postgis-3-scripts \
+      # Install PostgreSQL contrib extensions
+      postgresql-contrib \
+      # Install pgvector from source
+      # Try to clone specific tag, fallback to main branch if tag doesn't exist
+      && cd /tmp \
+      && git clone --depth 1 https://github.com/pgvector/pgvector.git \
+      && cd pgvector \
+      && (git checkout v0.7.2 2>/dev/null || git checkout v0.7.1 2>/dev/null || echo "Using latest commit") \
+      && PG_CONFIG=$PG_CONFIG make \
+      && PG_CONFIG=$PG_CONFIG make install \
+      && cd / \
+      && rm -rf /tmp/pgvector \
+      # Clean up build dependencies
+      && apt-get purge -y --auto-remove build-essential git postgresql-server-dev-17 \
+      && rm -rf /var/lib/apt/lists/*
+
+# Copy init scripts into image (so they work in Portainer without volume mounts)
+COPY initdb/01-enable-extensions.sql /docker-entrypoint-initdb.d/01-enable-extensions.sql
+
+# Extensions will be enabled automatically on first database initialization
+

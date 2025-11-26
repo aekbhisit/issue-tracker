@@ -1,0 +1,73 @@
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+stack.env
+# Storage (uploaded files)
+storage/uploads/*
+storage/temp/*
+!storage/uploads/.gitkeep
+!storage/temp/.gitkeep
+
+# Temp uploads (banner form)
+storage/uploads/temp/*
+!storage/uploads/temp/README.md
+
+# App-specific storage directories (symlinks or local storage)
+apps/api/storage/
+apps/frontend/storage/
+apps/admin/storage/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm-debug.log
+
+# Build outputs
+dist/
+build/
+.next/
+.turbo/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.sqlite
+*.sqlite3
+prisma/*.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Docker
+docker-compose.override.yml
+
+# Generated files
+.current-stack
+
+# Backup files
+*.bak
+*.backup
+
+.cursor*

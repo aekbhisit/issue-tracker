@@ -1,0 +1,7 @@
+PHASE IC-2 — COLLECTOR SDK (BASIC)
+
+Detailed tasks:
+- Floating report button
+- Simple modal
+- Collect URL, metadata, user
+- Submit basic issue

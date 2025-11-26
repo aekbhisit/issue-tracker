@@ -1,0 +1,9 @@
+PHASE IC-5 — ISSUE COLLECTOR API & DATABASE
+
+Detailed tasks:
+- Issue schema
+- Screenshot storage (S3/MinIO)
+- Logs storage
+- POST /issues
+- GET /issues
+- Status updates

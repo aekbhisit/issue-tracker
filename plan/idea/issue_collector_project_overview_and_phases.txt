@@ -1,0 +1,237 @@
+# Z Issue Collector Platform — Project Overview & Development Phases (Full Summary)
+
+This document provides a complete overview of the Z Issue Collector Platform along with the high‑level and detailed development phases. It is designed for new developers, onboarding AI agents, and technical stakeholders to quickly understand the system vision, architecture, and development roadmap.
+
+======================================================================
+PROJECT OVERVIEW
+======================================================================
+
+The Z Issue Collector Platform is a standalone system designed to provide a powerful, centralized issue-reporting experience across ALL Z.com and NetDesign Group applications. It allows any tester, staff member, or user to report UI/UX or functional issues directly from the browser with one click.
+
+When integrated into any web application via a lightweight JavaScript snippet (collector.min.js), users can:
+
+- Capture screenshots of UI elements  
+- Automatically collect DOM selectors + HTML snippets  
+- Gather browser metadata  
+- Capture console logs, JS errors, and network failures  
+- Add comments, severity, and reproduction steps  
+- Send the issue to a central Issue Collector API  
+- View and manage issues in a unified dashboard  
+
+This platform dramatically improves QA workflow, developer debugging efficiency, and overall product quality across all Z.com systems.
+
+======================================================================
+SYSTEM COMPONENTS (HIGH VIEW)
+======================================================================
+
+1. **Collector JS SDK (Injected Script)**
+   - Floating “Report Issue” button
+   - Inspect mode with element highlight
+   - Screenshots (html2canvas)
+   - Log and error capture
+   - Sends payload to Issue Collector API
+
+2. **Issue Collector API (Express.js)**
+   - Project registration + environment mapping
+   - Issue creation, storage, and retrieval
+   - Screenshot & log handling
+   - BullMQ background processing
+   - Notification integrations (Slack/Email/Webhook)
+   - Multi-project support
+   - **Note**: Originally planned for Hono.js, but implemented with Express.js for better ecosystem compatibility
+
+3. **Issue Dashboard (Next.js)**
+   - Central admin/developer interface
+   - Manage projects and environment settings
+   - View, filter, assign, and resolve issues
+   - Screenshot and log viewer
+   - Status workflows
+   - Comments and history
+
+4. **Background Worker (BullMQ)**
+   - Screenshot processing
+   - Log normalization
+   - AI triage (future phase)
+   - Notification dispatch
+
+5. **Storage**
+   - PostgreSQL (primary DB)
+   - Redis (cache + queue)
+   - S3/MinIO (binary storage)
+
+======================================================================
+KEY FEATURES (SUMMARY)
+======================================================================
+
+- Works across all Z.com platforms  
+- No change required in target apps except script injection  
+- Element-level screenshot capture  
+- Automatic DOM, metadata, and log collection  
+- Multi-project management  
+- Developer dashboard for issue tracking  
+- Slack/email/webhook notifications  
+- AI triage and auto‑classification (future phase)  
+
+======================================================================
+DEVELOPMENT PHASES (HIGH VIEW)
+======================================================================
+
+**PHASE IC-0 — Foundation & Environment Setup**  
+Monorepo creation, Docker environment, API/Dashboard skeletons, shared packages, CI/CD.
+
+**PHASE IC-1 — Project Registration System**  
+Create projects, generate keys, manage allowed domains/environments.
+
+**PHASE IC-2 — Collector SDK (Basic)**  
+Floating widget, simple modal, basic metadata collection.
+
+**PHASE IC-3 — Inspect Mode + Screenshot Capture**  
+Element selection, screenshot with html2canvas, DOM selector extraction.
+
+**PHASE IC-4 — Log & Error Capture**  
+Console logs, JS errors, fetch failure capture, attach logs to payload.
+
+**PHASE IC-5 — Issue Collector API & Database**  
+Schema definition, issue CRUD, screenshot + log storage, worker queue.
+
+**PHASE IC-6 — Issue Dashboard**  
+Filters, detail page, screenshot viewer, logs, status/assignee workflow.
+
+**PHASE IC-7 — Notifications & Integrations**  
+Slack, email, webhook integrations, project-level notification rules.
+
+**PHASE IC-8 — Browser Extension (Optional)**  
+Full-page screenshots, network inspector, deeper debugging.
+
+**PHASE IC-9 — AI Triage Engine**  
+Issue summarization, severity prediction, module classification.
+
+**PHASE IC-10 — Heatmap / Session Replay / Rage Click (Future)**  
+Advanced analytics features, minimal performance footprint.
+
+======================================================================
+DETAILED DEVELOPMENT PHASE DESCRIPTIONS
+======================================================================
+
+Below is a concise but sufficiently detailed breakdown of each phase.  
+(Each phase has its own dedicated spec file in your project.)
+
+----------------------------------------------------------------------
+PHASE IC-0 — Foundation & Environment Setup
+----------------------------------------------------------------------
+- ✅ Create PNPM monorepo with apps (api, dashboard, worker, collector-sdk).
+- ✅ Configure Docker Compose with PostgreSQL, Redis, MinIO.
+- ✅ Set up Express.js API base structure (using Express, not Hono.js).
+- ✅ Set up Next.js dashboard skeleton.
+- ⚠️ Implement shared config loader in packages/config (needs enhancement).
+- ✅ Configure Prisma ORM + migrations (using Prisma, not Drizzle).
+- ⚠️ Implement CI/CD pipeline (Jenkinsfile exists, GitHub Actions optional).
+- ⚠️ Prepare environment variables and infrastructure scripts (needs completion).
+
+----------------------------------------------------------------------
+PHASE IC-1 — Project Registration System
+----------------------------------------------------------------------
+- Implement PROJECT and PROJECT_ENVIRONMENT tables.
+- Create endpoints for project CRUD.
+- Generate unique public/private keys for collector snippet.
+- Dashboard UI for project management.
+- Domain restrictions for allowed origins.
+
+----------------------------------------------------------------------
+PHASE IC-2 — Collector SDK (Basic)
+----------------------------------------------------------------------
+- Build collector.min.js bundle with Vite.
+- Floating button UI.
+- Basic modal for manual issue submission.
+- Collect URL, browser metadata, user info.
+- POST payload to /issues endpoint.
+
+----------------------------------------------------------------------
+PHASE IC-3 — Inspect Mode + Screenshot Capture
+----------------------------------------------------------------------
+- Overlay highlight on hover.
+- Element selection with click.
+- Capture screenshot using html2canvas.
+- Extract outerHTML, CSS selector, XPath.
+- Modal preview of captured screenshot.
+
+----------------------------------------------------------------------
+PHASE IC-4 — Log & Error Capture
+----------------------------------------------------------------------
+- Patch console.log/error/warn.
+- Capture JS runtime errors.
+- Capture network failures from fetch.
+- Attach logs to issue payload.
+
+----------------------------------------------------------------------
+PHASE IC-5 — Issue Collector API & Database
+----------------------------------------------------------------------
+- Create ISSUE, ISSUE_LOG, ISSUE_SCREENSHOT tables.
+- Store screenshot to S3/MinIO.
+- Validate project key and allowed domains.
+- Implement GET/POST/PATCH for issues.
+- Background tasks for processing.
+
+----------------------------------------------------------------------
+PHASE IC-6 — Issue Dashboard
+----------------------------------------------------------------------
+- Project selector and filtering.
+- Issue table with pagination.
+- Detailed issue view with screenshot & logs.
+- Status update workflow.
+- Assignment to team members.
+- Internal comments & updates.
+
+----------------------------------------------------------------------
+PHASE IC-7 — Notifications & Integrations
+----------------------------------------------------------------------
+- Slack webhook notifications.
+- Email alert system via Resend or Nodemailer.
+- Webhook support per project.
+- Notification rules per severity.
+
+----------------------------------------------------------------------
+PHASE IC-8 — Browser Extension (Optional)
+----------------------------------------------------------------------
+- Chrome extension for advanced capture.
+- Full-page screenshot support.
+- Access to DevTools-level logs.
+
+----------------------------------------------------------------------
+PHASE IC-9 — AI Triage Engine
+----------------------------------------------------------------------
+- Summaries of issue descriptions.
+- Severity prediction.
+- Suspected root-cause mapping.
+- Auto-assign developer.
+
+----------------------------------------------------------------------
+PHASE IC-10 — Heatmap / Session Replay / Rage Click (Future)
+----------------------------------------------------------------------
+- Optional advanced analytics.
+- Heatmap from click/scroll events.
+- Rage-click detection.
+- Lightweight DOM snapshot replay.
+
+======================================================================
+TECH STACK NOTES
+======================================================================
+
+**Actual Implementation** (as of current codebase):
+- **API Framework**: Express.js (not Hono.js as originally planned)
+- **ORM**: Prisma (not Drizzle as originally planned)
+- **Admin Dashboard**: Next.js 15 (App Router)
+- **Database**: PostgreSQL
+- **Cache/Queue**: Redis + BullMQ
+- **Storage**: Local filesystem (dev) / S3/MinIO (production)
+
+**Rationale**: Express.js and Prisma were chosen for better ecosystem compatibility, 
+mature tooling, and team familiarity. The original plan specified Hono.js and Drizzle, 
+but the implementation uses Express + Prisma which is equally suitable for this project.
+
+**Future Considerations**: If migration to Hono.js or Drizzle is desired, it should 
+be planned as a separate refactoring effort and not block current development phases.
+
+======================================================================
+END OF DOCUMENT
+======================================================================

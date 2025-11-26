@@ -1,0 +1,7 @@
+PHASE IC-8 — BROWSER EXTENSION (OPTIONAL)
+
+Detailed tasks:
+- Chrome extension host
+- Full page screenshot
+- DevTools logs
+- Network inspector

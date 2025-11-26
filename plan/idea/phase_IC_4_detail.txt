@@ -1,0 +1,7 @@
+PHASE IC-4 — LOG & ERROR CAPTURE
+
+Detailed tasks:
+- Intercept console.log/warn/error
+- Capture JS errors
+- Capture network failures
+- Attach logs to payload

@@ -1,0 +1,15 @@
+{
+  "frontend": {
+    "home": {
+      "title": "Home",
+      "welcome": "Welcome"
+    },
+    "nav": {
+      "home": "Home",
+      "about": "About Us",
+      "contact": "Contact Us",
+      "services": "Services"
+    }
+  }
+}
+

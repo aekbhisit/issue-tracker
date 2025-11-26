@@ -1,0 +1,683 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ============================================
+// activity_log.prisma
+// ============================================
+
+// Activity Log Model
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model ActivityLog {
+  id        Int           @id @default(autoincrement())
+  userId    Int?          @map("user_id")
+  action    ActivityAction
+  model     String
+  modelId   String        @map("model_id")
+  oldData   Json?         @map("old_data") @db.JsonB
+  newData   Json?         @map("new_data") @db.JsonB
+  changes   Json?         @db.JsonB
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  createdAt DateTime      @default(now()) @map("created_at")
+  user      User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([model])
+  @@index([modelId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([model, modelId])
+  @@index([userId, createdAt])
+  @@map("activity_logs")
+}
+
+
+
+// ============================================
+// admin_menu.prisma
+// ============================================
+
+// Admin Menu Management Model
+
+model AdminMenu {
+  id        Int      @id @default(autoincrement())
+  icon      String?
+  path      String?
+  parentId  Int?     @map("parent_id")
+  sequence  Int      @default(0)
+  module    String?
+  type      String?
+  group     String?  @map("required_group")
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent   AdminMenu?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children AdminMenu[] @relation("MenuTree")
+
+  // Translations
+  translates AdminMenuTranslate[]
+
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([module, type])
+  @@map("admin_menus")
+}
+
+model AdminMenuTranslate {
+  id        Int       @id @default(autoincrement())
+  menuId    Int       @map("menu_id")
+  lang      String
+  name      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  menu      AdminMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@unique([menuId, lang])
+  @@index([menuId])
+  @@index([lang])
+  @@map("admin_menu_translate")
+}
+
+
+// ============================================
+// banner.prisma
+// ============================================
+
+// Banner Management Model
+
+model Banner {
+  id         Int               @id @default(autoincrement())
+  type       String?
+  style      String?
+  image      String?
+  mobile     String?
+  youtube    String?
+  video      String?
+  link       String?
+  target     Boolean           @default(false)
+  view       Int               @default(0)
+  section    String?
+  sequence   Int               @default(0)
+  status     Boolean           @default(true)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  deletedAt  DateTime?         @map("deleted_at")
+  translates BannerTranslate[]
+
+  @@index([type])
+  @@index([section])
+  @@index([sequence])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("banners")
+}
+
+model BannerTranslate {
+  id        Int      @id @default(autoincrement())
+  bannerId  Int      @map("banner_id")
+  lang      String
+  name      String?
+  desc      String?
+  detail    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  banner    Banner   @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+
+  @@unique([bannerId, lang])
+  @@index([bannerId])
+  @@index([lang])
+  @@map("banners_translate")
+}
+
+
+// ============================================
+// content.prisma
+// ============================================
+
+// Content Management Model
+
+model Content {
+  id        Int       @id @default(autoincrement())
+  type      String?
+  gallery   Json? // array ของ file paths (changed from String to Json)
+  image     String?
+  video     String?
+  youtube   String?
+  file      String?
+  publishAt DateTime? @map("publish_at")
+  startAt   DateTime? @map("start_at")
+  endAt     DateTime? @map("end_at")
+  startTime String?   @map("start_time") // Prisma doesn't support Time type
+  endTime   String?   @map("end_time") // Prisma doesn't support Time type
+  link      String?
+  email     String?
+  phone     String?
+  view      Int       @default(0)
+  default   Boolean   @default(false)
+  parentId  Int?      @map("parent_id")
+  sequence  Int       @default(0)
+  status    Boolean   @default(true)
+  carEmpty  String?   @map("car_empty")
+  tenants   String?
+  colorCode String?   @map("color_code")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Self-referential relationship
+  children Content[] @relation("ContentTree")
+  parent   Content?  @relation("ContentTree", fields: [parentId], references: [id], onDelete: SetNull)
+
+  // Translations
+  translates ContentTranslate[]
+
+  // Many-to-many relationship with categories
+  categoryRelations ContentAndCategory[]
+
+  // View tracking
+  views ContentView[]
+
+  @@index([type])
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([view])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("contents")
+}
+
+model ContentTranslate {
+  id        Int      @id @default(autoincrement())
+  contentId Int      @map("content_id")
+  lang      String
+  name      String?  @db.Text
+  desc      String?  @db.Text
+  detail    String?  @db.Text
+  text      String?  @db.Text
+  location  String?  @db.Text
+  prefix    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, lang])
+  @@index([contentId])
+  @@index([lang])
+  @@map("content_translate")
+}
+
+model ContentAndCategory {
+  contentId  Int             @map("content_id")
+  categoryId Int             @map("category_id")
+  content    Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  category   ContentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, categoryId])
+  @@index([contentId])
+  @@index([categoryId])
+  @@map("content_and_categories")
+}
+
+model ContentView {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  ip        String?
+  contentId Int?     @map("content_id")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([type])
+  @@index([ip])
+  @@index([createdAt])
+  @@map("content_view")
+}
+
+
+// ============================================
+// content_category.prisma
+// ============================================
+
+// Content Category Management Model
+
+model ContentCategory {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  image     String?
+  gallery   Json? // array ของ file paths
+  video     String?
+  youtube   String?
+  file      String?
+  default   Boolean  @default(false)
+  parentId  Int?     @map("parent_id")
+  sequence  Int      @default(0)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Self-referential relationship
+  children ContentCategory[] @relation("CategoryTree")
+  parent   ContentCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+
+  // Translations
+  translates ContentCategoryTranslate[]
+
+  // Many-to-many relationship with contents
+  contentRelations ContentAndCategory[]
+
+  @@index([type])
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("content_categories")
+}
+
+model ContentCategoryTranslate {
+  id         Int             @id @default(autoincrement())
+  categoryId Int             @map("category_id")
+  lang       String
+  name       String?
+  desc       String?
+  detail     String?
+  text       String?
+  location   String?
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  deletedAt  DateTime?       @map("deleted_at")
+  category   ContentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+  @@index([categoryId])
+  @@index([lang])
+  @@map("content_category_translate")
+}
+
+
+// ============================================
+// issue.prisma
+// ============================================
+
+// Issue Collector Models
+
+model Issue {
+  id            Int               @id @default(autoincrement())
+  projectId     Int               @map("project_id")
+  title         String
+  description   String?
+  severity      String            // low, medium, high, critical
+  status        String            @default("open") // open, in-progress, resolved, closed
+  assigneeId    Int?              @map("assignee_id")
+  reporterInfo  Json?             @map("reporter_info")
+  metadata      Json?
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee      User?             @relation(fields: [assigneeId], references: [id])
+  screenshots   IssueScreenshot[]
+  logs          IssueLog[]
+  comments      IssueComment[]
+  
+  @@index([projectId])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("issues")
+}
+
+model IssueScreenshot {
+  id            Int      @id @default(autoincrement())
+  issueId       Int      @map("issue_id")
+  storagePath   String   @map("storage_path")
+  storageType   String   @map("storage_type") // local, s3
+  mimeType      String?  @map("mime_type")
+  width         Int?
+  height        Int?
+  fileSize      Int?     @map("file_size")
+  elementSelector Json?   @map("element_selector") // JSON object with cssSelector, xpath, boundingBox, outerHTML
+  createdAt     DateTime @default(now()) @map("created_at")
+  issue         Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  
+  @@index([issueId])
+  @@map("issue_screenshots")
+}
+
+model IssueLog {
+  id        Int      @id @default(autoincrement())
+  issueId   Int      @map("issue_id")
+  logType   String   @map("log_type") // console, error, network
+  level     String?  // log, warn, error (for console logs)
+  message   String
+  stack     String?
+  metadata  Json?    // Additional log data (url, method, status for network errors, etc.)
+  timestamp DateTime
+  createdAt DateTime @default(now()) @map("created_at")
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  
+  @@index([issueId])
+  @@index([logType])
+  @@index([level])
+  @@map("issue_logs")
+}
+
+model IssueComment {
+  id        Int      @id @default(autoincrement())
+  issueId   Int      @map("issue_id")
+  userId    Int      @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@index([issueId])
+  @@index([userId])
+  @@map("issue_comments")
+}
+
+
+
+// ============================================
+// page.prisma
+// ============================================
+
+// Page Management Model
+
+model Page {
+  id        Int      @id @default(autoincrement())
+  type      String   @unique
+  gallery   Json?
+  image     String?
+  video     String?
+  youtube   String?
+  file      String?
+  publishAt DateTime? @map("publish_at")
+  startAt   DateTime? @map("start_at")
+  endAt     DateTime? @map("end_at")
+  startTime String?   @map("start_time")
+  endTime   String?   @map("end_time")
+  link      String?
+  email     String?
+  phone     String?
+  status    Boolean   @default(true)
+  default   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  translates PageTranslate[]
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("pages")
+}
+
+model PageTranslate {
+  id       Int      @id @default(autoincrement())
+  pageId   Int      @map("page_id")
+  lang     String
+  name     String?  @db.Text
+  desc     String?  @db.Text
+  detail   String?  @db.Text
+  text     String?  @db.Text
+  location String?  @db.Text
+  prefix   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  page     Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, lang])
+  @@index([pageId])
+  @@index([lang])
+  @@map("page_translate")
+}
+
+
+
+
+// ============================================
+// project.prisma
+// ============================================
+
+// Project Registration Models
+
+model Project {
+  id            Int                  @id @default(autoincrement())
+  name          String
+  description   String?
+  publicKey     String               @unique
+  privateKey    String               @unique
+  status        Boolean              @default(true)
+  allowedDomains Json                // Array of allowed domains
+  deletedAt     DateTime?            @map("deleted_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  environments  ProjectEnvironment[]
+  issues        Issue[]
+  
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+model ProjectEnvironment {
+  id            Int      @id @default(autoincrement())
+  projectId     Int      @map("project_id")
+  name          String   // dev, stage, prod, etc.
+  apiUrl        String?  @map("api_url")
+  allowedOrigins Json?   @map("allowed_origins") // Array of allowed origins (optional, overrides project-level)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@index([isActive])
+  @@map("project_environments")
+}
+
+
+
+// ============================================
+// seo.prisma
+// ============================================
+
+// SEO Management Model (Polymorphic)
+// Supports multiple modules: content_category, content, banner, etc.
+
+model Seo {
+  id               Int      @id @default(autoincrement())
+  module           String // Module name: 'content_category', 'content', 'banner', etc.
+  type             String? // Content type (optional)
+  data_id          Int      @map("data_id") // ID of the record in the module
+  lang             String // Language: 'th', 'en', etc.
+  slug             String? // URL-friendly version
+  meta_title       String?  @map("meta_title") // SEO title
+  meta_description String?  @map("meta_description") @db.Text // SEO description
+  meta_keyword     String?  @map("meta_keyword") // Comma-separated keywords
+  meta_image       String?  @map("meta_image") // Image path/URL for social sharing
+  status           Boolean  @default(true) // SEO status - active/inactive
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@unique([module, type, data_id, lang])
+  @@index([module, data_id])
+  @@index([slug])
+  @@index([lang])
+  @@index([module, type])
+  @@index([status])
+  @@map("seo")
+}
+
+
+// ============================================
+// setting.prisma
+// ============================================
+
+// Settings and Languages Models
+
+model Setting {
+  id         Int                @id @default(autoincrement())
+  logoHeader String?            @map("logo_header")
+  logoFooter String?            @map("logo_footer")
+  rightClick Boolean            @default(false) @map("right_click")
+  grayscale  Boolean            @default(false)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+  languages  Language[]
+  translates SettingTranslate[]
+
+  @@map("setting")
+}
+
+model Language {
+  id        Int      @id @default(autoincrement())
+  settingId Int?     @map("setting_id")
+  code      String   @unique
+  name      String
+  sequence  Int      @default(0)
+  isDefault Boolean  @default(false) @map("default")
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  setting   Setting? @relation(fields: [settingId], references: [id], onDelete: SetNull)
+
+  @@index([settingId])
+  @@index([status])
+  @@map("languages")
+}
+
+model SettingTranslate {
+  id        Int      @id @default(autoincrement())
+  settingId Int      @map("setting_id")
+  field     String
+  value     String?
+  lang      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  setting   Setting  @relation(fields: [settingId], references: [id], onDelete: Cascade)
+
+  @@unique([settingId, field, lang])
+  @@index([settingId])
+  @@index([lang])
+  @@map("settings_translate")
+}
+
+
+// ============================================
+// user.prisma
+// ============================================
+
+// User Management Models
+
+model User {
+  id            Int       @id @default(autoincrement())
+  roleId        Int?      @map("role_id")
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  password      String
+  avatar        String?
+  lang          String    @default("en")
+  loginAt       DateTime? @map("login_at")
+  status        Boolean   @default(false)
+  rememberToken String?   @map("remember_token")
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  role          UserRole? @relation(fields: [roleId], references: [id])
+  activityLogs  ActivityLog[]
+  assignedIssues Issue[]  // Issues assigned to this user
+  issueComments IssueComment[]
+
+  @@index([roleId])
+  @@index([username])
+  @@index([email])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("user_users")
+}
+
+model UserRole {
+  id              Int              @id @default(autoincrement())
+  name            String
+  scope           String           @default("admin") // "admin" | "member"
+  sequence        Int              @default(0)
+  status          Boolean          @default(true)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  rolePermissions RolePermission[]
+  users           User[]
+
+  @@index([scope])
+  @@index([scope, sequence])
+  @@index([scope, status])
+  @@index([status])
+  @@index([sequence])
+  @@map("user_roles")
+}
+
+model Permission {
+  id              Int              @id(map: "permissions_pkey") @default(autoincrement())
+  scope           String           @default("admin") // "admin" | "member" | "public"
+  method          String
+  module          String
+  type            String?          @map("type")
+  group           String
+  action          String
+  path            String
+  metaName        String           @map("meta_name")
+  description     String
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  rolePermissions RolePermission[]
+
+  @@unique([scope, method, type, path], map: "permissions_scope_method_type_path_key")
+  @@unique([scope, metaName], map: "permissions_scope_meta_name_key")
+  @@index([scope], map: "permissions_scope_idx")
+  @@index([scope, module], map: "permissions_scope_module_idx")
+  @@index([scope, isActive], map: "permissions_scope_is_active_idx")
+  @@index([isActive], map: "permissions_is_active_idx")
+  @@index([module], map: "permissions_module_idx")
+  @@map("user_permissions")
+}
+
+model RolePermission {
+  roleId       Int        @map("role_id")
+  permissionId Int        @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, map: "role_permissions_permission_id_fkey")
+  role         UserRole   @relation(fields: [roleId], references: [id], onDelete: Cascade, map: "role_permissions_role_id_fkey")
+
+  @@id([roleId, permissionId], map: "role_permissions_pkey")
+  @@index([permissionId], map: "role_permissions_permission_id_idx")
+  @@index([roleId], map: "role_permissions_role_id_idx")
+  @@map("user_roles_permissions")
+}
+
+

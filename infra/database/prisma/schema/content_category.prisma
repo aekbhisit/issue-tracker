@@ -1,0 +1,55 @@
+// Content Category Management Model
+
+model ContentCategory {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  image     String?
+  gallery   Json? // array ของ file paths
+  video     String?
+  youtube   String?
+  file      String?
+  default   Boolean  @default(false)
+  parentId  Int?     @map("parent_id")
+  sequence  Int      @default(0)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Self-referential relationship
+  children ContentCategory[] @relation("CategoryTree")
+  parent   ContentCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+
+  // Translations
+  translates ContentCategoryTranslate[]
+
+  // Many-to-many relationship with contents
+  contentRelations ContentAndCategory[]
+
+  @@index([type])
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("content_categories")
+}
+
+model ContentCategoryTranslate {
+  id         Int             @id @default(autoincrement())
+  categoryId Int             @map("category_id")
+  lang       String
+  name       String?
+  desc       String?
+  detail     String?
+  text       String?
+  location   String?
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  deletedAt  DateTime?       @map("deleted_at")
+  category   ContentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+  @@index([categoryId])
+  @@index([lang])
+  @@map("content_category_translate")
+}

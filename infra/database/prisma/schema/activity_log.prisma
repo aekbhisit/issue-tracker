@@ -1,0 +1,32 @@
+// Activity Log Model
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model ActivityLog {
+  id        Int           @id @default(autoincrement())
+  userId    Int?          @map("user_id")
+  action    ActivityAction
+  model     String
+  modelId   String        @map("model_id")
+  oldData   Json?         @map("old_data") @db.JsonB
+  newData   Json?         @map("new_data") @db.JsonB
+  changes   Json?         @db.JsonB
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  createdAt DateTime      @default(now()) @map("created_at")
+  user      User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([model])
+  @@index([modelId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([model, modelId])
+  @@index([userId, createdAt])
+  @@map("activity_logs")
+}
+

@@ -1,0 +1,87 @@
+# Production Dockerfile for Admin
+FROM node:18-alpine AS base
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# ===========================================
+# Dependencies Stage
+# ===========================================
+FROM base AS dependencies
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages (shared dependencies)
+COPY packages ./packages
+
+# Copy Admin app package.json
+COPY apps/admin/package.json ./apps/admin/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# ===========================================
+# Build Stage
+# ===========================================
+FROM base AS build
+
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+
+# Copy all packages
+COPY packages ./packages
+
+# Copy Admin app
+COPY apps/admin ./apps/admin
+
+# Copy Collector SDK (used to generate collector.min.js for Admin)
+COPY apps/collector-sdk ./apps/collector-sdk
+
+# Install all dependencies (including dev dependencies for build)
+RUN pnpm install --frozen-lockfile
+
+# Build Collector SDK
+WORKDIR /app/apps/collector-sdk
+RUN pnpm build
+
+# Copy Collector SDK bundle into Admin public folder before building
+RUN mkdir -p /app/apps/admin/public && \
+    cp /app/apps/collector-sdk/dist/collector.min.js /app/apps/admin/public/collector.min.js
+
+# Build Admin
+WORKDIR /app/apps/admin
+RUN pnpm build
+
+# ===========================================
+# Production Stage
+# ===========================================
+FROM base AS production
+
+# Copy production dependencies
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/packages ./packages
+
+# Copy built application
+COPY --from=build /app/apps/admin/.next ./.next
+COPY --from=build /app/apps/admin/public ./public
+COPY --from=build /app/apps/admin/package.json ./
+
+# Set working directory to Admin
+WORKDIR /app/apps/admin
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Expose port
+EXPOSE 3001
+
+# Start production server
+CMD ["pnpm", "start"]

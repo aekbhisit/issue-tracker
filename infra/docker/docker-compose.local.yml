@@ -1,0 +1,194 @@
+# ========================================
+# Local Test Docker Compose
+# Issue Collector Platform – builds every service locally, including PostgreSQL with pgvector
+# ========================================
+# Usage: docker-compose -f docker-compose.local-test.yml up --build
+#
+# Troubleshooting:
+# 1. Postgres container might need a clean volume (remove before enabling pgvector for the first time)
+# 2. Check logs with `docker logs issue-collector-postgres` or `issue-collector-api` if services fail
+# 3. Make sure required env vars (.env) are present before starting
+#
+services:
+  # PostgreSQL with PostGIS + pgvector support
+  postgres:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile.custom  # Uses postgres:17.6 base with PostGIS + pgvector
+    container_name: issue-collector-postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-issue_collector}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${DATABASE_PORT_EXTERNAL:-5435}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-issue_collector}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - issue-collector-network
+
+  # Redis Cache (internal only)
+  redis:
+    image: redis:7-alpine
+    container_name: issue-collector-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - issue-collector-network
+
+  # API Backend - build from source for local validation
+  api:
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile
+    container_name: issue-collector-api
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      API_PORT: 3401
+      API_HOST: 0.0.0.0
+
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-issue_collector}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-issue_collector}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      EXTERNAL_RAG_API_URL: ${EXTERNAL_RAG_API_URL}
+      EXTERNAL_RAG_API_KEY: ${EXTERNAL_RAG_API_KEY}
+      EXTERNAL_RAG_API_TIMEOUT: ${EXTERNAL_RAG_API_TIMEOUT:-30000}
+
+      EXTERNAL_CONTEXT_API_URL: ${EXTERNAL_CONTEXT_API_URL:-}
+      EXTERNAL_CONTEXT_API_KEY: ${EXTERNAL_CONTEXT_API_KEY:-}
+
+      EXTERNAL_DATA_API_URL: ${EXTERNAL_DATA_API_URL:-}
+      EXTERNAL_DATA_API_KEY: ${EXTERNAL_DATA_API_KEY:-}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      SESSION_SECRET: ${SESSION_SECRET}
+
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3400,http://localhost:3412}
+
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+
+      SENTRY_DSN: ${SENTRY_DSN:-}
+
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+
+    volumes:
+      - api_uploads:/app/uploads
+
+    ports:
+      - "${API_PORT:-3401}:3401"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3401/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+    restart: unless-stopped
+    networks:
+      - issue-collector-network
+
+  # Admin Dashboard - build locally
+  admin:
+    build:
+      context: ../../
+      dockerfile: apps/admin/Dockerfile
+      args:
+        - NEXT_PUBLIC_ADMIN_API_URL=${NEXT_PUBLIC_ADMIN_API_URL:-http://api:3401}
+    container_name: issue-collector-admin
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3412
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-http://api:3401}
+    ports:
+      - "${ADMIN_PORT:-3412}:3412"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3412/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - issue-collector-network
+
+  # Frontend App - build locally
+  frontend:
+    build:
+      context: ../../
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api:3401}
+    container_name: issue-collector-frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3400
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3401}
+    ports:
+      - "${FRONTEND_PORT:-3400}:3400"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3400/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - issue-collector-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  api_uploads:
+    driver: local
+
+networks:
+  issue-collector-network:
+    driver: bridge
+

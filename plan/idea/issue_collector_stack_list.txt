@@ -1,0 +1,229 @@
+# Z Issue Collector Platform — Full Tech Stack List (Final Version)
+
+This document contains the complete technology stack specification for preparing the environment for the Z Issue Collector Platform. It is intended for developers and AI agents to use as a reference when setting up infrastructure and beginning development.
+
+======================================================================
+1. CORE TECHNOLOGIES
+======================================================================
+
+Language:
+- TypeScript (strict mode enabled)
+
+Monorepo Tooling:
+- PNPM Workspaces
+- Turborepo (optional, recommended for caching)
+- Docker & Docker Compose
+
+======================================================================
+2. BACKEND (ISSUE COLLECTOR API)
+======================================================================
+
+Framework:
+- Hono.js
+
+Database:
+- PostgreSQL 15+
+
+ORM:
+- Drizzle ORM (schema-first, type-safe, migrations)
+
+Caching & Queueing:
+- Redis 7+
+- BullMQ for background jobs
+
+Authentication (Dashboard Only):
+- JWT or cookie session (SSO integration optional later)
+
+File Storage:
+- S3-compatible (MinIO recommended for development)
+
+Validation:
+- Zod
+
+Logging:
+- Pino or Tslog
+
+Environment:
+- dotenv + shared config manager (/packages/config)
+
+======================================================================
+3. COLLECTOR JS SDK (INJECTED SCRIPT)
+======================================================================
+
+Build Tool:
+- Vite or esbuild
+
+Screenshot Capture:
+- html2canvas
+
+DOM Selector & Highlight:
+- Custom DOM walker
+- css-selector-generator (optional)
+
+Error & Log Capture:
+- Intercept console.log/warn/error
+- Capture window.onerror
+- Capture unhandledrejection
+- Wrap fetch() for network error logging
+
+Transport:
+- fetch → Issue Collector API
+- Retry & backoff handling
+
+Distribution:
+- CDN-hosted collector.min.js
+- Script tag with data-project-key
+
+======================================================================
+4. DASHBOARD (INTERNAL DEVELOPER UI)
+======================================================================
+
+Framework:
+- Next.js 15 (App Router)
+
+Styling:
+- TailwindCSS
+- shadcn/ui
+- Lucide Icons
+
+State & Data Handling:
+- TanStack Query
+- Zustand (UI state)
+
+Visualization (optional):
+- Recharts
+
+Image Preview:
+- react-medium-image-zoom or custom
+
+======================================================================
+5. BACKGROUND WORKERS
+======================================================================
+
+Runtime:
+- Node.js app located under /apps/worker
+
+Libraries:
+- BullMQ Worker
+- AWS S3 SDK (v3)
+- OpenAI API (for future AI triage)
+
+Tasks:
+- Process issues
+- Upload screenshots
+- Normalize logs
+- Trigger notifications
+
+======================================================================
+6. NOTIFICATION INTEGRATIONS
+======================================================================
+
+Slack:
+- Incoming webhook
+
+Email:
+- Resend API or Nodemailer (SMTP)
+
+Webhooks:
+- Hono routes for external integrations
+
+======================================================================
+7. DEVOPS / INFRASTRUCTURE
+======================================================================
+
+Local Environment (Docker Compose):
+- postgres
+- redis
+- minio
+- api service
+- worker service
+- dashboard service
+- collector-sdk build service (optional)
+
+Deployment:
+- Vercel (Dashboard)
+- Fly.io, Render, or DigitalOcean (API)
+- Railway (Dev DB/Redis optional)
+
+CI/CD (GitHub Actions):
+- Type checking
+- Build steps
+- Migrations
+- Deployment pipelines
+
+======================================================================
+8. FOLDER STRUCTURE (RECOMMENDED)
+======================================================================
+
+/apps
+  /api               # Hono API
+  /dashboard         # Next.js dashboard
+  /worker            # BullMQ workers
+  /collector-sdk     # collector.min.js source
+
+/packages
+  /db                # Drizzle schema + migrations
+  /types             # Shared TS models
+  /utils             # Common helpers
+  /config            # Unified config loader
+  /queue             # Queue definitions
+  /ws                # (Optional future)
+
+/infra
+  /docker
+  /scripts
+  /env
+
+README.md
+package.json
+pnpm-workspace.yaml
+
+======================================================================
+9. LIBRARIES SUMMARY
+======================================================================
+
+Collector JS:
+- html2canvas
+- css-selector-generator
+- nanoid
+- lodash.throttle
+
+API:
+- hono
+- drizzle-orm
+- drizzle-kit
+- zod
+- bullmq
+- ioredis
+- aws-sdk v3
+
+Dashboard:
+- next
+- react
+- tailwindcss
+- shadcn/ui
+- tanstack-query
+- zustand
+
+======================================================================
+10. OPTIONAL ENHANCEMENTS
+======================================================================
+
+Browser Extension:
+- Manifest V3
+- Capture full-page screenshots
+- DevTools logs & network inspector
+
+AI Triage:
+- Automatic summarization
+- Severity prediction
+- Suspected root cause
+- Recommended assignee
+
+Session Replay Lite:
+- DOM snapshots
+- Event-based replay (not full video)
+
+======================================================================
+END OF DOCUMENT
+======================================================================

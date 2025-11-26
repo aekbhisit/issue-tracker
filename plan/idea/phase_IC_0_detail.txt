@@ -1,0 +1,9 @@
+PHASE IC-0 — FOUNDATION & ENVIRONMENT SETUP
+
+Detailed tasks:
+- Monorepo setup
+- Docker environment
+- Hono.js API bootstrapping
+- Next.js dashboard setup
+- Redis + PostgreSQL setup
+- CI pipeline and env config

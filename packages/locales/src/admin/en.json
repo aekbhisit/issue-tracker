@@ -1,0 +1,860 @@
+{
+  "admin": {
+    "auth": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "signOut": "Sign Out",
+      "forgotPassword": "Forgot password?",
+      "rememberMe": "Remember me",
+      "enterEmail": "Enter your email",
+      "enterPassword": "Enter your password",
+      "loginSuccess": "Login successful",
+      "loginFailed": "Login failed",
+      "invalidCredentials": "Invalid email or password",
+      "backToDashboard": "Back to dashboard",
+      "dontHaveAccount": "Don't have an account?",
+      "alreadyHaveAccount": "Already have an account?",
+      "signInMessage": "Enter your email and password to sign in!",
+      "signInWithGoogle": "Sign in with Google",
+      "signInWithX": "Sign in with X",
+      "or": "Or"
+    },
+    "menu": {
+      "dashboard": "Dashboard",
+      "ecommerce": "Ecommerce",
+      "calendar": "Calendar",
+      "profile": "Profile",
+      "userProfile": "User Profile",
+      "forms": "Forms",
+      "formElements": "Form Elements",
+      "tables": "Tables",
+      "basicTables": "Basic Tables",
+      "pages": "Pages",
+      "blankPage": "Blank Page",
+      "error404": "404 Error",
+      "charts": "Charts",
+      "lineChart": "Line Chart",
+      "barChart": "Bar Chart",
+      "uiElements": "UI Elements",
+      "alerts": "Alerts",
+      "avatar": "Avatar",
+      "badge": "Badge",
+      "buttons": "Buttons",
+      "images": "Images",
+      "videos": "Videos",
+      "authentication": "Authentication",
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "menu": "Menu",
+      "others": "Others",
+      "systemMenu": "System Menu",
+      "admin_menu": "Admin Menu",
+      "user_management": "User Management",
+      "file_manager": "File Manager",
+      "roles": "Roles",
+      "permissions": "Permissions",
+      "activity_logs": "Activity Logs",
+      "projects": "Projects",
+      "issues": "Issues",
+      "fallback": {
+        "menu": "Menu",
+        "subMenu": "Sub Menu",
+        "noMenuItems": "No menu items"
+      },
+      "badges": {
+        "new": "new",
+        "pro": "pro"
+      }
+    },
+    "fileManager": {
+      "pageTitle": "File Manager",
+      "pageDescription": "Upload, manage, and search files in the admin system",
+      "toolbar": {
+        "back": "Back",
+        "searchPlaceholder": "Search files or folders",
+        "searchAria": "Search",
+        "toggleColumns": "Toggle column count",
+        "refresh": "Refresh",
+        "newFolder": "New folder",
+        "upload": "Upload"
+      },
+      "grid": {
+        "emptyTitle": "No files or folders yet",
+        "emptyDescription": "Upload files or create a new folder to get started",
+        "folderLabel": "Folder"
+      },
+      "preview": {
+        "empty": "Select a file to see its details",
+        "typeFallback": "File",
+        "close": "Close",
+        "fileSize": "File size: {{value}}",
+        "lastUpdated": "Last updated: {{value}}",
+        "previewUnavailable": "Preview is not available for this file type",
+        "open": "Open file",
+        "download": "Download",
+        "use": "Use this file"
+      },
+      "modals": {
+        "createTitle": "Create new folder",
+        "createDescription": "Name the folder you want to create in the current location",
+        "createPlaceholder": "Folder name",
+        "renameTitle": "Rename",
+        "renameDescriptionFolder": "Enter a new name for the folder",
+        "renameDescriptionFile": "Enter a new name for the file",
+        "renamePlaceholder": "New name"
+      },
+      "notifications": {
+        "loadError": "Failed to load files",
+        "openUnsupported": "This file type cannot be opened in a new tab",
+        "downloadUnsupported": "Only files with a URL can be downloaded",
+        "copyUrlSuccess": "Copied URL to clipboard",
+        "copyUrlError": "Failed to copy URL",
+        "createSuccess": "Folder \"{{name}}\" created successfully",
+        "createError": "Failed to create folder",
+        "renameSuccess": "Renamed successfully",
+        "renameError": "Failed to rename",
+        "deleteSuccess": "Deleted successfully",
+        "deleteError": "Failed to delete",
+        "uploadSuccess": "Files uploaded successfully",
+        "uploadError": "Failed to upload files"
+      },
+      "contextMenu": {
+        "openFolder": "Open folder",
+        "openFile": "Open in new tab",
+        "rename": "Rename",
+        "download": "Download",
+        "copyUrl": "Copy URL",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm deletion",
+        "deleteFolderMessage": "Delete folder \"{{name}}\" and all contents inside?",
+        "deleteFileMessage": "Delete file \"{{name}}\"?",
+        "deleteConfirm": "Delete"
+      },
+      "breadcrumb": {
+        "root": "root"
+      },
+      "search": {
+        "results": "Search results for \"{{keyword}}\""
+      },
+      "dropzone": {
+        "hint": "Drop files to upload"
+      },
+      "page": {
+        "title": "File Manager",
+        "description": "Upload, manage, and search files in the admin system"
+      },
+      "picker": {
+        "title": "Select from library",
+        "description": "Choose a file to use in your content",
+        "close": "Close"
+      },
+      "inputModal": {
+        "confirm": "Save",
+        "cancel": "Cancel"
+      }
+    },
+    "textEditor": {
+      "buttons": {
+        "viewSource": "View source",
+        "exitSource": "Back to editor"
+      },
+      "linkModal": {
+        "title": "Insert link",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://example.com",
+        "textLabel": "Text to display",
+        "textPlaceholder": "Link text",
+        "cancel": "Cancel",
+        "insert": "Insert"
+      }
+    },
+    "banner": {
+      "pageTitle": "Banner Management",
+      "pageDescription": "Create and manage banners for your website",
+      "title": "Banner Management",
+      "manageBanners": "Manage and organize your banners",
+      "selectType": "Select Banner Type",
+      "filters": "Filters",
+      "search": "Search",
+      "searchPlaceholder": "Search banners...",
+      "status": "Status",
+      "section": "Section",
+      "allStatus": "All Status",
+      "allSections": "All Sections",
+      "clearFilters": "Clear Filters",
+      "add": "Add Banner",
+      "edit": "Edit",
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "active": "Active",
+      "inactive": "Inactive",
+      "loading": "Loading...",
+      "duplicateSuccess": "Banner duplicated successfully",
+      "duplicateError": "Failed to duplicate banner",
+      "noUrlAvailable": "No URL available for this banner",
+      "sequence": "Sequence",
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "sequenceMoveUp": "Move up",
+      "sequenceMoveDown": "Move down",
+      "sequenceInputLabel": "Sequence position",
+      "moveUpSuccess": "Moved up successfully",
+      "moveDownSuccess": "Moved down successfully",
+      "moveUpError": "Failed to move up",
+      "moveDownError": "Failed to move down",
+      "noData": "No banners found",
+      "noResults": "No results found",
+      "actions": "Actions",
+      "view": "View",
+      "all": "All",
+      "newTab": "New Tab",
+      "sameTab": "Same Tab",
+      "field": {
+        "section": "Section",
+        "youtube": "YouTube URL",
+        "video": "Video"
+      },
+      "types": {
+        "hero": "Hero",
+        "course": "Course",
+        "ads": "Advertisement",
+        "contact": "Contact",
+        "news": "News",
+        "about": "About",
+        "research": "Research",
+        "department_category": "Department Category",
+        "promotion": "Promotion",
+        "category": "Category",
+        "product": "Product",
+        "announcement": "Announcement"
+      },
+      "basicSettings": "Basic Settings",
+      "mediaSettings": "Media Settings",
+      "translations": "Translations",
+      "editBanner": "Edit Banner",
+      "addBanner": "Add Banner",
+      "editBannerDesc": "Edit banner information and settings",
+      "addBannerDesc": "Create a new banner with content and media",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "confirmDelete": "Are you sure you want to delete this banner?",
+      "form": {
+        "title": "Banner Form",
+        "addTitle": "Add Banner",
+        "editTitle": "Edit Banner",
+        "contentTab": "Content",
+        "mediaTab": "Media",
+        "successAdd": "Banner created successfully",
+        "successEdit": "Banner updated successfully",
+        "errorAdd": "Failed to create banner",
+        "errorEdit": "Failed to update banner",
+        "confirmCancel": "Confirm Cancel",
+        "confirmCancelMessage": "Are you sure you want to cancel? Changes will not be saved",
+        "manageBanner": "Manage your banner",
+        "translationStatus": "Translation Status",
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "currentStyle": "Current Style",
+        "mediaDescription": "Select and upload media for your banner",
+        "placeholder": {
+          "name": "Enter banner name",
+          "desc": "Enter banner description",
+          "detail": "Enter banner details"
+        },
+        "help": {
+          "language": "Switch languages to enter content in each language",
+          "media": "Select the type of media you want to use",
+          "save": "Save your changes",
+          "image": "Upload image for banner",
+          "mobile": "Upload mobile image (optional)",
+          "youtube": "Enter YouTube video link",
+          "video": "Upload video file"
+        },
+        "validation": {
+          "nameRequired": "Please enter banner name",
+          "imageRequired": "Please upload an image",
+          "youtubeRequired": "Please enter YouTube link",
+          "youtubeInvalid": "Invalid YouTube link format",
+          "videoRequired": "Please upload a video",
+          "linkInvalid": "Invalid link format",
+          "validationErrors": "Please fix the validation errors before saving"
+        },
+        "validationErrors": "Validation errors found",
+        "languageSwitch": "Language Switch",
+        "languageSwitchMessage": "Switched to {{language}} to fix validation errors",
+        "savingInProgress": "Saving data, please wait",
+        "loadingBanner": "Loading banner data...",
+        "updatingBanner": "Updating banner...",
+        "creatingBanner": "Creating banner...",
+        "redirecting": "Redirecting...",
+        "loadingPage": "Loading page..."
+      },
+      "style": {
+        "image": "Image",
+        "youtube": "YouTube",
+        "video": "Video"
+      }
+    },
+    "content": {
+      "pageTitle": "Content Management",
+      "pageDescription": "Upload and manage content in the admin system",
+      "sequence": {
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "inputLabel": "Sequence position"
+      },
+      "form": {
+        "upload": {
+          "empty": "No upload fields configured for this content type."
+        },
+        "seo": {
+          "empty": "SEO settings are not available for this content type."
+        }
+      }
+    },
+    "content_category": {
+      "pageTitle": "Content Category Management",
+      "pageDescription": "Organize and sort categories for all content",
+      "types": {
+        "product": "Product",
+        "news": "News",
+        "article": "Article"
+      },
+      "toolbar": {
+        "title": "{{type}} Content Categories",
+        "subtitle": "Total {{count}} items • Showing {{from}}-{{to}}",
+        "add": "Add Category",
+        "categoryFilter": "Category Filter",
+        "categoryFilterDisabled": "Category filter is not available",
+        "parentFilter": "Parent category",
+        "parentPlaceholder": "All categories"
+      },
+      "table": {
+        "title": "Content Categories",
+        "parentLabel": "Parent"
+      },
+      "labels": {
+        "default": "Default"
+      },
+      "tree": {
+        "title": "Reorder categories",
+        "description": "Drag and drop categories to update their hierarchy and ordering. Changes apply only within this category type.",
+        "saveSuccess": "Content category order updated successfully.",
+        "unsavedChanges": "You have unsaved changes. Remember to save your updates.",
+        "empty": "No categories available for this type."
+      },
+      "tabs": {
+        "translate": "Translations",
+        "upload": "Media Upload",
+        "seo": "SEO"
+      },
+      "form": {
+        "title": "Content Category",
+        "addTitle": "Create Content Category",
+        "editTitle": "Edit Content Category",
+        "description": "Manage translations and media for this content category",
+        "name": "Name",
+        "desc": "Description",
+        "detail": "Detail",
+        "text": "Text",
+        "location": "Location",
+        "image": "Image",
+        "imageHelper": "Provide an image path or upload files in the media tab",
+        "placeholder": {
+          "name": "Enter category name",
+          "desc": "Enter a short description",
+          "detail": "Enter detailed content",
+          "text": "Enter text",
+          "location": "Enter location"
+        },
+        "save": "Save",
+        "cancel": "Cancel",
+        "saving": "Saving category...",
+        "updateSuccess": "Category updated successfully",
+        "createSuccess": "Category created successfully",
+        "error": "Failed to save category",
+        "languageHelper": "Switch languages to manage localized content",
+        "confirmCancelTitle": "Discard changes?",
+        "confirmCancelMessage": "If you leave now, any unsaved changes will be lost.",
+        "confirmCancelConfirm": "Discard",
+        "saveHeader": "Save",
+        "validationSummary": "Please review highlighted fields before saving.",
+        "upload": {
+          "addItem": "Add item",
+          "removeItem": "Remove",
+          "empty": "No media fields configured for this content type.",
+          "placeholder": {
+            "gallery": "Add gallery media",
+            "image": "Upload or paste image path",
+            "video": "Upload a video file",
+            "youtube": "Paste YouTube URL",
+            "file": "Upload a file"
+          }
+        },
+        "seo": {
+          "empty": "SEO settings are not available for this content type."
+        }
+      },
+      "sidebar": {
+        "statusTitle": "Visibility",
+        "status": "Publish",
+        "default": "Set as default",
+        "parentTitle": "Parent Category",
+        "parent": "Parent category ID",
+        "parentHelper": "Leave blank to create a root category",
+        "languageTitle": "Language",
+        "languageHelper": "Quickly switch the active language"
+      },
+      "confirm": {
+        "deleteTitle": "Delete Category",
+        "deleteMessage": "Are you sure you want to delete this category?",
+        "bulkDeleteTitle": "Delete {{count}} categories",
+        "bulkDeleteMessage": "This action cannot be undone. Do you want to continue?"
+      },
+      "success": {
+        "deleted": "Category deleted successfully",
+        "duplicated": "Category duplicated successfully",
+        "bulkStatus": "Status updated successfully",
+        "bulkDelete": "Selected categories deleted successfully"
+      },
+      "errors": {
+        "load": "Failed to load content categories",
+        "delete": "Failed to delete category",
+        "updateStatus": "Failed to update status",
+        "duplicate": "Failed to duplicate category",
+        "sequence": "Failed to update sequence",
+        "bulkStatus": "Failed to update status for selected categories"
+      }
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Welcome",
+      "overview": "Overview",
+      "statistics": "Statistics",
+      "recentActivity": "Recent Activity",
+      "totalUsers": "Total Users",
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue",
+      "newCustomers": "New Customers",
+      "metrics": {
+        "projects": "Total Projects",
+        "issues": "Total Issues",
+        "users": "Total Users",
+        "openIssues": "Open Issues"
+      },
+      "sections": {
+        "recentIssues": "Recent Issues",
+        "recentActivity": "Recent Activity",
+        "issuesByStatus": "Issues by Status",
+        "issuesBySeverity": "Issues by Severity"
+      },
+      "status": {
+        "open": "Open",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      }
+    },
+    "user": {
+      "pageTitle": "User Management",
+      "pageDescription": "Manage admin accounts and user status",
+      "profile": "Profile",
+      "settings": "Settings",
+      "myProfile": "My Profile",
+      "accountSettings": "Account Settings",
+      "toolbar": {
+        "title": "User Management",
+        "subtitle": "Total {{count}} users • Showing {{from}}-{{to}} ({{totalPages}} pages)",
+        "searchPlaceholder": "Search users...",
+        "addUser": "Add User",
+        "roleFilter": "Role",
+        "roleAll": "All roles"
+      },
+      "table": {
+        "title": "Users",
+        "username": "Username",
+        "role": "Role",
+        "roleNone": "No role",
+        "lastLogin": "Last login"
+      },
+      "notifications": {
+        "loadError": "Failed to load users",
+        "rolesError": "Failed to load roles",
+        "statusUpdated": "User status updated",
+        "statusError": "Failed to update user status",
+        "roleUpdated": "User role updated",
+        "roleError": "Failed to update user role",
+        "deleteSuccess": "User deleted successfully",
+        "deleteError": "Failed to delete user",
+        "bulkStatusSuccess": "Status updated for selected users",
+        "bulkStatusError": "Failed to update status for selected users",
+        "bulkDeleteSuccess": "Selected users deleted successfully",
+        "bulkDeleteError": "Failed to delete selected users"
+      },
+      "confirm": {
+        "deleteTitle": "Delete User",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"?",
+        "bulkDeleteTitle": "Delete {{count}} users",
+        "bulkDeleteMessage": "This action cannot be undone. Do you want to continue?"
+      },
+      "form": {
+        "editTitle": "Edit User",
+        "addTitle": "Add User",
+        "description": "Manage admin user credentials and permissions",
+        "successUpdate": "User updated successfully",
+        "successCreate": "User \"{{name}}\" created successfully",
+        "errorSave": "Failed to save user",
+        "confirmCancelTitle": "Discard changes?",
+        "confirmCancelMessage": "If you leave now, any unsaved changes will be lost.",
+        "confirmCancelConfirm": "Discard",
+        "errors": {
+          "passwordRequired": "Please provide a password",
+          "passwordLength": "Password must be at least 6 characters",
+          "passwordMismatch": "Passwords do not match",
+          "validation": "Please check the form for errors",
+          "usernameInvalid": "Username can contain letters and numbers only",
+          "emailInvalid": "Please enter a valid email address",
+          "passwordInvalid": "Password must be 8-15 characters and use letters, numbers, or !@#$%",
+          "confirmPasswordRequired": "Please confirm the password"
+        },
+        "fields": {
+          "name": "Full name",
+          "username": "Username",
+          "email": "Email",
+          "avatar": "Avatar",
+          "avatarAlt": "Image alt text",
+          "password": "Password",
+          "confirmPassword": "Confirm password",
+          "role": "Role",
+          "language": "Language"
+        },
+        "placeholders": {
+          "name": "Enter full name",
+          "username": "Enter username",
+          "email": "Enter email address",
+          "avatar": "Upload or paste an image path",
+          "avatarAlt": "Describe the image (optional)",
+          "password": "Enter password",
+          "confirmPassword": "Confirm password",
+          "role": "Select a role"
+        },
+        "helpers": {
+          "avatarAlt": "Alt text improves accessibility and SEO"
+        }
+      }
+    },
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "notification": {
+      "ok": "OK",
+      "cancel": "Cancel",
+      "confirm": {
+        "title": "Confirm Action",
+        "button": "Confirm"
+      },
+      "processing": "Processing...",
+      "success": {
+        "title": "Success"
+      },
+      "error": {
+        "title": "Error"
+      },
+      "warning": {
+        "title": "Warning"
+      },
+      "info": {
+        "title": "Information"
+      }
+    },
+    "permission": {
+      "pageTitle": "Permission Management",
+      "pageDescription": "Manage system permissions",
+      "toolbar": {
+        "generate": "Generate Permissions",
+        "scopeFilter": "Scope",
+        "moduleFilter": "Module",
+        "groupFilter": "Group",
+        "allScopes": "All Scopes",
+        "allModules": "All Modules",
+        "allGroups": "All Groups"
+      },
+      "table": {
+        "title": "Permissions",
+        "scope": "Scope",
+        "method": "Method",
+        "module": "Module",
+        "type": "Type",
+        "group": "Group",
+        "action": "Action",
+        "path": "Path",
+        "metaName": "Meta Name"
+      },
+      "notifications": {
+        "loadError": "Failed to load permissions",
+        "generateSuccess": "Permissions generated successfully",
+        "generateError": "Failed to generate permissions",
+        "statusUpdated": "Permission status updated successfully",
+        "statusError": "Failed to update permission status"
+      }
+    },
+    "role": {
+      "pageTitle": "Role Management",
+      "pageDescription": "Configure role permissions and order in the admin system",
+      "toolbar": {},
+      "table": {
+        "title": "Roles",
+        "name": "Role",
+        "scope": "Scope",
+        "users": "Users",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "sequenceInput": "Sequence position"
+      },
+      "form": {
+        "editTitle": "Edit role",
+        "addTitle": "Create new role",
+        "description": "Configure the role name and assign permissions for this scope.",
+        "validationError": "Please fix the highlighted fields.",
+        "updateSuccess": "Role updated successfully.",
+        "createSuccess": "Role {{name}} created successfully.",
+        "errorSave": "Failed to save role.",
+        "confirmCancelTitle": "Discard changes?",
+        "confirmCancelMessage": "Your changes will be lost. Do you want to continue?",
+        "confirmCancelConfirm": "Discard",
+        "fields": {
+          "name": "Role name"
+        },
+        "placeholders": {
+          "name": "Enter role name"
+        }
+      },
+      "permissions": {
+        "actions": "actions",
+        "groupCount": "{{count}} groups",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} permissions selected",
+        "noPermissions": "No permissions available.",
+        "defaultType": "Default",
+        "helper": "Select a group to assign every action within it.",
+        "moduleCount": "{{count}} modules"
+      },
+      "notifications": {
+        "loadError": "Failed to load roles.",
+        "statusUpdated": "Role status updated.",
+        "statusError": "Failed to update role status.",
+        "deleteSuccess": "Role deleted successfully.",
+        "deleteError": "Failed to delete role.",
+        "sequenceInvalid": "Please enter a valid sequence number.",
+        "sequenceUpdated": "Role sequence updated successfully.",
+        "sequenceError": "Failed to update sequence."
+      },
+      "confirm": {
+        "deleteTitle": "Delete role?",
+        "deleteMessage": "Are you sure you want to delete {{name}}? This action cannot be undone."
+      }
+    },
+    "admin_menu": {
+      "pageTitle": "Admin Menu Management",
+      "pageDescription": "Configure menu items and ordering for the admin system",
+      "toolbar": {
+        "title": "Admin Menu Management",
+        "subtitle": "Total {{count}} items • Showing {{from}}-{{to}}"
+      },
+      "filters": {
+        "parent": "Parent",
+        "parentPlaceholder": "Select parent"
+      },
+      "table": {
+        "path": "Path",
+        "module": "Module",
+        "parentLabel": "Parent"
+      },
+      "form": {
+        "addTitle": "Create Menu Item",
+        "editTitle": "Edit Menu Item",
+        "description": "Manage menu items for admin sidebar",
+        "icon": "Icon",
+        "path": "Path",
+        "module": "Module",
+        "parentMenu": "Parent Menu"
+      },
+      "error": {
+        "pathFormat": "Path must start with /"
+      },
+      "confirm": {
+        "deleteTitle": "Delete Menu Item",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"?",
+        "bulkDeleteTitle": "Delete {{count}} menu items",
+        "bulkDeleteMessage": "This action cannot be undone. Do you want to continue?",
+        "bulkActivateTitle": "Activate {{count}} menu items",
+        "bulkActivateMessage": "Are you sure you want to activate {{count}} menu items?",
+        "bulkDeactivateTitle": "Deactivate {{count}} menu items",
+        "bulkDeactivateMessage": "Are you sure you want to deactivate {{count}} menu items?"
+      },
+      "success": {
+        "delete": "Menu item deleted successfully",
+        "activate": "Menu item activated successfully",
+        "deactivate": "Menu item deactivated successfully",
+        "updateSequence": "Sequence updated successfully",
+        "bulkActivate": "Menu items activated successfully",
+        "bulkDeactivate": "Menu items deactivated successfully",
+        "bulkDelete": "Menu items deleted successfully"
+      },
+      "errors": {
+        "load": "Failed to load menu items",
+        "delete": "Failed to delete menu item",
+        "update": "Failed to update menu item",
+        "updateSequence": "Failed to update sequence",
+        "bulkActivate": "Failed to activate menu items",
+        "bulkDeactivate": "Failed to deactivate menu items",
+        "bulkDelete": "Failed to delete menu items"
+      }
+    },
+    "project": {
+      "pageTitle": "Project Management",
+      "pageDescription": "Manage projects for issue collection",
+      "toolbar": {
+        "title": "Projects",
+        "subtitle": "View and manage projects",
+        "addProject": "Add Project",
+        "searchPlaceholder": "Search projects..."
+      },
+      "form": {
+        "editTitle": "Edit Project",
+        "addTitle": "Create New Project",
+        "editDescription": "Update project details and settings",
+        "addDescription": "Register a new project for issue collection",
+        "basicInformation": "Basic Information",
+        "projectName": "Project Name",
+        "projectNamePlaceholder": "Enter project name",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter project description (optional)",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "allowedDomains": "Allowed Domains",
+        "allowedDomainsPlaceholder": "Enter domain (e.g., example.com)",
+        "allowedDomainsHelper": "Add domains that are allowed to use this project's SDK",
+        "environments": "Environments",
+        "environmentName": "Environment Name",
+        "environmentNamePlaceholder": "e.g., Production, Staging",
+        "apiUrl": "API URL",
+        "apiUrlPlaceholder": "https://api.example.com",
+        "allowedOrigins": "Allowed Origins",
+        "allowedOriginsPlaceholder": "https://example.com",
+        "allowedOriginsHelper": "Comma-separated list of allowed origins",
+        "isActive": "Active",
+        "addEnvironment": "Add Environment",
+        "removeEnvironment": "Remove",
+        "testSDK": "Test SDK",
+        "environments": "Environments",
+        "environmentsDescription": "Configure different deployment stages (dev, staging, prod) with separate API URLs and allowed origins. Environments are optional and allow you to manage project settings for different deployment stages.",
+        "editEnvironment": "Edit Environment",
+        "environmentName": "Environment Name",
+        "environmentNamePlaceholder": "Select environment",
+        "apiUrlPlaceholder": "https://api.example.com (optional)",
+        "allowedOriginsPlaceholder": "https://example.com",
+        "allowedOriginsLabel": "Allowed Origins",
+        "active": "Active",
+        "inactive": "Inactive",
+        "cancel": "Cancel",
+        "update": "Update",
+        "add": "Add",
+        "remove": "Remove",
+        "environment": {
+          "dev": "Development",
+          "staging": "Staging",
+          "prod": "Production",
+          "test": "Test"
+        }
+      },
+      "table": {
+        "name": "Name",
+        "description": "Description",
+        "status": "Status",
+        "issues": "Issues",
+        "createdAt": "Created At",
+        "domain": "domain(s)"
+      }
+    },
+    "issue": {
+      "pageTitle": "Issue Management",
+      "pageDescription": "View and manage reported issues",
+      "toolbar": {
+        "title": "Issues",
+        "subtitle": "View and manage reported issues",
+        "searchPlaceholder": "Search issues by title or description...",
+        "allProjects": "All Projects"
+      },
+      "form": {
+        "editTitle": "Edit Issue",
+        "addTitle": "Create Issue"
+      },
+      "table": {
+        "id": "ID",
+        "title": "Title",
+        "project": "Project",
+        "severity": "Severity",
+        "status": "Status",
+        "assignee": "Assignee",
+        "createdAt": "Created At",
+        "unassigned": "Unassigned",
+        "pending": "pending",
+        "total": "total"
+      }
+    },
+    "activityLog": {
+      "pageTitle": "Activity Logs",
+      "pageDescription": "View all system activity logs",
+      "toolbar": {
+        "searchPlaceholder": "Search logs...",
+        "action": "Action",
+        "model": "Model",
+        "user": "User",
+        "allActions": "All Actions",
+        "allModels": "All Models",
+        "allUsers": "All Users",
+        "dateFrom": "Date From",
+        "dateTo": "Date To"
+      },
+      "actions": {
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete"
+      },
+      "models": {
+        "user": "User",
+        "role": "Role",
+        "content": "Content",
+        "banner": "Banner",
+        "permission": "Permission",
+        "contentCategory": "Content Category",
+        "adminMenu": "Admin Menu",
+        "page": "Page"
+      },
+      "table": {
+        "action": "Action",
+        "user": "User",
+        "model": "Model",
+        "modelId": "Model ID",
+        "timestamp": "Timestamp"
+      },
+      "notifications": {
+        "loadError": "Failed to load activity logs"
+      }
+    }
+  }
+}
+

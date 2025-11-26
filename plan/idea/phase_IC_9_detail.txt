@@ -1,0 +1,7 @@
+PHASE IC-9 — AI TRIAGE ENGINE
+
+Detailed tasks:
+- BullMQ AI job
+- Summary generation
+- Category prediction
+- Assignee suggestion

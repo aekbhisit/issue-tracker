@@ -1,0 +1,48 @@
+// Settings and Languages Models
+
+model Setting {
+  id         Int                @id @default(autoincrement())
+  logoHeader String?            @map("logo_header")
+  logoFooter String?            @map("logo_footer")
+  rightClick Boolean            @default(false) @map("right_click")
+  grayscale  Boolean            @default(false)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+  languages  Language[]
+  translates SettingTranslate[]
+
+  @@map("setting")
+}
+
+model Language {
+  id        Int      @id @default(autoincrement())
+  settingId Int?     @map("setting_id")
+  code      String   @unique
+  name      String
+  sequence  Int      @default(0)
+  isDefault Boolean  @default(false) @map("default")
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  setting   Setting? @relation(fields: [settingId], references: [id], onDelete: SetNull)
+
+  @@index([settingId])
+  @@index([status])
+  @@map("languages")
+}
+
+model SettingTranslate {
+  id        Int      @id @default(autoincrement())
+  settingId Int      @map("setting_id")
+  field     String
+  value     String?
+  lang      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  setting   Setting  @relation(fields: [settingId], references: [id], onDelete: Cascade)
+
+  @@unique([settingId, field, lang])
+  @@index([settingId])
+  @@index([lang])
+  @@map("settings_translate")
+}

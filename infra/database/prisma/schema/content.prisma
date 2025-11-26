@@ -1,0 +1,101 @@
+// Content Management Model
+
+model Content {
+  id        Int       @id @default(autoincrement())
+  type      String?
+  gallery   Json? // array ของ file paths (changed from String to Json)
+  image     String?
+  video     String?
+  youtube   String?
+  file      String?
+  publishAt DateTime? @map("publish_at")
+  startAt   DateTime? @map("start_at")
+  endAt     DateTime? @map("end_at")
+  startTime String?   @map("start_time") // Prisma doesn't support Time type
+  endTime   String?   @map("end_time") // Prisma doesn't support Time type
+  link      String?
+  email     String?
+  phone     String?
+  view      Int       @default(0)
+  default   Boolean   @default(false)
+  parentId  Int?      @map("parent_id")
+  sequence  Int       @default(0)
+  status    Boolean   @default(true)
+  carEmpty  String?   @map("car_empty")
+  tenants   String?
+  colorCode String?   @map("color_code")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Self-referential relationship
+  children Content[] @relation("ContentTree")
+  parent   Content?  @relation("ContentTree", fields: [parentId], references: [id], onDelete: SetNull)
+
+  // Translations
+  translates ContentTranslate[]
+
+  // Many-to-many relationship with categories
+  categoryRelations ContentAndCategory[]
+
+  // View tracking
+  views ContentView[]
+
+  @@index([type])
+  @@index([parentId, sequence])
+  @@index([status])
+  @@index([view])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("contents")
+}
+
+model ContentTranslate {
+  id        Int      @id @default(autoincrement())
+  contentId Int      @map("content_id")
+  lang      String
+  name      String?  @db.Text
+  desc      String?  @db.Text
+  detail    String?  @db.Text
+  text      String?  @db.Text
+  location  String?  @db.Text
+  prefix    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, lang])
+  @@index([contentId])
+  @@index([lang])
+  @@map("content_translate")
+}
+
+model ContentAndCategory {
+  contentId  Int             @map("content_id")
+  categoryId Int             @map("category_id")
+  content    Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  category   ContentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, categoryId])
+  @@index([contentId])
+  @@index([categoryId])
+  @@map("content_and_categories")
+}
+
+model ContentView {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  ip        String?
+  contentId Int?     @map("content_id")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([type])
+  @@index([ip])
+  @@index([createdAt])
+  @@map("content_view")
+}

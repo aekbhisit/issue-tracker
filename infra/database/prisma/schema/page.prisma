@@ -1,0 +1,55 @@
+// Page Management Model
+
+model Page {
+  id        Int      @id @default(autoincrement())
+  type      String   @unique
+  gallery   Json?
+  image     String?
+  video     String?
+  youtube   String?
+  file      String?
+  publishAt DateTime? @map("publish_at")
+  startAt   DateTime? @map("start_at")
+  endAt     DateTime? @map("end_at")
+  startTime String?   @map("start_time")
+  endTime   String?   @map("end_time")
+  link      String?
+  email     String?
+  phone     String?
+  status    Boolean   @default(true)
+  default   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  translates PageTranslate[]
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("pages")
+}
+
+model PageTranslate {
+  id       Int      @id @default(autoincrement())
+  pageId   Int      @map("page_id")
+  lang     String
+  name     String?  @db.Text
+  desc     String?  @db.Text
+  detail   String?  @db.Text
+  text     String?  @db.Text
+  location String?  @db.Text
+  prefix   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  page     Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, lang])
+  @@index([pageId])
+  @@index([lang])
+  @@map("page_translate")
+}
+
+

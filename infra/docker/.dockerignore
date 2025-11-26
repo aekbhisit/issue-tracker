@@ -1,0 +1,19 @@
+# Ignore node_modules everywhere
+**/node_modules
+!**/package.json
+!**/pnpm-lock.yaml
+!**/yarn.lock
+!**/package-lock.json
+
+# Ignore git and editor stuff
+.git
+.gitignore
+.vscode
+.DS_Store
+
+# Ignore local build artifacts
+dist
+build
+storage
+tmp
+.env

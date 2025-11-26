@@ -1,0 +1,196 @@
+{
+  "common": {
+    "button": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "update": "Update",
+      "close": "Close",
+      "back": "Back",
+      "next": "Next",
+      "previous": "Previous",
+      "search": "Search",
+      "reset": "Reset",
+      "logout": "Logout",
+      "login": "Login",
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "clear": "Clear"
+    },
+    "label": {
+      "email": "Email",
+      "password": "Password",
+      "username": "Username",
+      "name": "Name",
+      "status": "Status",
+      "action": "Action",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "description": "Description",
+      "detail": "Detail",
+      "category": "Category",
+      "title": "Title",
+      "language": "Language",
+      "image": "Image",
+      "view": "View",
+      "sequence": "Sequence",
+      "default": "Default",
+      "type": "Type",
+      "style": "Style",
+      "link": "Link",
+      "target": "Target",
+      "mobile": "Mobile",
+      "group": "Group",
+      "altText": "Alt text",
+      "dashboard": "Dashboard",
+      "issues": "Issues",
+      "projects": "Projects",
+      "basicInformation": "Basic Information",
+      "screenshot": "Screenshot",
+      "screenshots": "Screenshots",
+      "noScreenshots": "No screenshots available",
+      "noImage": "No image available",
+      "elementSelector": "Element Inspect",
+      "elementInspectDetails": "Element Inspect Details",
+      "logs": "Logs",
+      "project": "Project",
+      "severity": "Severity",
+      "dateRange": "Date Range"
+    },
+    "message": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information",
+      "loading": "Loading...",
+      "noData": "No Data",
+      "untitled": "Untitled",
+      "noCategory": "No category",
+      "noParent": "No parent",
+      "confirmDelete": "Are you sure you want to delete?",
+      "saveSuccess": "Saved successfully",
+      "deleteSuccess": "Deleted successfully",
+      "updateSuccess": "Updated successfully",
+      "createSuccess": "Created successfully",
+      "confirmCancelTitle": "Discard changes?",
+      "confirmCancelMessage": "If you leave now, any unsaved changes will be lost."
+    },
+    "error": {
+      "required": "This field is required",
+      "invalid": "Invalid data",
+      "emailInvalid": "Invalid email",
+      "passwordTooShort": "Password is too short",
+      "networkError": "Network connection error",
+      "unauthorized": "Unauthorized access",
+      "notFound": "Not found",
+      "serverError": "Server error"
+    },
+    "validation": {
+      "required": "{{field}} is required",
+      "min": "{{field}} must be at least {{min}} characters",
+      "max": "{{field}} must not exceed {{max}} characters",
+      "email": "{{field}} must be a valid email"
+    },
+    "table": {
+      "totalItems": "Total items: {{count}}",
+      "selectedCount": "{{count}} selected",
+      "paginationSummary": "Showing {{from}}-{{to}} of {{total}}",
+      "pageOf": "Page {{page}} of {{totalPages}}",
+      "perPage": "{{count}} per page",
+      "select": "Select",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "showing": "Showing",
+      "of": "of",
+      "page": "Page",
+      "previous": "Previous",
+      "next": "Next",
+      "noData": "No data available",
+      "filters": {
+        "show": "Show Filters",
+        "hide": "Hide Filters"
+      },
+      "status": {
+        "all": "All status",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "deleteSelected": "Delete Selected",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "actionsHeader": "Actions",
+      "treeSort": "Tree Sort",
+      "treeDragHint": "Drag and drop to reorder menu items."
+    },
+    "boolean": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "group": {
+      "view": "View",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "selectPlaceholder": "Select an option...",
+    "noOptions": "No options available",
+    "search": "Search...",
+    "placeholder": {
+      "altText": "Describe the image for accessibility"
+    },
+    "seo": {
+      "slug": "Slug",
+      "slugPlaceholder": "example-slug",
+      "slugHelper": "URL-friendly version of the title. Leave empty to auto-generate from name.",
+      "metaTitle": "Meta Title",
+      "metaTitlePlaceholder": "Enter meta title (recommended: 50-60 characters)",
+      "metaTitleHelper": "Title shown in search engine results. Recommended length: 50-60 characters.",
+      "metaDescription": "Meta Description",
+      "metaDescriptionPlaceholder": "Enter meta description (recommended: 150-160 characters)",
+      "metaDescriptionHelper": "Description shown in search engine results. Recommended length: 150-160 characters.",
+      "metaKeyword": "Meta Keywords",
+      "metaKeywordPlaceholder": "keyword1, keyword2, keyword3",
+      "metaKeywordHelper": "Comma-separated keywords related to this content.",
+      "metaImage": "Meta Image",
+      "metaImageHelper": "Image shown when sharing on social media. Recommended size: 1200x630px."
+    },
+    "tabs": {
+      "translate": "Translations",
+      "upload": "Media",
+      "seo": "SEO"
+    },
+    "sections": {
+      "settings": "Settings"
+    },
+    "adminMenu": {
+      "tree": {
+        "title": "Admin Menu Tree",
+        "description": "Drag and drop items to update hierarchy and sequence.",
+        "saveSuccess": "Menu structure updated successfully.",
+        "unsavedChanges": "You have unsaved changes. Save to apply.",
+        "empty": "No menu items available."
+      }
+    },
+    "badge": {
+      "default": "Default"
+    },
+    "dateRange": {
+      "today": "Today",
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisYear": "This Year",
+      "custom": "Select date range",
+      "all": "All"
+    }
+  }
+}
+

@@ -1,0 +1,196 @@
+{
+  "common": {
+    "button": {
+      "submit": "ส่ง",
+      "cancel": "ยกเลิก",
+      "save": "บันทึก",
+      "delete": "ลบ",
+      "edit": "แก้ไข",
+      "create": "สร้าง",
+      "update": "อัปเดต",
+      "close": "ปิด",
+      "back": "กลับ",
+      "next": "ถัดไป",
+      "previous": "ก่อนหน้า",
+      "search": "ค้นหา",
+      "reset": "รีเซ็ต",
+      "logout": "ออกจากระบบ",
+      "login": "เข้าสู่ระบบ",
+      "moveUp": "เลื่อนขึ้น",
+      "moveDown": "เลื่อนลง",
+      "clear": "ล้าง"
+    },
+    "label": {
+      "email": "อีเมล",
+      "password": "รหัสผ่าน",
+      "username": "ชื่อผู้ใช้",
+      "name": "ชื่อ",
+      "status": "สถานะ",
+      "action": "การดำเนินการ",
+      "createdAt": "สร้างเมื่อ",
+      "updatedAt": "อัปเดตเมื่อ",
+      "description": "คำอธิบาย",
+      "detail": "รายละเอียด",
+      "category": "หมวดหมู่",
+      "title": "หัวข้อ",
+      "language": "ภาษา",
+      "image": "รูปภาพ",
+      "view": "จำนวนผู้เข้าชม",
+      "sequence": "ลำดับ",
+      "default": "ค่าเริ่มต้น",
+      "type": "ประเภท",
+      "style": "สไตล์",
+      "link": "ลิงก์",
+      "target": "เป้าหมาย",
+      "mobile": "มือถือ",
+      "group": "กลุ่ม",
+      "altText": "ข้อความอธิบายรูป",
+      "dashboard": "แดชบอร์ด",
+      "issues": "ปัญหา",
+      "projects": "โปรเจ็กต์",
+      "basicInformation": "ข้อมูลพื้นฐาน",
+      "screenshot": "ภาพหน้าจอ",
+      "screenshots": "ภาพหน้าจอ",
+      "noScreenshots": "ไม่มีภาพหน้าจอ",
+      "noImage": "ไม่มีรูปภาพ",
+      "elementSelector": "ตรวจสอบองค์ประกอบ",
+      "elementInspectDetails": "รายละเอียดการตรวจสอบองค์ประกอบ",
+      "logs": "บันทึก",
+      "project": "โปรเจ็กต์",
+      "severity": "ระดับความรุนแรง",
+      "dateRange": "ช่วงวันที่"
+    },
+    "message": {
+      "success": "สำเร็จ",
+      "error": "เกิดข้อผิดพลาด",
+      "warning": "คำเตือน",
+      "info": "ข้อมูล",
+      "loading": "กำลังโหลด...",
+      "noData": "ไม่มีข้อมูล",
+      "untitled": "ไม่มีชื่อ",
+      "noCategory": "ไม่มีหมวดหมู่",
+      "noParent": "ไม่มีหมวดหมู่หลัก",
+      "confirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบ?",
+      "saveSuccess": "บันทึกสำเร็จ",
+      "deleteSuccess": "ลบสำเร็จ",
+      "updateSuccess": "อัปเดตสำเร็จ",
+      "createSuccess": "สร้างสำเร็จ",
+      "confirmCancelTitle": "ต้องการยกเลิกการแก้ไขหรือไม่?",
+      "confirmCancelMessage": "หากออกจากหน้านี้ ข้อมูลที่ยังไม่บันทึกจะหายไป"
+    },
+    "error": {
+      "required": "กรุณากรอกข้อมูล",
+      "invalid": "ข้อมูลไม่ถูกต้อง",
+      "emailInvalid": "อีเมลไม่ถูกต้อง",
+      "passwordTooShort": "รหัสผ่านสั้นเกินไป",
+      "networkError": "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย",
+      "unauthorized": "ไม่มีสิทธิ์เข้าถึง",
+      "notFound": "ไม่พบข้อมูล",
+      "serverError": "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์"
+    },
+    "validation": {
+      "required": "{{field}} จำเป็นต้องกรอก",
+      "min": "{{field}} ต้องมีอย่างน้อย {{min}} ตัวอักษร",
+      "max": "{{field}} ต้องมีไม่เกิน {{max}} ตัวอักษร",
+      "email": "{{field}} ต้องเป็นอีเมลที่ถูกต้อง"
+    },
+    "table": {
+      "totalItems": "รวมทั้งหมด {{count}} รายการ",
+      "selectedCount": "เลือก {{count}} รายการ",
+      "paginationSummary": "แสดง {{from}}-{{to}} จาก {{total}} รายการ",
+      "pageOf": "หน้า {{page}} จาก {{totalPages}}",
+      "perPage": "{{count}} ต่อหน้า",
+      "select": "เลือก",
+      "selectAll": "เลือกทั้งหมด",
+      "deselectAll": "ยกเลิกการเลือกทั้งหมด",
+      "showing": "แสดง",
+      "of": "จาก",
+      "page": "หน้า",
+      "previous": "ก่อนหน้า",
+      "next": "ถัดไป",
+      "noData": "ไม่มีข้อมูล",
+      "filters": {
+        "show": "แสดงตัวกรอง",
+        "hide": "ซ่อนตัวกรอง"
+      },
+      "status": {
+        "all": "ทุกสถานะ",
+        "active": "เปิดใช้งาน",
+        "inactive": "ปิดใช้งาน"
+      },
+      "actions": {
+        "activate": "เปิดใช้งาน",
+        "deactivate": "ปิดใช้งาน",
+        "deleteSelected": "ลบที่เลือก",
+        "edit": "แก้ไข",
+        "delete": "ลบ"
+      },
+      "actionsHeader": "การดำเนินการ",
+      "treeSort": "จัดเรียงแบบต้นไม้",
+      "treeDragHint": "ลากและวางเพื่อจัดลำดับเมนูใหม่"
+    },
+    "boolean": {
+      "yes": "ใช่",
+      "no": "ไม่ใช่"
+    },
+    "group": {
+      "view": "ดูข้อมูล",
+      "create": "สร้าง",
+      "edit": "แก้ไข",
+      "delete": "ลบ"
+    },
+    "selectPlaceholder": "เลือกตัวเลือก...",
+    "noOptions": "ไม่มีตัวเลือก",
+    "search": "ค้นหา...",
+    "placeholder": {
+      "altText": "อธิบายรูปภาพเพื่อการเข้าถึง"
+    },
+    "seo": {
+      "slug": "Slug",
+      "slugPlaceholder": "ตัวอย่าง-slug",
+      "slugHelper": "เวอร์ชันที่เป็นมิตรกับ URL ของชื่อ ปล่อยว่างเพื่อสร้างอัตโนมัติจากชื่อ",
+      "metaTitle": "Meta Title",
+      "metaTitlePlaceholder": "กรอก meta title (แนะนำ: 50-60 ตัวอักษร)",
+      "metaTitleHelper": "ชื่อที่แสดงในผลลัพธ์ของเครื่องมือค้นหา ความยาวที่แนะนำ: 50-60 ตัวอักษร",
+      "metaDescription": "Meta Description",
+      "metaDescriptionPlaceholder": "กรอก meta description (แนะนำ: 150-160 ตัวอักษร)",
+      "metaDescriptionHelper": "คำอธิบายที่แสดงในผลลัพธ์ของเครื่องมือค้นหา ความยาวที่แนะนำ: 150-160 ตัวอักษร",
+      "metaKeyword": "Meta Keywords",
+      "metaKeywordPlaceholder": "keyword1, keyword2, keyword3",
+      "metaKeywordHelper": "คำสำคัญที่เกี่ยวข้องกับเนื้อหานี้ คั่นด้วยเครื่องหมายจุลภาค",
+      "metaImage": "Meta Image",
+      "metaImageHelper": "รูปภาพที่แสดงเมื่อแชร์บนโซเชียลมีเดีย ขนาดที่แนะนำ: 1200x630px"
+    },
+    "tabs": {
+      "translate": "แปลภาษา",
+      "upload": "สื่อ",
+      "seo": "SEO"
+    },
+    "sections": {
+      "settings": "ตั้งค่า"
+    },
+    "adminMenu": {
+      "tree": {
+        "title": "โครงสร้างเมนูแอดมิน",
+        "description": "ลากและวางรายการเพื่อปรับลำดับและความเป็นแม่ลูก",
+        "saveSuccess": "อัปเดตโครงสร้างเมนูเรียบร้อยแล้ว",
+        "unsavedChanges": "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก กรุณาบันทึกเพื่อยืนยัน",
+        "empty": "ยังไม่มีรายการเมนู"
+      }
+    },
+    "badge": {
+      "default": "ค่าเริ่มต้น"
+    },
+    "dateRange": {
+      "today": "วันนี้",
+      "last7Days": "7 วันล่าสุด",
+      "last30Days": "30 วันล่าสุด",
+      "thisMonth": "เดือนนี้",
+      "lastMonth": "เดือนที่แล้ว",
+      "thisYear": "ปีนี้",
+      "custom": "เลือกช่วงวันที่",
+      "all": "ทั้งหมด"
+    }
+  }
+}
+
