@@ -176,9 +176,10 @@ services:
     # Ensure logs directory exists before starting
     # This is a workaround for Harbor images that may not have the logs directory pre-created
     # The volume mount ensures the directory exists, but we create it explicitly to avoid permission issues
-    # Note: Dockerfile sets WORKDIR to /app/apps/api, so we use relative path dist/index.js
+    # Note: Explicitly cd to /app/apps/api and verify path before running
+    # IMPORTANT: Make sure Docker image is rebuilt with latest Dockerfile.prod
     # For permanent fix: Rebuild Harbor images with updated Dockerfile that creates /app/logs with proper permissions
-    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && exec node dist/index.js"]
+    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && cd /app/apps/api && ls -la dist/ && exec node dist/index.js"]
 
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:

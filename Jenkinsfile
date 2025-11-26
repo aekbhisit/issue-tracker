@@ -167,11 +167,34 @@ pipeline {
                     echo "❌ infra/docker/api/Dockerfile.prod not found!"
                     exit 1
                   fi
+                  echo "Verifying required directories..."
+                  if [ ! -d apps/api/src ]; then
+                    echo "❌ apps/api/src directory not found!"
+                    exit 1
+                  fi
+                  if [ ! -d infra/database ]; then
+                    echo "❌ infra/database directory not found!"
+                    exit 1
+                  fi
+                  if [ ! -f infra/database/scripts/merge-schema.js ]; then
+                    echo "❌ infra/database/scripts/merge-schema.js not found!"
+                    exit 1
+                  fi
+                  if [ ! -d infra/database/prisma/schema ]; then
+                    echo "❌ infra/database/prisma/schema directory not found!"
+                    exit 1
+                  fi
+                  echo "✅ All required files and directories found"
                   # Disable BuildKit if buildx is not available
                   DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/api/Dockerfile.prod \\
                     -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
                     echo "❌ Docker build failed"
                     exit 1
+                  }
+                  echo "✅ Build completed successfully"
+                  echo "Verifying image structure..."
+                  docker run --rm ${repo}:${TAG} ls -la /app/apps/api/dist/ || {
+                    echo "⚠️  Warning: Could not verify dist directory structure"
                   }
                   echo "📤 Pushing ${image}"
                   for tag in ${TAG} ${gitCommit} latest; do
@@ -219,6 +242,16 @@ pipeline {
                     echo "❌ infra/docker/admin/Dockerfile.prod not found!"
                     exit 1
                   fi
+                  echo "Verifying required directories..."
+                  if [ ! -d apps/admin ]; then
+                    echo "❌ apps/admin directory not found!"
+                    exit 1
+                  fi
+                  if [ ! -d apps/collector-sdk ]; then
+                    echo "❌ apps/collector-sdk directory not found!"
+                    exit 1
+                  fi
+                  echo "✅ All required files and directories found"
                   # Collector SDK is now built inside the Admin Dockerfile (multi-stage build).
                   # Jenkins no longer needs to run a separate Node container here.
                   # Disable BuildKit if buildx is not available
@@ -226,6 +259,11 @@ pipeline {
                     -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
                     echo "❌ Docker build failed"
                     exit 1
+                  }
+                  echo "✅ Build completed successfully"
+                  echo "Verifying image structure..."
+                  docker run --rm ${repo}:${TAG} ls -la /app/apps/admin/.next/ || {
+                    echo "⚠️  Warning: Could not verify .next directory structure"
                   }
                   echo "📤 Pushing ${image}"
                   for tag in ${TAG} ${gitCommit} latest; do
@@ -269,11 +307,22 @@ pipeline {
                     echo "❌ infra/docker/frontend/Dockerfile.prod not found!"
                     exit 1
                   fi
+                  echo "Verifying required directories..."
+                  if [ ! -d apps/frontend ]; then
+                    echo "❌ apps/frontend directory not found!"
+                    exit 1
+                  fi
+                  echo "✅ All required files and directories found"
                   # Disable BuildKit if buildx is not available
                   DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
                     -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
                     echo "❌ Docker build failed"
                     exit 1
+                  }
+                  echo "✅ Build completed successfully"
+                  echo "Verifying image structure..."
+                  docker run --rm ${repo}:${TAG} ls -la /app/apps/frontend/.next/ || {
+                    echo "⚠️  Warning: Could not verify .next directory structure"
                   }
                   echo "📤 Pushing ${image}"
                   for tag in ${TAG} ${gitCommit} latest; do
