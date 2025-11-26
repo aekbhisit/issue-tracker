@@ -73,10 +73,17 @@ RUN echo "🔍 Checking source files..." && \
     test -f src/index.ts && echo "✅ Entry point exists" || (echo "❌ Entry point missing" && exit 1) && \
     echo "📁 Source files:" && ls -la src/ | head -10
 # Run build - TypeScript should resolve @prisma/client through pnpm workspace
-# Use explicit tsc command with error checking
+# Clean any previous build artifacts first
+RUN rm -rf dist || true
+# Use explicit tsc command with error checking - fail on any error
 RUN echo "🔨 Building TypeScript..." && \
     pnpm build 2>&1 | tee /tmp/build.log && \
-    echo "📋 Build log:" && cat /tmp/build.log
+    BUILD_EXIT_CODE=${PIPESTATUS[0]} && \
+    echo "📋 Build log:" && cat /tmp/build.log && \
+    if [ $BUILD_EXIT_CODE -ne 0 ]; then \
+      echo "❌ TypeScript build failed with exit code $BUILD_EXIT_CODE" && \
+      exit $BUILD_EXIT_CODE; \
+    fi
 # Verify build output was created
 RUN echo "🔍 Verifying build output..." && \
     test -d dist || (echo "❌ dist directory not found" && ls -la . && exit 1) && \
