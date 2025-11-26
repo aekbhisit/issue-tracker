@@ -128,6 +128,11 @@ COPY --from=build /app/apps/api/package.json ./apps/api/
 # Set working directory to API
 WORKDIR /app/apps/api
 
+# Set NODE_PATH to allow Node.js to resolve modules from workspace root
+# This is needed because pnpm hoists dependencies to /app/node_modules
+# but we're running from /app/apps/api
+ENV NODE_PATH=/app/node_modules
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
