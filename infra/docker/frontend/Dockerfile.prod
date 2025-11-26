@@ -56,15 +56,16 @@ RUN pnpm build
 # ===========================================
 FROM base AS production
 
-# Copy production dependencies
-COPY --from=dependencies /app/node_modules ./node_modules
+# Copy production dependencies (use build stage to ensure Next.js is available)
+# Build stage has all dependencies including Next.js
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=dependencies /app/packages ./packages
 
-# Copy built application
-COPY --from=build /app/apps/frontend/.next ./.next
+# Copy built application to correct location
+COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
 # Copy public directory (created in build stage if it didn't exist)
-COPY --from=build /app/apps/frontend/public ./public
-COPY --from=build /app/apps/frontend/package.json ./
+COPY --from=build /app/apps/frontend/public ./apps/frontend/public
+COPY --from=build /app/apps/frontend/package.json ./apps/frontend/
 
 # Set working directory to Frontend
 WORKDIR /app/apps/frontend
@@ -75,7 +76,8 @@ RUN adduser -S nodejs -u 1001
 USER nodejs
 
 # Expose port
-EXPOSE 3002
+EXPOSE 3412
 
 # Start production server
-CMD ["pnpm", "start"]
+# Use npx to find next binary (works with pnpm workspace hoisting)
+CMD ["sh", "-c", "npx next start -p ${PORT:-3412}"]

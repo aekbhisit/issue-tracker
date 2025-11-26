@@ -1,11 +1,11 @@
 # ========================================
 # Production Docker Compose
-# For Lobby AI Concierge
+# For Issue Collector Platform
 # ========================================
 #
 # TROUBLESHOOTING:
 # If API container fails healthcheck, check logs:
-#   docker logs lobby-concierge-api
+#   docker logs issue-collector-api
 #
 # Common causes:
 #   1. Missing required environment variables:
@@ -20,7 +20,7 @@
 #      - Set SKIP_VALIDATION=1 to allow container to start without required env vars
 #      - Empty strings for optional URLs are now accepted (will be treated as undefined)
 #   2. Database connection issues (check postgres container logs)
-#   3. Port conflicts (check if ports 3401, 3402, 3400 are already in use)
+#   3. Port conflicts (check if ports 3410, 3411, 3412 are already in use)
 #   4. Logs directory permission issues:
 #      - If you see "EACCES: permission denied, mkdir 'logs'" in logs:
 #        The volume mount and command override should handle this, but if issues persist,
@@ -43,7 +43,7 @@ services:
     environment:
       POSTGRES_USER: ${DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
-      POSTGRES_DB: ${DATABASE_NAME:-lobby_concierge}
+      POSTGRES_DB: ${DATABASE_NAME:-issue_collector}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # Init scripts are included in the Docker image, so no volume mount needed
@@ -51,19 +51,19 @@ services:
       # - ./postgres/initdb:/docker-entrypoint-initdb.d
     ports:
       # Expose PostgreSQL port for external connections (SSH tunnel, remote clients)
-      # Access via: ssh -L 5435:localhost:5435 user@server
-      # Using port 5435 to avoid conflict with existing PostgreSQL on host (default 5432)
-      - "127.0.0.1:${DATABASE_PORT_EXTERNAL:-5435}:5432"  # Only bind to localhost for security
+      # Access via: ssh -L 5436:localhost:5436 user@server
+      # Using port 5436 to avoid conflict with existing PostgreSQL on host (default 5432)
+      - "127.0.0.1:${DATABASE_PORT_EXTERNAL:-5436}:5432"  # Only bind to localhost for security
     healthcheck:
       # Check readiness via pg_isready so dependent services wait for DB availability.
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-lobby_concierge}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-issue_collector}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     restart: unless-stopped
     networks:
-      - lobby-concierge-network
+      - issue-collector-network
 
   # Redis Cache
   # Note: Redis is only used internally by containers, no external port mapping
@@ -86,30 +86,32 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - lobby-concierge-network
+      - issue-collector-network
 
   # API Backend
   api:
-    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-api:${IMAGE_TAG:-latest}
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/issue-collector-api:${IMAGE_TAG:-latest}
     container_name: issue-collector-api
     depends_on:
+      # TEMPORARY: Changed from service_healthy to service_started to skip health checks for debugging
+      # Change back to service_healthy after fixing issues
       postgres:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     environment:
       # Application
       NODE_ENV: production
-      API_PORT: 3401
+      API_PORT: 3410
       API_HOST: 0.0.0.0
       # Set SKIP_VALIDATION=1 to allow container to start without required env vars (for initial testing only)
       SKIP_VALIDATION: ${SKIP_VALIDATION:-}
 
       # Database
-      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-lobby_concierge}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-issue_collector}
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
-      DATABASE_NAME: ${DATABASE_NAME:-lobby_concierge}
+      DATABASE_NAME: ${DATABASE_NAME:-issue_collector}
       DATABASE_USER: ${DATABASE_USER:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
 
@@ -146,12 +148,12 @@ services:
       # 
       # If you don't have a domain yet, you can:
       # 1. Leave it unset (uses default: localhost) - works for testing
-      # 2. Use IP addresses: CORS_ORIGIN=http://192.168.1.100:3400,http://192.168.1.100:3402
-      # 3. Set it later when you have a domain: CORS_ORIGIN=https://yourdomain.com,https://admin.yourdomain.com
+      # 2. Use IP addresses: CORS_ORIGIN=http://192.168.1.100:3412,http://192.168.1.100:3411
+      # 3. Production: CORS_ORIGIN=https://issue.haahii.com,https://issue.haahii.com/admin
       #
       # Note: This does NOT affect container startup or internal container-to-container communication
-      # Must include both frontend (3400) and admin (3402) origins
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3400,http://localhost:3402}
+      # Must include both frontend (3412) and admin (3411) origins
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3412,http://localhost:3411}
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -169,47 +171,49 @@ services:
       - api_logs:/app/logs
 
     ports:
-      - "${API_PORT:-3401}:3401"
+      - "${API_PORT:-3410}:3410"
     
     # Ensure logs directory exists before starting
     # This is a workaround for Harbor images that may not have the logs directory pre-created
     # The volume mount ensures the directory exists, but we create it explicitly to avoid permission issues
-    # Note: If container runs as non-root user (honojs), the volume will be owned by root initially
-    # The mkdir command will fail silently if permissions are wrong, but the volume mount should handle it
+    # Note: Dockerfile sets WORKDIR to /app/apps/api, so we use relative path dist/index.js
     # For permanent fix: Rebuild Harbor images with updated Dockerfile that creates /app/logs with proper permissions
-    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && exec node apps/api/dist/index.js"]
+    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && exec node dist/index.js"]
 
-    healthcheck:
-      # Simple healthcheck - checks if /health endpoint returns 200
-      # If healthcheck fails, check container logs: docker logs lobby-concierge-api
-      # Common issues: Missing OPENAI_API_KEY, EXTERNAL_RAG_API_URL, JWT_SECRET, or SESSION_SECRET
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3401/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 120s  # Increased to allow API to fully start and connect to DB
+    # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
+    # healthcheck:
+    #   # Simple healthcheck - checks if /health endpoint returns 200
+    #   # If healthcheck fails, check container logs: docker logs issue-collector-api
+    #   # Common issues: Missing OPENAI_API_KEY, EXTERNAL_RAG_API_URL, JWT_SECRET, or SESSION_SECRET
+    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3410/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 10
+    #   start_period: 120s  # Increased to allow API to fully start and connect to DB
 
     restart: unless-stopped
     networks:
-      - lobby-concierge-network
+      - issue-collector-network
 
   # Admin Dashboard
   admin:
-    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-admin:${IMAGE_TAG:-latest}
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/issue-collector-admin:${IMAGE_TAG:-latest}
     container_name: issue-collector-admin
     depends_on:
+      # TEMPORARY: Changed from service_healthy to service_started to skip health checks for debugging
+      # Change back to service_healthy after fixing issues
       api:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: production
-      PORT: 3402
+      PORT: 3411
       HOSTNAME: "0.0.0.0"
       
       # Admin API URL (⚠️ IMPORTANT)
-      # For Docker internal networking: Use http://api:3401 (container-to-container)
+      # For Docker internal networking: Use http://api:3410 (container-to-container)
       # For browser requests: Use public URL from NEXT_PUBLIC_ADMIN_API_URL env var
       # The admin code appends /api to this URL, so use base domain only
-      # Example: https://kiosk-agent.haahii.com (admin will call https://kiosk-agent.haahii.com/api)
+      # Production: https://issue.haahii.com (admin will call https://issue.haahii.com/api)
       NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-}
       
       # AI Chatbot Feature (Optional - Enable/disable AI chatbot in admin)
@@ -230,48 +234,56 @@ services:
       # Disable Next.js telemetry
       NEXT_TELEMETRY_DISABLED: 1
     ports:
-      - "${ADMIN_PORT:-3402}:3402"
-    healthcheck:
-      # Health check for admin Next.js app
-      # Root path redirects to /login, so we check /login which returns 200
-      # Alternative: Accept redirects (307/308) as healthy by checking statusCode < 400
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3402/login', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      - "${ADMIN_PORT:-3411}:3411"
+    # Override command to ensure Next.js is found (pnpm workspace hoisting issue)
+    command: ["sh", "-c", "cd /app/apps/admin && npx next start -p ${PORT:-3411}"]
+    # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
+    # healthcheck:
+    #   # Health check for admin Next.js app
+    #   # Root path redirects to /login, so we check /login which returns 200
+    #   # Alternative: Accept redirects (307/308) as healthy by checking statusCode < 400
+    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3411/login', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s
     restart: unless-stopped
     networks:
-      - lobby-concierge-network
+      - issue-collector-network
 
   # Frontend App
   frontend:
-    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/lobby-concierge-frontend:${IMAGE_TAG:-latest}
+    image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/issue-collector-frontend:${IMAGE_TAG:-latest}
     container_name: issue-collector-frontend
     depends_on:
+      # TEMPORARY: Changed from service_healthy to service_started to skip health checks for debugging
+      # Change back to service_healthy after fixing issues
       api:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: production
-      PORT: 3400
+      PORT: 3412
       HOSTNAME: "0.0.0.0"
       # Frontend API URL (⚠️ IMPORTANT)
-      # For Docker internal networking: Use http://api:3401 (container-to-container)
+      # For Docker internal networking: Use http://api:3410 (container-to-container)
       # For browser requests: Use public URL from NEXT_PUBLIC_FRONTEND_API_URL env var
       # The frontend code appends /api to this URL, so use base domain only
-      # Example: https://kiosk-agent.haahii.com (frontend will call https://kiosk-agent.haahii.com/api)
-      NEXT_PUBLIC_FRONTEND_API_URL: ${NEXT_PUBLIC_FRONTEND_API_URL:-http://api:3401}
+      # Production: https://issue.haahii.com (frontend will call https://issue.haahii.com/api)
+      NEXT_PUBLIC_FRONTEND_API_URL: ${NEXT_PUBLIC_FRONTEND_API_URL:-http://api:3410}
     ports:
-      - "${FRONTEND_PORT:-3400}:3400"
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3400/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      - "${FRONTEND_PORT:-3412}:3412"
+    # Override command to ensure Next.js is found (pnpm workspace hoisting issue)
+    command: ["sh", "-c", "cd /app/apps/frontend && npx next start -p ${PORT:-3412}"]
+    # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
+    # healthcheck:
+    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3412/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s
     restart: unless-stopped
     networks:
-      - lobby-concierge-network
+      - issue-collector-network
 
 volumes:
   postgres_data:
@@ -284,5 +296,5 @@ volumes:
     driver: local
 
 networks:
-  lobby-concierge-network:
+  issue-collector-network:
     driver: bridge

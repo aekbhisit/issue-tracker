@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev-with-url.js",
     "build": "next build",
-    "start": "next start -p 4503",
+    "start": "next start -p ${PORT:-3412}",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next"
