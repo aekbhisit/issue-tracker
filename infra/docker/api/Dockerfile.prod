@@ -76,14 +76,11 @@ RUN echo "🔍 Checking source files..." && \
 # Clean any previous build artifacts first
 RUN rm -rf dist || true
 # Use explicit tsc command with error checking - fail on any error
+# Write build output to file first, then check exit code
 RUN echo "🔨 Building TypeScript..." && \
-    pnpm build 2>&1 | tee /tmp/build.log && \
-    BUILD_EXIT_CODE=${PIPESTATUS[0]} && \
+    pnpm build > /tmp/build.log 2>&1 || (cat /tmp/build.log && exit 1) && \
     echo "📋 Build log:" && cat /tmp/build.log && \
-    if [ $BUILD_EXIT_CODE -ne 0 ]; then \
-      echo "❌ TypeScript build failed with exit code $BUILD_EXIT_CODE" && \
-      exit $BUILD_EXIT_CODE; \
-    fi
+    echo "✅ TypeScript build completed successfully"
 # Verify build output was created
 RUN echo "🔍 Verifying build output..." && \
     test -d dist || (echo "❌ dist directory not found" && ls -la . && exit 1) && \
