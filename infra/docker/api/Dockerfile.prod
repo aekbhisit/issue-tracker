@@ -86,21 +86,29 @@ RUN echo "🔨 Building TypeScript..." && \
 # TypeScript may output to dist/apps/api/src/ when rootDir is inferred from monorepo
 RUN echo "🔍 Verifying build output..." && \
     echo "📁 Checking dist structure..." && \
-    find dist -name "index.js" -type f 2>/dev/null | head -5 && \
+    find dist -name "index.js" -type f 2>/dev/null | head -5 || echo "No index.js found yet" && \
     if [ -f dist/apps/api/src/index.js ]; then \
-      echo "📦 Reorganizing build output (monorepo structure detected)..." && \
+      echo "📦 Reorganizing build output (monorepo structure: dist/apps/api/src/ -> dist/)..." && \
       mkdir -p dist.tmp && \
-      mv dist/apps/api/src/* dist.tmp/ 2>/dev/null || true && \
+      cp -r dist/apps/api/src/* dist.tmp/ && \
       rm -rf dist && \
-      mv dist.tmp dist; \
-    elif [ -d dist/src ]; then \
-      echo "📦 Reorganizing build output (src subdirectory detected)..." && \
-      mv dist/src/* dist/ 2>/dev/null || true && \
-      rmdir dist/src 2>/dev/null || true; \
+      mv dist.tmp dist && \
+      echo "✅ Reorganization complete"; \
+    elif [ -d dist/src ] && [ -f dist/src/index.js ]; then \
+      echo "📦 Reorganizing build output (src subdirectory: dist/src/ -> dist/)..." && \
+      mkdir -p dist.tmp && \
+      cp -r dist/src/* dist.tmp/ && \
+      rm -rf dist && \
+      mv dist.tmp dist && \
+      echo "✅ Reorganization complete"; \
+    else \
+      echo "ℹ️  Using dist structure as-is"; \
     fi && \
+    echo "📁 Final dist structure:" && \
+    ls -la dist/ | head -10 && \
     test -d dist || (echo "❌ dist directory not found" && ls -la . && exit 1) && \
-    test -f dist/index.js || (echo "❌ dist/index.js not found" && echo "📁 dist contents:" && find dist -type f | head -10 && exit 1) && \
-    echo "✅ Build output verified:" && ls -la dist/ | head -10
+    test -f dist/index.js || (echo "❌ dist/index.js not found after reorganization" && echo "📁 dist contents:" && find dist -type f -name "*.js" | head -10 && exit 1) && \
+    echo "✅ Build output verified: dist/index.js exists"
 
 # ===========================================
 # Production Stage
