@@ -67,8 +67,21 @@ RUN test -d node_modules/.pnpm/@prisma+client* && echo "✅ Prisma client genera
 
 # Build API
 WORKDIR /app/apps/api
+# Verify source files exist before building
+RUN echo "🔍 Checking source files..." && \
+    test -d src && echo "✅ Source directory exists" || (echo "❌ Source directory missing" && exit 1) && \
+    test -f src/index.ts && echo "✅ Entry point exists" || (echo "❌ Entry point missing" && exit 1) && \
+    echo "📁 Source files:" && ls -la src/ | head -10
 # Run build - TypeScript should resolve @prisma/client through pnpm workspace
-RUN pnpm build
+# Use explicit tsc command with error checking
+RUN echo "🔨 Building TypeScript..." && \
+    pnpm build 2>&1 | tee /tmp/build.log && \
+    echo "📋 Build log:" && cat /tmp/build.log
+# Verify build output was created
+RUN echo "🔍 Verifying build output..." && \
+    test -d dist || (echo "❌ dist directory not found" && ls -la . && exit 1) && \
+    test -f dist/index.js || (echo "❌ dist/index.js not found" && ls -la dist/ 2>&1 || echo "dist/ does not exist" && exit 1) && \
+    echo "✅ Build output verified:" && ls -la dist/ | head -10
 
 # ===========================================
 # Production Stage

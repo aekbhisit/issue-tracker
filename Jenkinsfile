@@ -193,8 +193,10 @@ pipeline {
                   }
                   echo "✅ Build completed successfully"
                   echo "Verifying image structure..."
-                  docker run --rm ${repo}:${TAG} ls -la /app/apps/api/dist/ || {
-                    echo "⚠️  Warning: Could not verify dist directory structure"
+                  docker run --rm ${repo}:${TAG} sh -c "test -d /app/apps/api/dist && test -f /app/apps/api/dist/index.js && echo '✅ dist/index.js verified' && ls -la /app/apps/api/dist/ | head -10 || (echo '❌ dist/index.js NOT FOUND' && echo 'Current directory structure:' && ls -la /app/apps/api/ && exit 1)" || {
+                    echo "❌ CRITICAL: dist/index.js not found in image!"
+                    echo "Build verification failed - image will not work correctly"
+                    exit 1
                   }
                   echo "📤 Pushing ${image}"
                   for tag in ${TAG} ${gitCommit} latest; do
