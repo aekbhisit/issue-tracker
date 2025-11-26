@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Collector SDK Test - IC-4 Log & Error Capture</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      max-width: 1000px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    .info {
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info h2 {
+      margin-top: 0;
+      color: #0369a1;
+    }
+    .info code {
+      background-color: #e0f2fe;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .test-section {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    button.danger {
+      background-color: #ef4444;
+    }
+    button.danger:hover {
+      background-color: #dc2626;
+    }
+    button.success {
+      background-color: #10b981;
+    }
+    button.success:hover {
+      background-color: #059669;
+    }
+    .log-output {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status.active {
+      background-color: #10b981;
+      color: white;
+    }
+    .status.inactive {
+      background-color: #6b7280;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Issue Collector SDK Test - IC-4 Log & Error Capture</h1>
+  
+  <div class="info">
+    <h2>Setup Instructions</h2>
+    <p>This page tests the Issue Collector SDK with IC-4 Log & Error Capture features. To use it:</p>
+    <ol>
+      <li>Make sure the API server is running on <code>http://localhost:4501</code></li>
+      <li>Create a project in the admin dashboard and copy its <code>publicKey</code></li>
+      <li>Update the <code>data-project-key</code> attribute in the script tag below</li>
+      <li>Reload this page</li>
+    </ol>
+    <p><strong>Note:</strong> The SDK should auto-initialize when the page loads. Check console for "Log and error capture started." message.</p>
+  </div>
+
+  <div class="test-section">
+    <h3>SDK Status</h3>
+    <p>
+      SDK Status: <span id="sdk-status" class="status inactive">Checking...</span>
+      <br>
+      Logging Status: <span id="logging-status" class="status inactive">Unknown</span>
+    </p>
+    <button onclick="checkSDK()">Check SDK</button>
+    <button onclick="testManualInit()">Test Manual Init</button>
+    <button onclick="testDestroy()">Test Destroy</button>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-4: Console Log Generation</h3>
+    <p>Generate console logs to test log capture:</p>
+    <button onclick="generateBasicLogs()">Generate Basic Logs (log/warn/error)</button>
+    <button onclick="generateComplexLogs()">Generate Complex Logs (objects/arrays)</button>
+    <button onclick="generateCircularLogs()">Generate Circular Reference Logs</button>
+    <button onclick="generateManyLogs()">Generate 150 Logs (Test Buffer Limit)</button>
+    <div class="log-output" id="console-log-output">Console logs will appear here...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-4: JavaScript Error Generation</h3>
+    <p>Generate JavaScript errors to test error capture:</p>
+    <button onclick="generateRuntimeError()" class="danger">Generate Runtime Error</button>
+    <button onclick="generatePromiseRejection()" class="danger">Generate Promise Rejection</button>
+    <button onclick="generateMultipleErrors()" class="danger">Generate Multiple Errors</button>
+    <div class="log-output" id="error-output">Errors will appear here...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-4: Network Error Generation</h3>
+    <p>Generate network errors to test network error capture:</p>
+    <button onclick="generate404Error()" class="danger">Generate 404 Error</button>
+    <button onclick="generateNetworkError()" class="danger">Generate Network Error</button>
+    <button onclick="generateSuccessfulRequest()" class="success">Generate Successful Request (Should NOT be captured)</button>
+    <button onclick="generateManyNetworkErrors()" class="danger">Generate 60 Network Errors (Test Buffer Limit)</button>
+    <div class="log-output" id="network-output">Network requests will appear here...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-4: Sensitive Data Redaction Testing</h3>
+    <p>Generate logs with sensitive data to test redaction:</p>
+    <button onclick="generatePasswordLogs()">Generate Password Logs</button>
+    <button onclick="generateTokenLogs()">Generate Token Logs</button>
+    <button onclick="generateAPIKeyLogs()">Generate API Key Logs</button>
+    <button onclick="generateAuthHeaderRequest()" class="danger">Generate Request with Auth Header</button>
+    <div class="log-output" id="redaction-output">Sensitive data logs will appear here...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-4: Log Truncation Testing</h3>
+    <p>Generate long logs to test truncation:</p>
+    <button onclick="generateLongMessage()">Generate Long Message (2000 chars)</button>
+    <button onclick="generateLargeMetadata()">Generate Large Metadata</button>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-3: Screenshot Capture Testing</h3>
+    <p>Use these elements to test screenshot capture:</p>
+    <button id="test-button" style="margin: 10px;">Test Button</button>
+    <div id="test-div" style="width: 200px; height: 100px; background-color: #e0f2fe; padding: 20px; margin: 10px; border-radius: 8px;">
+      Test Div Element
+    </div>
+    <input type="text" id="test-input" placeholder="Test Input" style="margin: 10px; padding: 8px;">
+    <div style="width: 500px; height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 20px 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+      Large Element for Testing
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>Expected Behavior (IC-2 + IC-3 + IC-4)</h3>
+    <ul>
+      <li>A floating "+" button should appear in the bottom-right corner</li>
+      <li>Clicking the button should open a modal with a form</li>
+      <li><strong>IC-3:</strong> A "Capture Screenshot" button should be visible in the form</li>
+      <li><strong>IC-4:</strong> Console logs, errors, and network failures are automatically captured</li>
+      <li><strong>IC-4:</strong> Sensitive data (passwords, tokens, API keys) is redacted</li>
+      <li><strong>IC-4:</strong> Logs are included in issue payload when submitting</li>
+      <li>Filling out and submitting the form should send the issue to the API (with logs and screenshot if captured)</li>
+      <li>On success, the modal should close automatically</li>
+      <li>On error, an error message should be displayed</li>
+    </ul>
+  </div>
+
+  <!-- Issue Collector SDK -->
+  <!-- Replace YOUR_PROJECT_KEY with an actual project key from the admin dashboard -->
+  <script 
+    data-project-key="proj_YeCKPYTJ9Olcp4UQ"
+    data-api-url="http://localhost:4501"
+    src="./collector.min.js">
+  </script>
+
+  <script>
+    // Log output helpers
+    function addToLogOutput(elementId, message, type = 'log') {
+      const output = document.getElementById(elementId);
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
+      output.innerHTML += `<div>[${timestamp}] ${prefix} ${message}</div>`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function checkSDK() {
+      const statusEl = document.getElementById('sdk-status');
+      const loggingEl = document.getElementById('logging-status');
+      
+      if (window.IssueCollector) {
+        statusEl.textContent = '✓ SDK loaded';
+        statusEl.className = 'status active';
+        
+        // Check if logging is active (SDK should have started it)
+        // We can't directly check, but if SDK is loaded, logging should be active
+        loggingEl.textContent = '✓ Active (assumed)';
+        loggingEl.className = 'status active';
+      } else {
+        statusEl.textContent = '✗ SDK not found';
+        statusEl.className = 'status inactive';
+        loggingEl.textContent = '✗ Unknown';
+        loggingEl.className = 'status inactive';
+      }
+    }
+
+    function testManualInit() {
+      const script = document.querySelector('script[data-project-key]');
+      const projectKey = script.getAttribute('data-project-key');
+      const apiUrl = script.getAttribute('data-api-url') || 'http://localhost:4501';
+      
+      if (projectKey === 'YOUR_PROJECT_KEY') {
+        alert('Please update the data-project-key attribute with a real project key');
+        return;
+      }
+
+      if (window.IssueCollector) {
+        window.IssueCollector.destroy();
+        const widget = window.IssueCollector.init({
+          projectKey: projectKey,
+          apiUrl: apiUrl
+        });
+        alert('SDK manually initialized');
+        checkSDK();
+      } else {
+        alert('SDK not loaded');
+      }
+    }
+
+    function testDestroy() {
+      if (window.IssueCollector) {
+        window.IssueCollector.destroy();
+        alert('SDK destroyed. Logging should have stopped.');
+        checkSDK();
+      } else {
+        alert('SDK not loaded');
+      }
+    }
+
+    // Console log generation functions
+    function generateBasicLogs() {
+      console.log('Test log message');
+      console.warn('Test warning message');
+      console.error('Test error message');
+      addToLogOutput('console-log-output', 'Generated 3 console logs (log, warn, error)');
+    }
+
+    function generateComplexLogs() {
+      console.log('Message', { key: 'value' }, [1, 2, 3]);
+      console.log('Object:', { nested: { data: 'test' } });
+      addToLogOutput('console-log-output', 'Generated complex logs with objects and arrays');
+    }
+
+    function generateCircularLogs() {
+      const circularObject = { name: 'test' };
+      circularObject.self = circularObject;
+      console.log(circularObject);
+      addToLogOutput('console-log-output', 'Generated log with circular reference');
+    }
+
+    function generateManyLogs() {
+      addToLogOutput('console-log-output', 'Generating 150 console logs...');
+      for (let i = 0; i < 150; i++) {
+        console.log(`Log message ${i}`);
+      }
+      addToLogOutput('console-log-output', 'Generated 150 logs. Only last 100 should be captured (buffer limit).');
+    }
+
+    // Error generation functions
+    function generateRuntimeError() {
+      try {
+        throw new Error('Test runtime error');
+      } catch (e) {
+        // Re-throw to trigger window.onerror
+        setTimeout(() => { throw e; }, 0);
+      }
+      addToLogOutput('error-output', 'Generated runtime error', 'error');
+    }
+
+    function generatePromiseRejection() {
+      Promise.reject('Test promise rejection');
+      addToLogOutput('error-output', 'Generated unhandled promise rejection', 'error');
+    }
+
+    function generateMultipleErrors() {
+      throw new Error('Error 1');
+      setTimeout(() => { throw new Error('Error 2'); }, 100);
+      setTimeout(() => { throw new Error('Error 3'); }, 200);
+      addToLogOutput('error-output', 'Generated 3 errors', 'error');
+    }
+
+    // Network error generation functions
+    function generate404Error() {
+      fetch('/api/nonexistent')
+        .then(r => r.json())
+        .catch(e => {
+          addToLogOutput('network-output', '404 error generated', 'error');
+        });
+    }
+
+    function generateNetworkError() {
+      fetch('http://invalid-domain-that-does-not-exist-12345.com')
+        .catch(e => {
+          addToLogOutput('network-output', 'Network error generated', 'error');
+        });
+    }
+
+    function generateSuccessfulRequest() {
+      fetch('http://localhost:4501/api/health')
+        .then(r => r.json())
+        .then(data => {
+          addToLogOutput('network-output', 'Successful request (should NOT be captured)', 'log');
+        })
+        .catch(e => {
+          addToLogOutput('network-output', 'Request failed: ' + e.message, 'error');
+        });
+    }
+
+    function generateManyNetworkErrors() {
+      addToLogOutput('network-output', 'Generating 60 network errors...');
+      for (let i = 0; i < 60; i++) {
+        fetch(`/api/nonexistent-${i}`).catch(() => {});
+      }
+      addToLogOutput('network-output', 'Generated 60 network errors. Only last 50 should be captured (buffer limit).');
+    }
+
+    // Sensitive data generation functions
+    function generatePasswordLogs() {
+      console.log('password=secret123');
+      console.log('Password: secret123');
+      console.log('user_password=abc123');
+      addToLogOutput('redaction-output', 'Generated logs with passwords (should be redacted)');
+    }
+
+    function generateTokenLogs() {
+      console.log('token=abc123xyz');
+      console.log('Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+      console.log('api_token=secret-token-123');
+      addToLogOutput('redaction-output', 'Generated logs with tokens (should be redacted)');
+    }
+
+    function generateAPIKeyLogs() {
+      console.log('api_key=sk_live_1234567890');
+      console.log('api-key=secret-key');
+      console.log('API_KEY=ABC123XYZ');
+      addToLogOutput('redaction-output', 'Generated logs with API keys (should be redacted)');
+    }
+
+    function generateAuthHeaderRequest() {
+      fetch('/api/test', {
+        headers: { 'Authorization': 'Bearer secret-token-123' }
+      }).catch(() => {
+        addToLogOutput('redaction-output', 'Generated request with Authorization header (should be redacted)', 'error');
+      });
+    }
+
+    // Truncation testing functions
+    function generateLongMessage() {
+      const longMessage = 'A'.repeat(2000);
+      console.log(longMessage);
+      addToLogOutput('console-log-output', 'Generated 2000-character message (should be truncated to 1000 chars)');
+    }
+
+    function generateLargeMetadata() {
+      console.log('Test', { data: 'X'.repeat(1000) });
+      addToLogOutput('console-log-output', 'Generated log with large metadata (should be truncated to 500 chars per item)');
+    }
+
+    // Check SDK on load
+    window.addEventListener('load', () => {
+      setTimeout(checkSDK, 1000);
+      
+      // Clear log outputs
+      document.getElementById('console-log-output').innerHTML = 'Console logs will appear here...';
+      document.getElementById('error-output').innerHTML = 'Errors will appear here...';
+      document.getElementById('network-output').innerHTML = 'Network requests will appear here...';
+      document.getElementById('redaction-output').innerHTML = 'Sensitive data logs will appear here...';
+    });
+  </script>
+</body>
+</html>
+

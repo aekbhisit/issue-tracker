@@ -1,0 +1,28 @@
+{
+  "requireAdmin": true,
+  "rootDirectory": "uploads",
+  "previewBasePath": "/storage/uploads",
+  "maxUploadFileSizeMB": 50,
+  "allowedMimeTypes": [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "video/mp4",
+    "video/webm",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ],
+  "gridHeight": 500,
+  "features": {
+    "upload": true,
+    "rename": true,
+    "delete": true,
+    "folders": true,
+    "search": true,
+    "preview": true,
+    "multiSelect": true
+  }
+}
+

@@ -1,0 +1,7 @@
+{
+  "languages": [
+    { "code": "th", "name": "ไทย", "default": true },
+    { "code": "en", "name": "English", "default": false }
+  ]
+}
+

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Collector SDK Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    .info {
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info h2 {
+      margin-top: 0;
+      color: #0369a1;
+    }
+    .info code {
+      background-color: #e0f2fe;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .test-section {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Issue Collector SDK Test Page</h1>
+  
+  <div class="info">
+    <h2>Setup Instructions</h2>
+    <p>This page tests the Issue Collector SDK. To use it:</p>
+    <ol>
+      <li>Make sure the API server is running on <code>http://localhost:4501</code></li>
+      <li>Create a project in the admin dashboard and copy its <code>publicKey</code></li>
+      <li>Update the <code>data-project-key</code> attribute in the script tag below</li>
+      <li>Reload this page</li>
+    </ol>
+    <p><strong>Note:</strong> The SDK should auto-initialize when the page loads.</p>
+  </div>
+
+  <div class="test-section">
+    <h3>SDK Status</h3>
+    <p id="sdk-status">Checking...</p>
+    <button onclick="checkSDK()">Check SDK</button>
+    <button onclick="testManualInit()">Test Manual Init</button>
+    <button onclick="testDestroy()">Test Destroy</button>
+  </div>
+
+  <div class="test-section">
+    <h3>User Info Test</h3>
+    <p>You can set user info globally to test user info collection:</p>
+    <pre><code>window.issueCollectorUser = {
+  id: 'test-user-123',
+  email: 'test@example.com',
+  name: 'Test User'
+}</code></pre>
+    <button onclick="setUserInfo()">Set User Info</button>
+    <button onclick="clearUserInfo()">Clear User Info</button>
+  </div>
+
+  <div class="test-section">
+    <h3>Expected Behavior (IC-2 + IC-3)</h3>
+    <ul>
+      <li>A floating "+" button should appear in the bottom-right corner</li>
+      <li>Clicking the button should open a modal with a form</li>
+      <li><strong>IC-3:</strong> A "Capture Screenshot" button should be visible in the form</li>
+      <li><strong>IC-3:</strong> Clicking "Capture Screenshot" activates inspect mode with hover highlighting</li>
+      <li><strong>IC-3:</strong> Clicking an element captures a screenshot and shows preview</li>
+      <li><strong>IC-3:</strong> Preview modal shows screenshot, CSS selector, XPath, bounding box, and HTML</li>
+      <li>Filling out and submitting the form should send the issue to the API (with screenshot if captured)</li>
+      <li>On success, the modal should close automatically</li>
+      <li>On error, an error message should be displayed</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h3>IC-3 Test Elements</h3>
+    <p>Use these elements to test screenshot capture:</p>
+    <button id="test-button" style="margin: 10px;">Test Button</button>
+    <div id="test-div" style="width: 200px; height: 100px; background-color: #e0f2fe; padding: 20px; margin: 10px; border-radius: 8px;">
+      Test Div Element
+    </div>
+    <input type="text" id="test-input" placeholder="Test Input" style="margin: 10px; padding: 8px;">
+    <div style="width: 500px; height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 20px 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+      Large Element for Testing
+    </div>
+  </div>
+
+  <!-- Issue Collector SDK -->
+  <!-- Replace YOUR_PROJECT_KEY with an actual project key from the admin dashboard -->
+  <script 
+    data-project-key="YOUR_PROJECT_KEY"
+    data-api-url="http://localhost:4501"
+    src="../dist/collector.min.js">
+  </script>
+
+  <script>
+    function checkSDK() {
+      const statusEl = document.getElementById('sdk-status');
+      if (window.IssueCollector) {
+        statusEl.textContent = '✓ SDK loaded successfully';
+        statusEl.style.color = 'green';
+      } else {
+        statusEl.textContent = '✗ SDK not found';
+        statusEl.style.color = 'red';
+      }
+    }
+
+    function testManualInit() {
+      const script = document.querySelector('script[data-project-key]');
+      const projectKey = script.getAttribute('data-project-key');
+      const apiUrl = script.getAttribute('data-api-url') || 'http://localhost:4501';
+      
+      if (projectKey === 'YOUR_PROJECT_KEY') {
+        alert('Please update the data-project-key attribute with a real project key');
+        return;
+      }
+
+      if (window.IssueCollector) {
+        window.IssueCollector.destroy();
+        const widget = window.IssueCollector.init({
+          projectKey: projectKey,
+          apiUrl: apiUrl
+        });
+        alert('SDK manually initialized');
+      } else {
+        alert('SDK not loaded');
+      }
+    }
+
+    function testDestroy() {
+      if (window.IssueCollector) {
+        window.IssueCollector.destroy();
+        alert('SDK destroyed');
+      } else {
+        alert('SDK not loaded');
+      }
+    }
+
+    function setUserInfo() {
+      window.issueCollectorUser = {
+        id: 'test-user-123',
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+      alert('User info set. Reload the page for it to take effect.');
+    }
+
+    function clearUserInfo() {
+      delete window.issueCollectorUser;
+      alert('User info cleared. Reload the page for it to take effect.');
+    }
+
+    // Check SDK on load
+    window.addEventListener('load', () => {
+      setTimeout(checkSDK, 1000);
+    });
+  </script>
+</body>
+</html>
+
