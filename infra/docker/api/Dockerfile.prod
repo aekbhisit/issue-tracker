@@ -133,11 +133,14 @@ WORKDIR /app/apps/api
 # but we're running from /app/apps/api
 ENV NODE_PATH=/app/node_modules
 
-# Verify node_modules and dotenv exist before switching user
+# Verify node_modules and dotenv can be resolved (pnpm uses symlinks, so check via Node.js resolution)
 RUN echo "🔍 Verifying dependencies..." && \
     test -d /app/node_modules || (echo "❌ /app/node_modules not found" && ls -la /app/ && exit 1) && \
-    test -d /app/node_modules/dotenv || (echo "❌ dotenv not found in node_modules" && echo "📁 node_modules contents:" && ls -la /app/node_modules/ | head -20 && exit 1) && \
-    echo "✅ Dependencies verified: dotenv found at /app/node_modules/dotenv"
+    echo "📁 Checking node_modules structure..." && \
+    ls -la /app/node_modules/ | head -10 && \
+    echo "🔍 Verifying dotenv can be resolved..." && \
+    NODE_PATH=/app/node_modules node -e "require.resolve('dotenv')" && \
+    echo "✅ Dependencies verified: dotenv can be resolved via NODE_PATH"
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
