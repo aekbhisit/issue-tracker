@@ -105,12 +105,12 @@ pipeline {
                   echo "Build context: \$(pwd)"
                   echo "Image tag: ${imageTag}"
                   echo "Checking Dockerfile..."
-                  if [ ! -f infra/docker/postgres/Dockerfile.prod ]; then
+                  if test ! -f infra/docker/postgres/Dockerfile.prod; then
                     echo "❌ Dockerfile.prod not found!"
                     exit 1
                   fi
                   echo "Checking init scripts directory..."
-                  if [ ! -d infra/docker/postgres/initdb ]; then
+                  if test ! -d infra/docker/postgres/initdb; then
                     echo "❌ Init scripts directory not found!"
                     exit 1
                   fi
@@ -155,34 +155,34 @@ pipeline {
                   echo "Build context: \$(pwd)"
                   echo "Git commit: ${gitCommit}"
                   echo "Checking lockfile..."
-                  if [ ! -f pnpm-lock.yaml ]; then
+                  if test ! -f pnpm-lock.yaml; then
                     echo "❌ pnpm-lock.yaml not found!"
                     exit 1
                   fi
                   echo "Verifying package.json..."
-                  if [ ! -f apps/api/package.json ]; then
+                  if test ! -f apps/api/package.json; then
                     echo "❌ apps/api/package.json not found!"
                     exit 1
                   fi
                   echo "Checking Dockerfile..."
-                  if [ ! -f infra/docker/api/Dockerfile.prod ]; then
+                  if test ! -f infra/docker/api/Dockerfile.prod; then
                     echo "❌ infra/docker/api/Dockerfile.prod not found!"
                     exit 1
                   fi
                   echo "Verifying required directories..."
-                  if [ ! -d apps/api/src ]; then
+                  if test ! -d apps/api/src; then
                     echo "❌ apps/api/src directory not found!"
                     exit 1
                   fi
-                  if [ ! -d infra/database ]; then
+                  if test ! -d infra/database; then
                     echo "❌ infra/database directory not found!"
                     exit 1
                   fi
-                  if [ ! -f infra/database/scripts/merge-schema.js ]; then
+                  if test ! -f infra/database/scripts/merge-schema.js; then
                     echo "❌ infra/database/scripts/merge-schema.js not found!"
                     exit 1
                   fi
-                  if [ ! -d infra/database/prisma/schema ]; then
+                  if test ! -d infra/database/prisma/schema; then
                     echo "❌ infra/database/prisma/schema directory not found!"
                     exit 1
                   fi
@@ -209,7 +209,7 @@ pipeline {
                     }
                     echo "✅ Successfully pushed ${repo}:\$tag"
                   done
-                '''
+                """
               }
             }
           }
@@ -242,16 +242,16 @@ pipeline {
                   echo "Git commit: ${gitCommit}"
                   echo "Build args: ${buildArgs}"
                   echo "Checking Dockerfile..."
-                  if [ ! -f infra/docker/admin/Dockerfile.prod ]; then
+                  if test ! -f infra/docker/admin/Dockerfile.prod; then
                     echo "❌ infra/docker/admin/Dockerfile.prod not found!"
                     exit 1
                   fi
                   echo "Verifying required directories..."
-                  if [ ! -d apps/admin ]; then
+                  if test ! -d apps/admin; then
                     echo "❌ apps/admin directory not found!"
                     exit 1
                   fi
-                  if [ ! -d apps/collector-sdk ]; then
+                  if test ! -d apps/collector-sdk; then
                     echo "❌ apps/collector-sdk directory not found!"
                     exit 1
                   fi
@@ -307,12 +307,12 @@ pipeline {
                   echo "Git commit: ${gitCommit}"
                   echo "Build args: ${buildArgs}"
                   echo "Checking Dockerfile..."
-                  if [ ! -f infra/docker/frontend/Dockerfile.prod ]; then
+                  if test ! -f infra/docker/frontend/Dockerfile.prod; then
                     echo "❌ infra/docker/frontend/Dockerfile.prod not found!"
                     exit 1
                   fi
                   echo "Verifying required directories..."
-                  if [ ! -d apps/frontend ]; then
+                  if test ! -d apps/frontend; then
                     echo "❌ apps/frontend directory not found!"
                     exit 1
                   fi
