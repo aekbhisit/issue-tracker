@@ -47,8 +47,14 @@ COPY apps/collector-sdk ./apps/collector-sdk
 RUN pnpm install --frozen-lockfile
 
 # Build shared workspace packages needed by Admin (CommonJS dist for Node/Next resolution)
-RUN pnpm --filter "@workspace/types" build && \
-    pnpm --filter "@workspace/utils" build
+RUN echo "🔨 Building workspace packages..." && \
+    pnpm --filter "@workspace/types" build && \
+    pnpm --filter "@workspace/utils" build && \
+    echo "✅ Workspace packages built" && \
+    echo "📁 Verifying dist folders..." && \
+    test -d packages/types/dist || (echo "❌ packages/types/dist not found" && exit 1) && \
+    test -d packages/utils/dist || (echo "❌ packages/utils/dist not found" && exit 1) && \
+    echo "✅ Dist folders verified"
 
 # Build Collector SDK
 WORKDIR /app/apps/collector-sdk
@@ -71,6 +77,10 @@ FROM base AS production
 # Build stage has all dependencies including Next.js
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=dependencies /app/packages ./packages
+
+# Copy compiled workspace package dist folders (needed at runtime)
+COPY --from=build /app/packages/types/dist ./packages/types/dist
+COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 
 # Copy built application to correct location
 COPY --from=build /app/apps/admin/.next ./apps/admin/.next
