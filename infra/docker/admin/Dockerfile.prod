@@ -47,14 +47,26 @@ COPY apps/collector-sdk ./apps/collector-sdk
 RUN pnpm install --frozen-lockfile
 
 # Build shared workspace packages needed by Admin (CommonJS dist for Node/Next resolution)
+# Build each package explicitly from its directory to ensure dist is created in the right place
+WORKDIR /app
 RUN echo "🔨 Building workspace packages..." && \
-    pnpm --filter "@workspace/types" build && \
-    pnpm --filter "@workspace/utils" build && \
+    echo "📁 Building @workspace/types..." && \
+    cd packages/types && \
+    pnpm build && \
+    echo "📁 Types build complete, checking dist:" && \
+    ls -la dist/ 2>&1 | head -5 || echo "⚠️  dist not found in packages/types" && \
+    cd /app && \
+    echo "📁 Building @workspace/utils..." && \
+    cd packages/utils && \
+    pnpm build && \
+    echo "📁 Utils build complete, checking dist:" && \
+    ls -la dist/ 2>&1 | head -5 || echo "⚠️  dist not found in packages/utils" && \
+    cd /app && \
     echo "✅ Workspace packages built" && \
-    echo "📁 Verifying dist folders..." && \
-    test -d packages/types/dist || (echo "❌ packages/types/dist not found" && exit 1) && \
-    test -d packages/utils/dist || (echo "❌ packages/utils/dist not found" && exit 1) && \
-    echo "✅ Dist folders verified"
+    echo "📁 Verifying dist folders from /app..." && \
+    test -d packages/types/dist || (echo "❌ packages/types/dist not found" && ls -la packages/types/ && exit 1) && \
+    test -d packages/utils/dist || (echo "❌ packages/utils/dist not found" && ls -la packages/utils/ && exit 1) && \
+    echo "✅ Dist folders verified: packages/types/dist and packages/utils/dist exist"
 
 # Build Collector SDK
 WORKDIR /app/apps/collector-sdk
