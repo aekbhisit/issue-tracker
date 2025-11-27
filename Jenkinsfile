@@ -146,6 +146,8 @@ pipeline {
               def image = 'issue-collector-api'
               def repo  = "${HARBOR_URL}/${HARBOR_PROJECT}/${image}"
               def gitCommit = env.GIT_COMMIT_SHORT ?: 'unknown'
+              // Optional: disable Docker layer cache when DOCKER_NO_CACHE=1 is set in Jenkins env
+              def noCacheFlag = (env.DOCKER_NO_CACHE ?: '') == '1' ? '--no-cache' : ''
               docker.withRegistry("https://${HARBOR_URL}", HARBOR_CRED) {
                 sh """
                   set -eu
@@ -185,13 +187,8 @@ pipeline {
                     exit 1
                   fi
                   echo "✅ All required files and directories found"
-                  NO_CACHE_FLAG=""
-                  if [ "${DOCKER_NO_CACHE:-}" = "1" ]; then
-                    echo "⚠️  Docker layer cache disabled for this build"
-                    NO_CACHE_FLAG="--no-cache"
-                  fi
                   # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull ${NO_CACHE_FLAG} -f infra/docker/api/Dockerfile.prod \\
+                  DOCKER_BUILDKIT=0 docker build --pull ${noCacheFlag} -f infra/docker/api/Dockerfile.prod \\
                     -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
                     echo "❌ Docker build failed"
                     exit 1
