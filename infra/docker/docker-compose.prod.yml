@@ -104,6 +104,10 @@ services:
       NODE_ENV: production
       API_PORT: 3410
       API_HOST: 0.0.0.0
+      # Set NODE_PATH to allow Node.js to resolve modules from workspace root
+      # This is needed because pnpm hoists dependencies to /app/node_modules
+      # but we're running from /app/apps/api
+      NODE_PATH: /app/node_modules
       # Set SKIP_VALIDATION=1 to allow container to start without required env vars (for initial testing only)
       SKIP_VALIDATION: ${SKIP_VALIDATION:-}
 
@@ -179,7 +183,8 @@ services:
     # Note: Explicitly cd to /app/apps/api and verify path before running
     # IMPORTANT: Make sure Docker image is rebuilt with latest Dockerfile.prod
     # For permanent fix: Rebuild Harbor images with updated Dockerfile that creates /app/logs with proper permissions
-    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && cd /app/apps/api && ls -la dist/ && exec node dist/index.js"]
+    # Verify NODE_PATH and node_modules before starting
+    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && echo '🔍 Debugging module resolution...' && echo 'NODE_PATH='$NODE_PATH && echo 'Checking /app/node_modules:' && ls -la /app/node_modules/ 2>&1 | head -10 || echo 'No /app/node_modules' && echo 'Checking for dotenv:' && test -d /app/node_modules/dotenv && echo '✅ dotenv found' || echo '❌ dotenv NOT found' && echo 'Current directory:' && pwd && cd /app/apps/api && echo 'In /app/apps/api, checking dist:' && ls -la dist/ && echo 'Starting application...' && exec node dist/index.js"]
 
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:

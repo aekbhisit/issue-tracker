@@ -133,6 +133,12 @@ WORKDIR /app/apps/api
 # but we're running from /app/apps/api
 ENV NODE_PATH=/app/node_modules
 
+# Verify node_modules and dotenv exist before switching user
+RUN echo "🔍 Verifying dependencies..." && \
+    test -d /app/node_modules || (echo "❌ /app/node_modules not found" && ls -la /app/ && exit 1) && \
+    test -d /app/node_modules/dotenv || (echo "❌ dotenv not found in node_modules" && echo "📁 node_modules contents:" && ls -la /app/node_modules/ | head -20 && exit 1) && \
+    echo "✅ Dependencies verified: dotenv found at /app/node_modules/dotenv"
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
