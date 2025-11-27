@@ -140,24 +140,57 @@ WORKDIR /app/apps/api
 # Include both root and app-specific node_modules in case pnpm doesn't hoist
 ENV NODE_PATH=/app/node_modules:/app/apps/api/node_modules
 
-# Verify node_modules and dotenv can be resolved
-# pnpm typically installs app-specific dependencies in apps/api/node_modules (not hoisted)
-RUN echo "🔍 Verifying dependencies..." && \
-    test -d /app/node_modules || (echo "❌ /app/node_modules not found" && ls -la /app/ && exit 1) && \
-    echo "📁 Checking for dotenv in apps/api/node_modules (most likely location)..." && \
-    (test -d /app/apps/api/node_modules/dotenv || test -L /app/apps/api/node_modules/dotenv) && \
-    echo "✅ dotenv found in apps/api/node_modules" || \
-    (echo "⚠️  Checking root node_modules..." && \
-     (test -d /app/node_modules/dotenv || test -L /app/node_modules/dotenv) && \
-     echo "✅ dotenv found in root node_modules" || \
-     (echo "❌ dotenv not found! Checking pnpm store..." && \
-      find /app/node_modules/.pnpm -type d -name "dotenv*" 2>/dev/null | head -5 || echo "No dotenv in .pnpm" && \
-      echo "📋 Verifying pnpm installed API dependencies..." && \
-      ls -la /app/apps/api/node_modules/ 2>/dev/null | head -10 || echo "apps/api/node_modules does not exist" && \
-      exit 1)) && \
-    echo "🔍 Verifying dotenv can be resolved via NODE_PATH..." && \
-    (cd /app && NODE_PATH=/app/node_modules:/app/apps/api/node_modules node -e "const path = require.resolve('dotenv'); console.log('✅ dotenv resolved:', path)") && \
-    echo "✅ Dependencies verified: dotenv can be resolved"
+# Verify node_modules and ensure dotenv can be resolved
+# pnpm may keep dotenv inside the store without creating symlinks, so create them if needed
+RUN <<'EOF'
+set -e
+echo "🔍 Verifying dependencies..."
+
+if [ ! -d /app/node_modules ]; then
+  echo "❌ /app/node_modules not found"
+  ls -la /app/
+  exit 1
+fi
+
+mkdir -p /app/apps/api/node_modules
+
+if [ ! -e /app/apps/api/node_modules/dotenv ]; then
+  echo "⚠️  dotenv not found in apps/api/node_modules, searching pnpm store..."
+  DOTENV_STORE_PATH=$(find /app/node_modules/.pnpm -maxdepth 3 -type d -path "*/node_modules/dotenv" 2>/dev/null | head -1 || true)
+  if [ -n "${DOTENV_STORE_PATH:-}" ]; then
+    echo "⚠️  Creating symlink: /app/apps/api/node_modules/dotenv -> ${DOTENV_STORE_PATH}"
+    ln -sf "${DOTENV_STORE_PATH}" /app/apps/api/node_modules/dotenv
+  else
+    echo "❌ dotenv not found in pnpm store"
+    find /app/node_modules/.pnpm -type d -maxdepth 3 -name "dotenv*" 2>/dev/null || true
+    exit 1
+  fi
+else
+  echo "✅ dotenv already present in apps/api/node_modules"
+fi
+
+if [ ! -e /app/node_modules/dotenv ]; then
+  DOTENV_TARGET=$(readlink -f /app/apps/api/node_modules/dotenv 2>/dev/null || true)
+  if [ -n "${DOTENV_TARGET:-}" ]; then
+    echo "⚠️  Creating symlink: /app/node_modules/dotenv -> ${DOTENV_TARGET}"
+    ln -sf "${DOTENV_TARGET}" /app/node_modules/dotenv
+  fi
+fi
+
+if [ ! -e /app/apps/api/node_modules/dotenv ]; then
+  echo "❌ dotenv is still missing after attempting to create symlink"
+  ls -la /app/apps/api/node_modules/ 2>/dev/null || true
+  exit 1
+fi
+
+echo "📁 apps/api/node_modules snapshot:"
+ls -la /app/apps/api/node_modules | head -10
+
+echo "🔍 Verifying dotenv can be resolved via NODE_PATH..."
+cd /app
+NODE_PATH=/app/node_modules:/app/apps/api/node_modules node -e "const path = require.resolve('dotenv'); console.log('✅ dotenv resolved:', path)"
+echo "✅ Dependencies verified: dotenv can be resolved"
+EOF
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
