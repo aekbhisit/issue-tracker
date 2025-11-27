@@ -22,11 +22,17 @@ COPY packages ./packages
 # Copy infra directory (contains database package)
 COPY infra ./infra
 
-# Copy API app package.json
+# Create apps/api directory and copy package.json (needed for workspace dependency resolution)
+# pnpm requires the directory structure to exist to recognize workspace packages
+RUN mkdir -p apps/api
 COPY apps/api/package.json ./apps/api/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies for all workspace packages
+# pnpm will install dependencies for all packages listed in pnpm-workspace.yaml
+# Using --filter ensures API dependencies are installed
+RUN echo "📦 Installing production dependencies..." && \
+    pnpm install --frozen-lockfile --prod --filter "api" --filter "@workspace/*" && \
+    echo "✅ Dependencies installed"
 
 # Generate Prisma client (needed at runtime)
 # Prisma CLI is installed globally in base image
@@ -131,16 +137,27 @@ WORKDIR /app/apps/api
 # Set NODE_PATH to allow Node.js to resolve modules from workspace root
 # This is needed because pnpm hoists dependencies to /app/node_modules
 # but we're running from /app/apps/api
-ENV NODE_PATH=/app/node_modules
+# Include both root and app-specific node_modules in case pnpm doesn't hoist
+ENV NODE_PATH=/app/node_modules:/app/apps/api/node_modules
 
-# Verify node_modules and dotenv can be resolved (pnpm uses symlinks, so check via Node.js resolution)
+# Verify node_modules and dotenv can be resolved
+# pnpm typically installs app-specific dependencies in apps/api/node_modules (not hoisted)
 RUN echo "🔍 Verifying dependencies..." && \
     test -d /app/node_modules || (echo "❌ /app/node_modules not found" && ls -la /app/ && exit 1) && \
-    echo "📁 Checking node_modules structure..." && \
-    ls -la /app/node_modules/ | head -10 && \
-    echo "🔍 Verifying dotenv can be resolved..." && \
-    NODE_PATH=/app/node_modules node -e "require.resolve('dotenv')" && \
-    echo "✅ Dependencies verified: dotenv can be resolved via NODE_PATH"
+    echo "📁 Checking for dotenv in apps/api/node_modules (most likely location)..." && \
+    (test -d /app/apps/api/node_modules/dotenv || test -L /app/apps/api/node_modules/dotenv) && \
+    echo "✅ dotenv found in apps/api/node_modules" || \
+    (echo "⚠️  Checking root node_modules..." && \
+     (test -d /app/node_modules/dotenv || test -L /app/node_modules/dotenv) && \
+     echo "✅ dotenv found in root node_modules" || \
+     (echo "❌ dotenv not found! Checking pnpm store..." && \
+      find /app/node_modules/.pnpm -type d -name "dotenv*" 2>/dev/null | head -5 || echo "No dotenv in .pnpm" && \
+      echo "📋 Verifying pnpm installed API dependencies..." && \
+      ls -la /app/apps/api/node_modules/ 2>/dev/null | head -10 || echo "apps/api/node_modules does not exist" && \
+      exit 1)) && \
+    echo "🔍 Verifying dotenv can be resolved via NODE_PATH..." && \
+    (cd /app && NODE_PATH=/app/node_modules:/app/apps/api/node_modules node -e "const path = require.resolve('dotenv'); console.log('✅ dotenv resolved:', path)") && \
+    echo "✅ Dependencies verified: dotenv can be resolved"
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
