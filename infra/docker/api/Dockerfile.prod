@@ -130,6 +130,8 @@ COPY --from=dependencies /app/infra ./infra
 # Copy built application
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/package.json ./apps/api/
+# Copy app-specific node_modules with symlinks pointing to workspace store
+COPY --from=dependencies /app/apps/api/node_modules ./apps/api/node_modules
 
 # Set working directory to API
 WORKDIR /app/apps/api
