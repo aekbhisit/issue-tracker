@@ -72,12 +72,28 @@ RUN cd infra/database && \
 RUN test -d node_modules/.pnpm/@prisma+client* && echo "✅ Prisma client generated" || echo "⚠️  Prisma client location check skipped"
 
 # Build shared workspace packages to emit CommonJS output for runtime
-RUN pnpm --filter "@workspace/database" build && \
-    pnpm --filter "@workspace/types" build && \
-    pnpm --filter "@workspace/utils" build && \
-    echo "📁 infra/database/dist contents:" && ls -la infra/database/dist | head -10 && \
-    echo "📁 packages/types/dist contents:" && ls -la packages/types/dist | head -10 && \
-    echo "📁 packages/utils/dist contents:" && ls -la packages/utils/dist | head -10
+# Use subshells to isolate directory changes and ensure we're back at /app after each build
+RUN echo "🔨 Building workspace packages..." && \
+    (cd /app/infra/database && \
+     echo "📁 Building @workspace/database from $(pwd)..." && \
+     npx tsc --project tsconfig.json && \
+     test -d dist || (echo "❌ dist not found in infra/database" && exit 1)) && \
+    (cd /app/packages/types && \
+     echo "📁 Building @workspace/types from $(pwd)..." && \
+     npx tsc --project tsconfig.json && \
+     test -d dist || (echo "❌ dist not found in packages/types" && ls -la . && exit 1)) && \
+    (cd /app/packages/utils && \
+     echo "📁 Building @workspace/utils from $(pwd)..." && \
+     npx tsc --project tsconfig.json && \
+     test -d dist || (echo "❌ dist not found in packages/utils" && ls -la . && exit 1)) && \
+    echo "✅ Workspace packages built" && \
+    echo "📁 Verifying dist folders from /app..." && \
+    test -d /app/infra/database/dist || (echo "❌ /app/infra/database/dist not found" && exit 1) && \
+    test -d /app/packages/types/dist || (echo "❌ /app/packages/types/dist not found" && exit 1) && \
+    test -d /app/packages/utils/dist || (echo "❌ /app/packages/utils/dist not found" && exit 1) && \
+    echo "📁 infra/database/dist contents:" && ls -la /app/infra/database/dist | head -10 && \
+    echo "📁 packages/types/dist contents:" && ls -la /app/packages/types/dist | head -10 && \
+    echo "📁 packages/utils/dist contents:" && ls -la /app/packages/utils/dist | head -10
 
 # Build API
 WORKDIR /app/apps/api

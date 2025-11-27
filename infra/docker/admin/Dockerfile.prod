@@ -47,25 +47,23 @@ COPY apps/collector-sdk ./apps/collector-sdk
 RUN pnpm install --frozen-lockfile
 
 # Build shared workspace packages needed by Admin (CommonJS dist for Node/Next resolution)
-# Build each package explicitly from its directory to ensure dist is created in the right place
+# Use subshells to isolate directory changes and ensure we're back at /app after each build
 WORKDIR /app
 RUN echo "🔨 Building workspace packages..." && \
-    echo "📁 Building @workspace/types..." && \
-    cd packages/types && \
-    pnpm build && \
-    echo "📁 Types build complete, checking dist:" && \
-    ls -la dist/ 2>&1 | head -5 || echo "⚠️  dist not found in packages/types" && \
-    cd /app && \
-    echo "📁 Building @workspace/utils..." && \
-    cd packages/utils && \
-    pnpm build && \
-    echo "📁 Utils build complete, checking dist:" && \
-    ls -la dist/ 2>&1 | head -5 || echo "⚠️  dist not found in packages/utils" && \
-    cd /app && \
+    (cd /app/packages/types && \
+     echo "📁 Building @workspace/types from $(pwd)..." && \
+     npx tsc --project tsconfig.json && \
+     echo "📁 Types build complete, checking dist:" && \
+     test -d dist && ls -la dist/ | head -5 || (echo "❌ dist not found in packages/types" && ls -la . && exit 1)) && \
+    (cd /app/packages/utils && \
+     echo "📁 Building @workspace/utils from $(pwd)..." && \
+     npx tsc --project tsconfig.json && \
+     echo "📁 Utils build complete, checking dist:" && \
+     test -d dist && ls -la dist/ | head -5 || (echo "❌ dist not found in packages/utils" && ls -la . && exit 1)) && \
     echo "✅ Workspace packages built" && \
     echo "📁 Verifying dist folders from /app..." && \
-    test -d packages/types/dist || (echo "❌ packages/types/dist not found" && ls -la packages/types/ && exit 1) && \
-    test -d packages/utils/dist || (echo "❌ packages/utils/dist not found" && ls -la packages/utils/ && exit 1) && \
+    test -d /app/packages/types/dist || (echo "❌ /app/packages/types/dist not found" && find /app -name "dist" -type d 2>/dev/null | head -10 && exit 1) && \
+    test -d /app/packages/utils/dist || (echo "❌ /app/packages/utils/dist not found" && find /app -name "dist" -type d 2>/dev/null | head -10 && exit 1) && \
     echo "✅ Dist folders verified: packages/types/dist and packages/utils/dist exist"
 
 # Build Collector SDK
