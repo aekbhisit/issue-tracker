@@ -97,18 +97,20 @@ RUN echo "🔨 Building TypeScript..." && \
     echo "✅ TypeScript build completed successfully" || \
     (echo "❌ TypeScript build failed!" && echo "📋 Build log:" && cat /tmp/build.log && exit 1)
 # Verify build output was created and reorganize if needed
-# TypeScript may output to dist/apps/api/src/ when rootDir is inferred from monorepo
+# Note: rootDir cannot be set in tsconfig.json due to workspace package imports,
+# so TypeScript may output to dist/apps/api/src/ when rootDir is inferred from monorepo.
+# We handle this by reorganizing the output structure.
 RUN echo "🔍 Verifying build output..." && \
     echo "📁 Checking dist structure..." && \
     find dist -name "index.js" -type f 2>/dev/null | head -5 || echo "No index.js found yet" && \
-    if [ -f dist/apps/api/src/index.js ]; then \
+    if test -f dist/apps/api/src/index.js; then \
       echo "📦 Reorganizing build output (monorepo structure: dist/apps/api/src/ -> dist/)..." && \
       mkdir -p dist.tmp && \
       cp -r dist/apps/api/src/* dist.tmp/ && \
       rm -rf dist && \
       mv dist.tmp dist && \
       echo "✅ Reorganization complete"; \
-    elif [ -d dist/src ] && [ -f dist/src/index.js ]; then \
+    elif test -d dist/src && test -f dist/src/index.js; then \
       echo "📦 Reorganizing build output (src subdirectory: dist/src/ -> dist/)..." && \
       mkdir -p dist.tmp && \
       cp -r dist/src/* dist.tmp/ && \
