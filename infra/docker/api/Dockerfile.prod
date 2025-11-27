@@ -71,6 +71,14 @@ RUN cd infra/database && \
 # Verify Prisma client was generated
 RUN test -d node_modules/.pnpm/@prisma+client* && echo "✅ Prisma client generated" || echo "⚠️  Prisma client location check skipped"
 
+# Build shared workspace packages to emit CommonJS output for runtime
+RUN pnpm --filter "@workspace/database" build && \
+    pnpm --filter "@workspace/types" build && \
+    pnpm --filter "@workspace/utils" build && \
+    echo "📁 infra/database/dist contents:" && ls -la infra/database/dist | head -10 && \
+    echo "📁 packages/types/dist contents:" && ls -la packages/types/dist | head -10 && \
+    echo "📁 packages/utils/dist contents:" && ls -la packages/utils/dist | head -10
+
 # Build API
 WORKDIR /app/apps/api
 # Verify source files exist before building
@@ -116,6 +124,12 @@ RUN echo "🔍 Verifying build output..." && \
     test -f dist/index.js || (echo "❌ dist/index.js not found after reorganization" && echo "📁 dist contents:" && find dist -type f -name "*.js" | head -10 && exit 1) && \
     echo "✅ Build output verified: dist/index.js exists"
 
+# Copy plain JavaScript config files that are required at runtime but not emitted by TypeScript
+RUN test -f src/shared/storage.config.js && \
+    mkdir -p dist/shared && \
+    cp src/shared/storage.config.js dist/shared/storage.config.js && \
+    echo "✅ Copied shared/storage.config.js into dist"
+
 # ===========================================
 # Production Stage
 # ===========================================
@@ -126,6 +140,13 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/packages ./packages
 # Copy infra directory (needed for database package)
 COPY --from=dependencies /app/infra ./infra
+# Copy root package metadata (needed by runtime helpers that look for project root)
+COPY --from=dependencies /app/package.json ./
+# Overlay compiled database package output
+COPY --from=build /app/infra/database/dist ./infra/database/dist
+# Overlay compiled shared packages
+COPY --from=build /app/packages/types/dist ./packages/types/dist
+COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 
 # Copy built application
 COPY --from=build /app/apps/api/dist ./apps/api/dist
@@ -197,6 +218,12 @@ EOF
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
+
+# Ensure storage directories exist and are writable by the non-root user
+RUN mkdir -p /app/storage/temp /app/storage/uploads && \
+    ln -sfn /app/storage /app/apps/api/storage && \
+    chown -R nodejs:nodejs /app/storage
+
 USER nodejs
 
 # Expose port

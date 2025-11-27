@@ -172,7 +172,7 @@ services:
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
 
     volumes:
-      - api_uploads:/app/uploads
+      - api_uploads:/app/storage
       - api_logs:/app/logs
 
     ports:
