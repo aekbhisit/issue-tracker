@@ -185,8 +185,13 @@ pipeline {
                     exit 1
                   fi
                   echo "✅ All required files and directories found"
+                  NO_CACHE_FLAG=""
+                  if [ "${DOCKER_NO_CACHE:-}" = "1" ]; then
+                    echo "⚠️  Docker layer cache disabled for this build"
+                    NO_CACHE_FLAG="--no-cache"
+                  fi
                   # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/api/Dockerfile.prod \\
+                  DOCKER_BUILDKIT=0 docker build --pull ${NO_CACHE_FLAG} -f infra/docker/api/Dockerfile.prod \\
                     -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
                     echo "❌ Docker build failed"
                     exit 1
