@@ -46,6 +46,10 @@ COPY apps/collector-sdk ./apps/collector-sdk
 # Install all dependencies (including dev dependencies for build)
 RUN pnpm install --frozen-lockfile
 
+# Build shared workspace packages needed by Admin (CommonJS dist for Node/Next resolution)
+RUN pnpm --filter "@workspace/types" build && \
+    pnpm --filter "@workspace/utils" build
+
 # Build Collector SDK
 WORKDIR /app/apps/collector-sdk
 RUN pnpm build
