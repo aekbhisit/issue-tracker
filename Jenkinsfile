@@ -99,7 +99,7 @@ pipeline {
               def repo  = "${HARBOR_URL}/${HARBOR_PROJECT}/${image}"
               def imageTag = '17.6'
               docker.withRegistry("https://${HARBOR_URL}", HARBOR_CRED) {
-                sh """
+                sh '''
                   set -eu
                   echo "🚀 Building ${image}"
                   echo "Build context: \$(pwd)"
@@ -212,7 +212,7 @@ pipeline {
                     }
                     echo "✅ Successfully pushed ${repo}:\$tag"
                   done
-                """
+                '''
               }
             }
           }
