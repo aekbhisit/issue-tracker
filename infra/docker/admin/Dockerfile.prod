@@ -83,16 +83,22 @@ RUN pnpm build
 # ===========================================
 FROM base AS production
 
-# Copy production dependencies from build stage (has all dependencies with correct structure)
-# This approach works because the build stage has all deps installed correctly by pnpm
-COPY --from=build /app/node_modules ./node_modules
-
-# Copy workspace configuration files (needed for module resolution)
+# Copy workspace configuration files (needed for pnpm to install dependencies)
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=build /app/pnpm-lock.yaml* ./pnpm-lock.yaml
 
 # Copy packages (needed for workspace resolution)
 COPY --from=build /app/packages ./packages
+
+# Copy Admin app package.json (needed for dependency resolution)
+COPY --from=build /app/apps/admin/package.json ./apps/admin/
+
+# Install production dependencies (must run as root before switching to nodejs user)
+# This ensures correct pnpm structure with working symlinks
+RUN echo "📦 Installing production dependencies..." && \
+    pnpm install --frozen-lockfile --prod && \
+    echo "✅ Dependencies installed"
 
 # Copy compiled workspace package dist folders (needed at runtime)
 COPY --from=build /app/packages/types/dist ./packages/types/dist
@@ -101,13 +107,12 @@ COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 # Copy built application to correct location
 COPY --from=build /app/apps/admin/.next ./apps/admin/.next
 COPY --from=build /app/apps/admin/public ./apps/admin/public
-COPY --from=build /app/apps/admin/package.json ./apps/admin/
 
 # Verify Next.js and React are available (for debugging)
 RUN echo "🔍 Verifying dependencies..." && \
-    test -d /app/node_modules/next && echo "✅ Next.js found" || (echo "❌ Next.js not found" && exit 1) && \
+    test -d /app/node_modules/next && echo "✅ Next.js found" || (echo "❌ Next.js not found" && echo "📁 Checking node_modules:" && ls -la /app/node_modules 2>&1 | head -20 && exit 1) && \
     test -d /app/node_modules/react && echo "✅ React found" || (echo "❌ React not found" && exit 1) && \
-    test -f /app/node_modules/next/dist/bin/next && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && exit 1) && \
+    (test -f /app/node_modules/next/dist/bin/next || test -L /app/node_modules/.bin/next || test -f /app/node_modules/.bin/next) && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && echo "📁 Checking .bin:" && ls -la /app/node_modules/.bin/next 2>&1 && echo "📁 Checking next/dist/bin:" && ls -la /app/node_modules/next/dist/bin 2>&1 && exit 1) && \
     echo "✅ All dependencies verified"
 
 # Set working directory to Admin
