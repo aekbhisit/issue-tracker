@@ -83,10 +83,16 @@ RUN pnpm build
 # ===========================================
 FROM base AS production
 
-# Copy production dependencies (use build stage to ensure Next.js is available)
-# Build stage has all dependencies including Next.js
+# Copy production dependencies from build stage (has all dependencies with correct structure)
+# This approach works because the build stage has all deps installed correctly by pnpm
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=dependencies /app/packages ./packages
+
+# Copy workspace configuration files (needed for module resolution)
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+
+# Copy packages (needed for workspace resolution)
+COPY --from=build /app/packages ./packages
 
 # Copy compiled workspace package dist folders (needed at runtime)
 COPY --from=build /app/packages/types/dist ./packages/types/dist
@@ -96,6 +102,13 @@ COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 COPY --from=build /app/apps/admin/.next ./apps/admin/.next
 COPY --from=build /app/apps/admin/public ./apps/admin/public
 COPY --from=build /app/apps/admin/package.json ./apps/admin/
+
+# Verify Next.js and React are available (for debugging)
+RUN echo "🔍 Verifying dependencies..." && \
+    test -d /app/node_modules/next && echo "✅ Next.js found" || (echo "❌ Next.js not found" && exit 1) && \
+    test -d /app/node_modules/react && echo "✅ React found" || (echo "❌ React not found" && exit 1) && \
+    test -f /app/node_modules/next/dist/bin/next && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && exit 1) && \
+    echo "✅ All dependencies verified"
 
 # Set working directory to Admin
 WORKDIR /app/apps/admin
@@ -109,6 +122,8 @@ USER nodejs
 EXPOSE 3411
 
 # Start production server
-# Use direct path to next binary from node_modules to avoid npx downloading dependencies
-# Set NODE_PATH and PATH to ensure proper module resolution
-CMD ["sh", "-c", "export NODE_PATH=\"/app/node_modules\" && export PATH=\"/app/node_modules/.bin:$PATH\" && /app/node_modules/.bin/next start -p ${PORT:-3411}"]
+# Use node to run Next.js CLI directly (avoids npx/pnpm exec downloading deps)
+# Set NODE_PATH for proper module resolution
+# Try .bin symlink first (pnpm standard), fallback to direct path
+ENV NODE_PATH=/app/node_modules
+CMD ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found' && exit 1; fi"]

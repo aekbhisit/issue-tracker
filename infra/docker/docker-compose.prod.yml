@@ -240,11 +240,13 @@ services:
       
       # Disable Next.js telemetry
       NEXT_TELEMETRY_DISABLED: 1
+      # Set NODE_PATH for proper module resolution
+      NODE_PATH: /app/node_modules
     ports:
       - "${ADMIN_PORT:-3411}:3411"
-    # Override command to use installed Next.js binary directly (avoid npx downloading deps)
-    # Set NODE_PATH and PATH to ensure proper module resolution
-    command: ["sh", "-c", "export NODE_PATH=\"/app/node_modules\" && export PATH=\"/app/node_modules/.bin:$PATH\" && cd /app/apps/admin && /app/node_modules/.bin/next start -p ${PORT:-3411}"]
+    # Override command to use node directly (avoids npx/pnpm exec downloading deps)
+    # Try .bin symlink first (pnpm standard), fallback to direct path
+    command: ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found. Checking...' && ls -la /app/node_modules/.bin/next 2>&1 && ls -la /app/node_modules/next/dist/bin/next 2>&1 && exit 1; fi"]
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:
     #   # Health check for admin Next.js app
