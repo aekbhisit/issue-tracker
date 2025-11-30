@@ -25,14 +25,15 @@ COPY packages ./packages
 RUN mkdir -p apps/admin
 COPY apps/admin/package.json ./apps/admin/
 
-# Install production dependencies for ALL workspace packages
-# pnpm will automatically install dependencies for all workspace packages listed in pnpm-workspace.yaml
-# This includes admin app dependencies (Next.js, React, etc.)
-RUN echo "📦 Installing production dependencies for all workspace packages..." && \
+# Install production dependencies for admin app and workspace packages
+# CRITICAL: Use --filter to explicitly install admin app dependencies (Next.js, React, etc.)
+# Without --filter, pnpm might only install root dependencies, not workspace app dependencies
+# This matches the pattern used in API Dockerfile which works correctly
+RUN echo "📦 Installing production dependencies for admin and workspace packages..." && \
     echo "📁 Workspace structure:" && \
     ls -la apps/ && \
     ls -la apps/admin/ && \
-    pnpm install --frozen-lockfile --prod && \
+    pnpm install --frozen-lockfile --prod --filter "admin" --filter "@workspace/*" && \
     echo "✅ Dependencies installed" && \
     echo "🔍 Verifying Next.js is installed..." && \
     (test -d /app/node_modules/next && echo "✅ Next.js found in root node_modules" || echo "⚠️ Next.js not in root") && \
