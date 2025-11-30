@@ -91,13 +91,15 @@ COPY --from=build /app/pnpm-lock.yaml* ./pnpm-lock.yaml
 # Copy packages (needed for workspace resolution)
 COPY --from=build /app/packages ./packages
 
-# Copy Admin app package.json (needed for dependency resolution)
+# Create apps directory structure and copy Admin app package.json (needed for dependency resolution)
+RUN mkdir -p apps/admin
 COPY --from=build /app/apps/admin/package.json ./apps/admin/
 
 # Install production dependencies (must run as root before switching to nodejs user)
+# Use --filter to install admin app dependencies and workspace packages
 # This ensures correct pnpm structure with working symlinks
 RUN echo "📦 Installing production dependencies..." && \
-    pnpm install --frozen-lockfile --prod && \
+    pnpm install --frozen-lockfile --prod --filter "admin" --filter "@workspace/*" && \
     echo "✅ Dependencies installed"
 
 # Copy compiled workspace package dist folders (needed at runtime)
