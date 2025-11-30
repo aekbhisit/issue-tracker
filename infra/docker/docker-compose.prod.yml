@@ -242,8 +242,9 @@ services:
       NEXT_TELEMETRY_DISABLED: 1
     ports:
       - "${ADMIN_PORT:-3411}:3411"
-    # Override command to ensure Next.js is found (pnpm workspace hoisting issue)
-    command: ["sh", "-c", "cd /app/apps/admin && npx next start -p ${PORT:-3411}"]
+    # Override command to use installed Next.js binary directly (avoid npx downloading deps)
+    # Set NODE_PATH and PATH to ensure proper module resolution
+    command: ["sh", "-c", "export NODE_PATH=\"/app/node_modules\" && export PATH=\"/app/node_modules/.bin:$PATH\" && cd /app/apps/admin && /app/node_modules/.bin/next start -p ${PORT:-3411}"]
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:
     #   # Health check for admin Next.js app

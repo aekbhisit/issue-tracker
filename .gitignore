@@ -72,4 +72,9 @@ docker-compose.override.yml
 
 .cursor*
 storage
-tsconfig.tsbuildinfo
+
+# TypeScript incremental build info (should not be committed)
+# These files are generated during build and cause issues in Docker
+# when they exist but dist/ folders don't match
+**/*.tsbuildinfo
+*.tsbuildinfo

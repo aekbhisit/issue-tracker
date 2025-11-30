@@ -109,5 +109,6 @@ USER nodejs
 EXPOSE 3411
 
 # Start production server
-# Use npx to find next binary (works with pnpm workspace hoisting)
-CMD ["sh", "-c", "npx next start -p ${PORT:-3411}"]
+# Use direct path to next binary from node_modules to avoid npx downloading dependencies
+# Set NODE_PATH and PATH to ensure proper module resolution
+CMD ["sh", "-c", "export NODE_PATH=\"/app/node_modules\" && export PATH=\"/app/node_modules/.bin:$PATH\" && /app/node_modules/.bin/next start -p ${PORT:-3411}"]
