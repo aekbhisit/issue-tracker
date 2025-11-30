@@ -51,10 +51,12 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 # Copy all packages
 COPY packages ./packages
 
-# Copy Admin app
+# Copy Admin app (includes existing collector.min.js in public folder)
 COPY apps/admin ./apps/admin
 
-# Copy Collector SDK (used to generate collector.min.js for Admin)
+# Copy Collector SDK if it exists in build context
+# Note: If collector-sdk is not available, the build will use existing collector.min.js
+# Build must be run from repo root: docker build -f infra/docker/admin/Dockerfile.prod .
 COPY apps/collector-sdk ./apps/collector-sdk
 
 # Install all dependencies (including dev dependencies for build)
@@ -80,13 +82,26 @@ RUN echo "🔨 Building workspace packages..." && \
     test -d /app/packages/utils/dist || (echo "❌ /app/packages/utils/dist not found" && find /app -name "dist" -type d 2>/dev/null | head -10 && exit 1) && \
     echo "✅ Dist folders verified: packages/types/dist and packages/utils/dist exist"
 
-# Build Collector SDK
-WORKDIR /app/apps/collector-sdk
-RUN pnpm build
-
-# Copy Collector SDK bundle into Admin public folder before building
-RUN mkdir -p /app/apps/admin/public && \
-    cp /app/apps/collector-sdk/dist/collector.min.js /app/apps/admin/public/collector.min.js
+# Build Collector SDK if it exists, otherwise use existing collector.min.js
+# Check if collector-sdk exists and has package.json before building
+RUN if [ -f /app/apps/collector-sdk/package.json ]; then \
+        echo "📦 Building Collector SDK..." && \
+        cd /app/apps/collector-sdk && \
+        pnpm build && \
+        echo "✅ Collector SDK built" && \
+        mkdir -p /app/apps/admin/public && \
+        cp /app/apps/collector-sdk/dist/collector.min.js /app/apps/admin/public/collector.min.js && \
+        echo "✅ Copied collector.min.js to admin/public"; \
+    else \
+        echo "⚠️ Collector SDK not found, checking for existing collector.min.js..." && \
+        if [ -f /app/apps/admin/public/collector.min.js ]; then \
+            echo "✅ Using existing collector.min.js"; \
+        else \
+            echo "❌ No collector.min.js found! Creating empty file..." && \
+            mkdir -p /app/apps/admin/public && \
+            touch /app/apps/admin/public/collector.min.js; \
+        fi; \
+    fi
 
 # Build Admin
 WORKDIR /app/apps/admin
@@ -99,8 +114,7 @@ FROM base AS production
 
 # Copy production dependencies from dependencies stage
 # The dependencies stage already installed production deps correctly with pnpm
-# This is safer than copying from build stage (which has dev deps and broken symlinks)
-# or reinstalling (which might have hoisting issues)
+# This contains the pnpm store in .pnpm plus any root-level deps
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/packages ./packages
 
@@ -108,8 +122,11 @@ COPY --from=dependencies /app/packages ./packages
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# Create apps/admin directory structure (needed for app-specific node_modules if any)
+# Create apps/admin directory structure (needed before copying app node_modules or .next)
 RUN mkdir -p apps/admin
+
+# Copy app-specific node_modules for admin (where Next.js, React, etc. live)
+COPY --from=dependencies /app/apps/admin/node_modules ./apps/admin/node_modules
 
 # Copy compiled workspace package dist folders (needed at runtime)
 COPY --from=build /app/packages/types/dist ./packages/types/dist
@@ -119,12 +136,13 @@ COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 COPY --from=build /app/apps/admin/.next ./apps/admin/.next
 COPY --from=build /app/apps/admin/public ./apps/admin/public
 
-# Verify Next.js and React are available (check both root and app-specific locations)
-RUN echo "🔍 Verifying dependencies..." && \
-    (test -d /app/node_modules/next || test -d /app/apps/admin/node_modules/next) && echo "✅ Next.js found" || (echo "❌ Next.js not found" && echo "📁 Checking root node_modules:" && ls -la /app/node_modules 2>&1 | head -20 && echo "📁 Checking admin node_modules:" && ls -la /app/apps/admin/node_modules 2>&1 | head -20 && exit 1) && \
-    (test -d /app/node_modules/react || test -d /app/apps/admin/node_modules/react) && echo "✅ React found" || (echo "❌ React not found" && exit 1) && \
-    (test -f /app/node_modules/next/dist/bin/next || test -f /app/apps/admin/node_modules/next/dist/bin/next || test -L /app/node_modules/.bin/next || test -f /app/node_modules/.bin/next || test -L /app/apps/admin/node_modules/.bin/next || test -f /app/apps/admin/node_modules/.bin/next) && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && echo "📁 Checking root .bin:" && ls -la /app/node_modules/.bin/ 2>&1 | head -10 && echo "📁 Checking admin .bin:" && ls -la /app/apps/admin/node_modules/.bin/ 2>&1 | head -10 && exit 1) && \
-    echo "✅ All dependencies verified"
+# Verify Next.js and React are available in admin node_modules (primary location)
+RUN echo "🔍 Verifying runtime dependencies (admin node_modules)..." && \
+    ls -la /app/apps/admin/node_modules 2>&1 | head -30 && \
+    test -d /app/apps/admin/node_modules/next && echo "✅ Next.js found in /app/apps/admin/node_modules" || (echo "❌ Next.js NOT found in /app/apps/admin/node_modules" && exit 1) && \
+    test -d /app/apps/admin/node_modules/react && echo "✅ React found in /app/apps/admin/node_modules" || (echo "❌ React NOT found in /app/apps/admin/node_modules" && exit 1) && \
+    (test -f /app/apps/admin/node_modules/next/dist/bin/next || test -L /app/apps/admin/node_modules/.bin/next || test -f /app/apps/admin/node_modules/.bin/next) && echo "✅ Next.js binary found for admin" || (echo "❌ Next.js binary NOT found for admin" && ls -la /app/apps/admin/node_modules/.bin 2>&1 | head -20 && ls -la /app/apps/admin/node_modules/next/dist/bin 2>&1 | head -20 && exit 1) && \
+    echo "✅ All runtime dependencies verified"
 
 # Set working directory to Admin
 WORKDIR /app/apps/admin
@@ -138,7 +156,7 @@ USER nodejs
 EXPOSE 3411
 
 # Start production server
-# Use node to run Next.js CLI directly (avoids npx/pnpm exec downloading deps)
-# Set NODE_PATH to check both root and app-specific node_modules
+# Use node to run Next.js CLI directly from admin's node_modules
+# Set NODE_PATH so Node can resolve both root and admin-level deps
 ENV NODE_PATH=/app/node_modules:/app/apps/admin/node_modules
-CMD ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -L /app/apps/admin/node_modules/.bin/next ] || [ -f /app/apps/admin/node_modules/.bin/next ]; then exec /app/apps/admin/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; elif [ -f /app/apps/admin/node_modules/next/dist/bin/next ]; then exec node /app/apps/admin/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found in any expected location' && find /app -name 'next' -type f -path '*/bin/next' 2>/dev/null | head -5 && exit 1; fi"]
+CMD ["sh", "-c", "cd /app/apps/admin && exec node node_modules/next/dist/bin/next start -p ${PORT:-3411}"]

@@ -1,55 +1,27 @@
-# Ignore node_modules everywhere
-**/node_modules
-**/.pnpm-store
-**/.pnpm
-!**/package.json
-!**/pnpm-lock.yaml
-!**/yarn.lock
-!**/package-lock.json
+# Very minimal exclusions - only exclude what's absolutely necessary
+# This ensures apps/ directory is always included
 
-# Ignore git and editor stuff
 .git
 .gitignore
 .vscode
 .DS_Store
 *.log
+.env*
+storage
+tmp
+coverage
+.nyc_output
 
-# Ignore local build artifacts
+# Exclude node_modules but be specific to avoid excluding parent dirs
+node_modules
+.pnpm-store
+.pnpm
+
+# Exclude build outputs (but source files in apps/ are kept)
 dist
 build
 .next
 .turbo
-storage
-tmp
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-# Ignore OS generated files
-Thumbs.db
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-
-# Ignore IDE files
-.idea
-*.swp
-*.swo
-*~
-
-# Ignore test coverage
-coverage
-.nyc_output
-
-# Ignore documentation
-docs
-*.md
-!README.md
-
-# Ignore templates
-infra/templates
+# CRITICAL: apps/ directory and its source files MUST be included
+# Do not add patterns that might exclude apps/

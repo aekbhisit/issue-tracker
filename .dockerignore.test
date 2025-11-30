@@ -1,0 +1,16 @@
+# Minimal .dockerignore for testing
+**/node_modules
+**/.pnpm-store
+**/.pnpm
+.git
+.gitignore
+.DS_Store
+*.log
+dist
+build
+.next
+.turbo
+storage
+tmp
+.env*
+
