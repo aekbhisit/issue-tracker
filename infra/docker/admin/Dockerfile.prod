@@ -20,11 +20,24 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 # Copy all packages (shared dependencies)
 COPY packages ./packages
 
-# Copy Admin app package.json
+# Create apps directory structure FIRST (so pnpm recognizes it as workspace)
+# Then copy Admin app package.json
+RUN mkdir -p apps/admin
 COPY apps/admin/package.json ./apps/admin/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies for ALL workspace packages
+# pnpm will automatically install dependencies for all workspace packages listed in pnpm-workspace.yaml
+# This includes admin app dependencies (Next.js, React, etc.)
+RUN echo "📦 Installing production dependencies for all workspace packages..." && \
+    echo "📁 Workspace structure:" && \
+    ls -la apps/ && \
+    ls -la apps/admin/ && \
+    pnpm install --frozen-lockfile --prod && \
+    echo "✅ Dependencies installed" && \
+    echo "🔍 Verifying Next.js is installed..." && \
+    (test -d /app/node_modules/next && echo "✅ Next.js found in root node_modules" || echo "⚠️ Next.js not in root") && \
+    (test -d /app/apps/admin/node_modules/next && echo "✅ Next.js found in admin node_modules" || echo "⚠️ Next.js not in admin") && \
+    (test -d /app/node_modules/next || test -d /app/apps/admin/node_modules/next) && echo "✅ Next.js verified" || (echo "❌ Next.js not found anywhere!" && echo "📁 Root node_modules contents:" && ls -la /app/node_modules 2>&1 | head -20 && echo "📁 Admin node_modules:" && ls -la /app/apps/admin/node_modules 2>&1 | head -20 && find /app -name "next" -type d 2>/dev/null | head -10 && exit 1)
 
 # ===========================================
 # Build Stage
@@ -83,24 +96,19 @@ RUN pnpm build
 # ===========================================
 FROM base AS production
 
-# Copy workspace configuration files (needed for pnpm to install dependencies)
+# Copy production dependencies from dependencies stage
+# The dependencies stage already installed production deps correctly with pnpm
+# This is safer than copying from build stage (which has dev deps and broken symlinks)
+# or reinstalling (which might have hoisting issues)
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/packages ./packages
+
+# Copy workspace configuration files (needed for module resolution)
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=build /app/pnpm-lock.yaml* ./pnpm-lock.yaml
 
-# Copy packages (needed for workspace resolution)
-COPY --from=build /app/packages ./packages
-
-# Create apps directory structure and copy Admin app package.json (needed for dependency resolution)
+# Create apps/admin directory structure (needed for app-specific node_modules if any)
 RUN mkdir -p apps/admin
-COPY --from=build /app/apps/admin/package.json ./apps/admin/
-
-# Install production dependencies (must run as root before switching to nodejs user)
-# Use --filter to install admin app dependencies and workspace packages
-# This ensures correct pnpm structure with working symlinks
-RUN echo "📦 Installing production dependencies..." && \
-    pnpm install --frozen-lockfile --prod --filter "admin" --filter "@workspace/*" && \
-    echo "✅ Dependencies installed"
 
 # Copy compiled workspace package dist folders (needed at runtime)
 COPY --from=build /app/packages/types/dist ./packages/types/dist
@@ -110,11 +118,11 @@ COPY --from=build /app/packages/utils/dist ./packages/utils/dist
 COPY --from=build /app/apps/admin/.next ./apps/admin/.next
 COPY --from=build /app/apps/admin/public ./apps/admin/public
 
-# Verify Next.js and React are available (for debugging)
+# Verify Next.js and React are available (check both root and app-specific locations)
 RUN echo "🔍 Verifying dependencies..." && \
-    test -d /app/node_modules/next && echo "✅ Next.js found" || (echo "❌ Next.js not found" && echo "📁 Checking node_modules:" && ls -la /app/node_modules 2>&1 | head -20 && exit 1) && \
-    test -d /app/node_modules/react && echo "✅ React found" || (echo "❌ React not found" && exit 1) && \
-    (test -f /app/node_modules/next/dist/bin/next || test -L /app/node_modules/.bin/next || test -f /app/node_modules/.bin/next) && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && echo "📁 Checking .bin:" && ls -la /app/node_modules/.bin/next 2>&1 && echo "📁 Checking next/dist/bin:" && ls -la /app/node_modules/next/dist/bin 2>&1 && exit 1) && \
+    (test -d /app/node_modules/next || test -d /app/apps/admin/node_modules/next) && echo "✅ Next.js found" || (echo "❌ Next.js not found" && echo "📁 Checking root node_modules:" && ls -la /app/node_modules 2>&1 | head -20 && echo "📁 Checking admin node_modules:" && ls -la /app/apps/admin/node_modules 2>&1 | head -20 && exit 1) && \
+    (test -d /app/node_modules/react || test -d /app/apps/admin/node_modules/react) && echo "✅ React found" || (echo "❌ React not found" && exit 1) && \
+    (test -f /app/node_modules/next/dist/bin/next || test -f /app/apps/admin/node_modules/next/dist/bin/next || test -L /app/node_modules/.bin/next || test -f /app/node_modules/.bin/next || test -L /app/apps/admin/node_modules/.bin/next || test -f /app/apps/admin/node_modules/.bin/next) && echo "✅ Next.js binary found" || (echo "❌ Next.js binary not found" && echo "📁 Checking root .bin:" && ls -la /app/node_modules/.bin/ 2>&1 | head -10 && echo "📁 Checking admin .bin:" && ls -la /app/apps/admin/node_modules/.bin/ 2>&1 | head -10 && exit 1) && \
     echo "✅ All dependencies verified"
 
 # Set working directory to Admin
@@ -130,7 +138,6 @@ EXPOSE 3411
 
 # Start production server
 # Use node to run Next.js CLI directly (avoids npx/pnpm exec downloading deps)
-# Set NODE_PATH for proper module resolution
-# Try .bin symlink first (pnpm standard), fallback to direct path
-ENV NODE_PATH=/app/node_modules
-CMD ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found' && exit 1; fi"]
+# Set NODE_PATH to check both root and app-specific node_modules
+ENV NODE_PATH=/app/node_modules:/app/apps/admin/node_modules
+CMD ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -L /app/apps/admin/node_modules/.bin/next ] || [ -f /app/apps/admin/node_modules/.bin/next ]; then exec /app/apps/admin/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; elif [ -f /app/apps/admin/node_modules/next/dist/bin/next ]; then exec node /app/apps/admin/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found in any expected location' && find /app -name 'next' -type f -path '*/bin/next' 2>/dev/null | head -5 && exit 1; fi"]
