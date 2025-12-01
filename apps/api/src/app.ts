@@ -33,14 +33,15 @@ const allowedOrigins = corsOriginsEnv
       'http://127.0.0.1:4503',
     ]
 
-// Log CORS configuration on startup (for debugging)
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔐 CORS Configuration:', {
-    allowedOrigins,
-    hasCorsOrigin: !!process.env.CORS_ORIGIN,
-    hasAllowedOrigins: !!process.env.ALLOWED_ORIGINS,
-  })
-}
+// Log CORS configuration on startup (for debugging - always log in production too)
+console.log('🔐 CORS Configuration:', {
+  allowedOrigins,
+  hasCorsOrigin: !!process.env.CORS_ORIGIN,
+  hasAllowedOrigins: !!process.env.ALLOWED_ORIGINS,
+  corsOriginValue: process.env.CORS_ORIGIN || 'not set',
+  allowedOriginsValue: process.env.ALLOWED_ORIGINS || 'not set',
+  nodeEnv: process.env.NODE_ENV,
+})
 
 // CORS configuration
 // Public API endpoints allow all origins (SDK can be embedded anywhere)
@@ -52,9 +53,13 @@ app.use(cors({
       return callback(null, true)
     }
     
+    // Normalize origin (remove trailing slashes, lowercase for comparison)
+    const normalizedOrigin = origin.trim().toLowerCase().replace(/\/+$/, '')
+    const normalizedAllowedOrigins = allowedOrigins.map(o => o.trim().toLowerCase().replace(/\/+$/, ''))
+    
     // In development, allow all localhost origins
     if (process.env.NODE_ENV === 'development') {
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) {
         return callback(null, true)
       }
     }
@@ -67,16 +72,24 @@ app.use(cors({
     }
     
     // Check if origin is in allowed list (exact match or wildcard)
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    // Use normalized comparison for case-insensitive matching
+    if (normalizedAllowedOrigins.includes(normalizedOrigin) || normalizedAllowedOrigins.includes('*')) {
       return callback(null, true)
     }
     
-    // Log CORS rejection for debugging
+    // Log CORS rejection for debugging with detailed comparison
     // Note: CORS callback doesn't have access to req object, so we can only log origin info
     console.warn('🚫 CORS blocked:', {
       origin,
+      normalizedOrigin,
       allowedOrigins,
+      normalizedAllowedOrigins,
+      allowedOriginsCount: allowedOrigins.length,
+      exactMatch: normalizedAllowedOrigins.includes(normalizedOrigin),
+      hasWildcard: normalizedAllowedOrigins.includes('*'),
       nodeEnv: process.env.NODE_ENV,
+      corsOriginEnv: process.env.CORS_ORIGIN || 'not set',
+      allowedOriginsEnv: process.env.ALLOWED_ORIGINS || 'not set',
       hint: `Add "${origin}" to CORS_ORIGIN or ALLOWED_ORIGINS environment variable`,
     })
     
