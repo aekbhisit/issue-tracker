@@ -97,33 +97,33 @@ pipeline {
                   
                   # Setup cache
                   CACHE_OPTS=""
-                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
+                  if [ "\${USE_BUILD_CACHE}" = "true" ]; then
                     # Use registry cache backend (faster than inline cache)
-                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
-                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                    if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                      CACHE_OPTS="--cache-from type=registry,ref=\${repo}:buildcache --cache-to type=registry,ref=\${repo}:buildcache,mode=max"
                       # Also pull latest for cache
-                      docker pull ${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
+                      docker pull \${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
                     else
                       # Fallback to inline cache
-                      docker pull ${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
-                      CACHE_OPTS="--cache-from ${repo}:latest"
+                      docker pull \${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
+                      CACHE_OPTS="--cache-from \${repo}:latest"
                     fi
                   fi
                   
                   # Build (using buildx if available for better caching)
-                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
-                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
-                      -t ${repo}:${imageTag} -t ${repo}:latest \\
+                  if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load \${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
+                      -t \${repo}:\${imageTag} -t \${repo}:latest \\
                       infra/docker/postgres || exit 1
                   else
-                    docker build ${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
-                      -t ${repo}:${imageTag} -t ${repo}:latest \\
+                    docker build \${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
+                      -t \${repo}:\${imageTag} -t \${repo}:latest \\
                       infra/docker/postgres || exit 1
                   fi
                   
                   # Push both tags in parallel (background)
-                  docker push ${repo}:${imageTag} &
-                  docker push ${repo}:latest &
+                  docker push \${repo}:\${imageTag} &
+                  docker push \${repo}:latest &
                   wait
                   echo "✅ ${image} built and pushed"
                 """
@@ -154,43 +154,43 @@ pipeline {
                   
                   # Setup cache
                   CACHE_OPTS=""
-                  if [ "${USE_BUILD_CACHE}" = "true" ] && [ -z "${noCacheFlag}" ]; then
-                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                  if [ "\${USE_BUILD_CACHE}" = "true" ] && [ -z "\${noCacheFlag}" ]; then
+                    if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
                       # Use registry cache backend (much faster)
-                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      CACHE_OPTS="--cache-from type=registry,ref=\${repo}:buildcache --cache-to type=registry,ref=\${repo}:buildcache,mode=max"
                       # Pull previous images for cache (in background, don't wait)
-                      docker pull ${repo}:latest 2>/dev/null &
-                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                      docker pull \${repo}:latest 2>/dev/null &
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null &
                     else
                       # Fallback: pull for inline cache
-                      docker pull ${repo}:latest 2>/dev/null || true
-                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
-                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                      docker pull \${repo}:latest 2>/dev/null || true
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from \${repo}:latest --cache-from \${repo}:\${gitCommit}"
                     fi
                   fi
                   
                   # Build
-                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
-                    docker buildx build --load ${CACHE_OPTS} ${noCacheFlag} \\
+                  if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load \${CACHE_OPTS} \${noCacheFlag} \\
                       -f infra/docker/api/Dockerfile.prod \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   else
-                    docker build ${CACHE_OPTS} ${noCacheFlag} \\
+                    docker build \${CACHE_OPTS} \${noCacheFlag} \\
                       --build-arg BUILDKIT_INLINE_CACHE=1 \\
                       -f infra/docker/api/Dockerfile.prod \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   fi
                   
                   # Quick verification (only critical check)
-                  docker run --rm ${repo}:${TAG} test -f /app/apps/api/dist/index.js || {
+                  docker run --rm \${repo}:\${TAG} test -f /app/apps/api/dist/index.js || {
                     echo "❌ CRITICAL: dist/index.js not found in image!"
                     exit 1
                   }
                   
                   # Push all tags in parallel
-                  docker push ${repo}:${TAG} &
-                  docker push ${repo}:${gitCommit} &
-                  docker push ${repo}:latest &
+                  docker push \${repo}:\${TAG} &
+                  docker push \${repo}:\${gitCommit} &
+                  docker push \${repo}:latest &
                   wait
                   echo "✅ ${image} built and pushed"
                 """
@@ -225,40 +225,40 @@ pipeline {
                   
                   # Setup cache
                   CACHE_OPTS=""
-                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
-                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                  if [ "\${USE_BUILD_CACHE}" = "true" ]; then
+                    if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
                       # Use registry cache backend
-                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      CACHE_OPTS="--cache-from type=registry,ref=\${repo}:buildcache --cache-to type=registry,ref=\${repo}:buildcache,mode=max"
                       # Pull previous images (in background)
-                      docker pull ${repo}:latest 2>/dev/null &
-                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                      docker pull \${repo}:latest 2>/dev/null &
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null &
                     else
                       # Fallback
-                      docker pull ${repo}:latest 2>/dev/null || true
-                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
-                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                      docker pull \${repo}:latest 2>/dev/null || true
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from \${repo}:latest --cache-from \${repo}:\${gitCommit}"
                     fi
                   fi
                   
                   # Build
-                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
-                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod ${buildArgs} \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load \${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod \${buildArgs} \\
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   else
-                    docker build ${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod ${buildArgs} \\
+                    docker build \${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod \${buildArgs} \\
                       --build-arg BUILDKIT_INLINE_CACHE=1 \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   fi
                   
                   # Quick verification
-                  docker run --rm ${repo}:${TAG} test -d /app/apps/admin/.next || {
+                  docker run --rm \${repo}:\${TAG} test -d /app/apps/admin/.next || {
                     echo "⚠️  Warning: .next directory not found"
                   }
                   
                   # Push all tags in parallel
-                  docker push ${repo}:${TAG} &
-                  docker push ${repo}:${gitCommit} &
-                  docker push ${repo}:latest &
+                  docker push \${repo}:\${TAG} &
+                  docker push \${repo}:\${gitCommit} &
+                  docker push \${repo}:latest &
                   wait
                   echo "✅ ${image} built and pushed"
                 """
@@ -292,40 +292,40 @@ pipeline {
                   
                   # Setup cache
                   CACHE_OPTS=""
-                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
-                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                  if [ "\${USE_BUILD_CACHE}" = "true" ]; then
+                    if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
                       # Use registry cache backend
-                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      CACHE_OPTS="--cache-from type=registry,ref=\${repo}:buildcache --cache-to type=registry,ref=\${repo}:buildcache,mode=max"
                       # Pull previous images (in background)
-                      docker pull ${repo}:latest 2>/dev/null &
-                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                      docker pull \${repo}:latest 2>/dev/null &
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null &
                     else
                       # Fallback
-                      docker pull ${repo}:latest 2>/dev/null || true
-                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
-                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                      docker pull \${repo}:latest 2>/dev/null || true
+                      docker pull \${repo}:\${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from \${repo}:latest --cache-from \${repo}:\${gitCommit}"
                     fi
                   fi
                   
                   # Build
-                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
-                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  if [ "\${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load \${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod \${buildArgs} \\
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   else
-                    docker build ${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
+                    docker build \${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod \${buildArgs} \\
                       --build-arg BUILDKIT_INLINE_CACHE=1 \\
-                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                      -t \${repo}:\${TAG} -t \${repo}:\${gitCommit} -t \${repo}:latest . || exit 1
                   fi
                   
                   # Quick verification
-                  docker run --rm ${repo}:${TAG} test -d /app/apps/frontend/.next || {
+                  docker run --rm \${repo}:\${TAG} test -d /app/apps/frontend/.next || {
                     echo "⚠️  Warning: .next directory not found"
                   }
                   
                   # Push all tags in parallel
-                  docker push ${repo}:${TAG} &
-                  docker push ${repo}:${gitCommit} &
-                  docker push ${repo}:latest &
+                  docker push \${repo}:\${TAG} &
+                  docker push \${repo}:\${gitCommit} &
+                  docker push \${repo}:latest &
                   wait
                   echo "✅ ${image} built and pushed"
                 """
