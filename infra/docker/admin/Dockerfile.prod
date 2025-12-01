@@ -145,7 +145,8 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
     (test -f /app/apps/admin/public/collector.min.js && echo "✅ collector.min.js exists" || echo "⚠️ collector.min.js not found (will create empty)") && \
     echo "" && \
     echo "🚀 Running: pnpm build" && \
-    (pnpm build 2>&1 | tee /tmp/build.log) || ( \
+    mkdir -p /tmp && \
+    if ! pnpm build 2>&1 | tee /tmp/build.log; then \
         echo "" && \
         echo "❌ BUILD FAILED!" && \
         echo "" && \
@@ -167,8 +168,8 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
         echo "  Checking Next.js:" && \
         (test -d /app/node_modules/next && echo "    ✅ Next.js in root node_modules" || echo "    ⚠️ Next.js not in root node_modules") && \
         (test -d /app/apps/admin/node_modules/next && echo "    ✅ Next.js in admin node_modules" || echo "    ⚠️ Next.js not in admin node_modules") && \
-        exit 1 \
-    ) && \
+        exit 1; \
+    fi && \
     echo "" && \
     echo "🔍 Verifying .next directory was created..." && \
     if [ ! -d /app/apps/admin/.next ]; then \
