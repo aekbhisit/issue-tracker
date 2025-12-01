@@ -71,15 +71,13 @@ app.use(cors({
       return callback(null, true)
     }
     
-    // Log CORS rejection for debugging with more context
+    // Log CORS rejection for debugging
+    // Note: CORS callback doesn't have access to req object, so we can only log origin info
     console.warn('🚫 CORS blocked:', {
       origin,
       allowedOrigins,
       nodeEnv: process.env.NODE_ENV,
-      method: req.method,
-      path: req.path,
-      hasBody: !!req.body && Object.keys(req.body).length > 0,
-      contentType: req.get('content-type'),
+      hint: `Add "${origin}" to CORS_ORIGIN or ALLOWED_ORIGINS environment variable`,
     })
     
     // Create a more descriptive CORS error
