@@ -10,15 +10,33 @@ import { BaseApiError } from '../utils/error.util'
  * Categorize error and provide user-friendly message
  */
 function categorizeError(err: Error): { category: string; userMessage: string; status: number; details?: any } {
-	// Check for database connection errors
+	const errMessage = err.message || ''
+	const errName = err.name || ''
+	const errStack = err.stack || ''
+	
+	// Log raw error for debugging (always, even in production for server logs)
+	console.error('🔍 Raw Error Details:', {
+		name: errName,
+		message: errMessage,
+		stack: errStack.substring(0, 500), // First 500 chars of stack
+	})
+
+	// Check for database connection errors (comprehensive patterns)
 	if (
-		err.message?.includes('Can\'t reach database server') ||
-		err.message?.includes('Connection refused') ||
-		err.message?.includes('ECONNREFUSED') ||
-		err.message?.includes('ENOTFOUND') ||
-		err.message?.includes('timeout') ||
-		err.message?.includes('connect ETIMEDOUT') ||
-		err.name === 'PrismaClientInitializationError'
+		errMessage.includes('Can\'t reach database server') ||
+		errMessage.includes('Connection refused') ||
+		errMessage.includes('ECONNREFUSED') ||
+		errMessage.includes('ENOTFOUND') ||
+		errMessage.includes('timeout') ||
+		errMessage.includes('connect ETIMEDOUT') ||
+		errMessage.includes('getaddrinfo ENOTFOUND') ||
+		errMessage.includes('Connection terminated') ||
+		errMessage.includes('Connection closed') ||
+		errMessage.includes('Unable to connect') ||
+		errName === 'PrismaClientInitializationError' ||
+		errName === 'PrismaClientConnectionError' ||
+		errStack.includes('PrismaClientInitializationError') ||
+		errStack.includes('ECONNREFUSED')
 	) {
 		return {
 			category: 'DatabaseConnectionError',
@@ -27,15 +45,21 @@ function categorizeError(err: Error): { category: string; userMessage: string; s
 			details: {
 				code: 'DATABASE_CONNECTION_FAILED',
 				hint: 'Check DATABASE_URL, database host, port, and credentials in environment variables.',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage.substring(0, 200), // First 200 chars for debugging
+				}),
 			}
 		}
 	}
 
-	// Check for authentication/authorization errors
+	// Check for authentication/authorization errors (database and API)
 	if (
-		err.message?.includes('password authentication failed') ||
-		err.message?.includes('authentication failed') ||
-		err.message?.includes('invalid credentials')
+		errMessage.includes('password authentication failed') ||
+		errMessage.includes('authentication failed') ||
+		errMessage.includes('invalid credentials') ||
+		errMessage.includes('FATAL: password authentication failed') ||
+		errMessage.includes('authentication failed for user') ||
+		errStack.includes('password authentication failed')
 	) {
 		return {
 			category: 'AuthenticationError',
@@ -44,16 +68,22 @@ function categorizeError(err: Error): { category: string; userMessage: string; s
 			details: {
 				code: 'DATABASE_AUTH_FAILED',
 				hint: 'Verify DATABASE_USER and DATABASE_PASSWORD in environment variables.',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage.substring(0, 200),
+				}),
 			}
 		}
 	}
 
 	// Check for configuration errors
 	if (
-		err.message?.includes('JWT_SECRET') ||
-		err.message?.includes('not configured') ||
-		err.message?.includes('environment variable') ||
-		err.message?.includes('missing required')
+		errMessage.includes('JWT_SECRET') ||
+		errMessage.includes('not configured') ||
+		errMessage.includes('environment variable') ||
+		errMessage.includes('missing required') ||
+		errMessage.includes('is not configured') ||
+		errMessage.includes('is required') ||
+		errStack.includes('JWT_SECRET')
 	) {
 		return {
 			category: 'ConfigurationError',
@@ -61,13 +91,16 @@ function categorizeError(err: Error): { category: string; userMessage: string; s
 			status: 500,
 			details: {
 				code: 'CONFIGURATION_ERROR',
-				hint: process.env.NODE_ENV === 'development' ? err.message : 'Check server environment variables.',
+				hint: process.env.NODE_ENV === 'development' ? errMessage : 'Check server environment variables.',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage,
+				}),
 			}
 		}
 	}
 
-	// Check for Prisma errors
-	if (err.name === 'PrismaClientKnownRequestError') {
+	// Check for Prisma errors (check both name and stack)
+	if (errName === 'PrismaClientKnownRequestError' || errStack.includes('PrismaClientKnownRequestError')) {
 		const prismaErr = err as any
 		const code = prismaErr.code
 
@@ -134,43 +167,95 @@ function categorizeError(err: Error): { category: string; userMessage: string; s
 		}
 	}
 
-	if (err.name === 'PrismaClientValidationError') {
+	if (errName === 'PrismaClientValidationError' || errStack.includes('PrismaClientValidationError')) {
 		return {
 			category: 'ValidationError',
 			userMessage: 'Invalid database query. Please check your request.',
 			status: 400,
 			details: process.env.NODE_ENV === 'development' ? {
-				message: err.message,
+				message: errMessage,
+				rawError: errMessage.substring(0, 300),
 			} : undefined,
 		}
 	}
 
 	// Check for JSON Web Token errors
-	if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.message?.includes('jwt')) {
+	if (errName === 'JsonWebTokenError' || errName === 'TokenExpiredError' || errMessage.includes('jwt') || errStack.includes('jsonwebtoken')) {
 		return {
 			category: 'AuthenticationError',
-			userMessage: err.name === 'TokenExpiredError'
+			userMessage: errName === 'TokenExpiredError'
 				? 'Your session has expired. Please log in again.'
 				: 'Invalid authentication token. Please log in again.',
 			status: 401,
 			details: {
 				code: 'JWT_ERROR',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage.substring(0, 200),
+				}),
+			}
+		}
+	}
+
+	// Check for bcrypt errors
+	if (errMessage.includes('bcrypt') || errStack.includes('bcrypt')) {
+		return {
+			category: 'AuthenticationError',
+			userMessage: 'Password verification failed. Please check your credentials.',
+			status: 401,
+			details: {
+				code: 'PASSWORD_VERIFICATION_FAILED',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage.substring(0, 200),
+				}),
+			}
+		}
+	}
+
+	// Check for CORS errors (CRITICAL - should be caught early)
+	if (
+		errMessage.includes('Not allowed by CORS') ||
+		errMessage.includes('CORS') ||
+		errMessage.includes('cors') ||
+		errName === 'CorsError'
+	) {
+		return {
+			category: 'CorsError',
+			userMessage: 'Request blocked by CORS policy. Please check server CORS configuration.',
+			status: 403,
+			details: {
+				code: 'CORS_POLICY_VIOLATION',
+				hint: 'The request origin is not allowed by the server CORS policy. Check CORS_ORIGIN or ALLOWED_ORIGINS environment variable.',
+				...(process.env.NODE_ENV === 'development' && {
+					rawError: errMessage,
+					allowedOrigins: process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || 'Not configured',
+				}),
 			}
 		}
 	}
 
 	// Default: Internal Server Error
+	// In production, show generic message but include error code
+	// In development, show actual error message
+	const isProduction = process.env.NODE_ENV === 'production'
+	
 	return {
 		category: 'InternalServerError',
-		userMessage: process.env.NODE_ENV === 'production'
+		userMessage: isProduction
 			? 'An unexpected error occurred. Please try again later or contact support if the problem persists.'
-			: err.message || 'An unexpected error occurred',
+			: errMessage || 'An unexpected error occurred',
 		status: 500,
-		details: process.env.NODE_ENV === 'development' ? {
-			name: err.name,
-			message: err.message,
-			stack: err.stack,
-		} : undefined,
+		details: {
+			code: 'UNEXPECTED_ERROR',
+			...(isProduction ? {
+				// In production, provide a hint but not the actual error
+				hint: 'Check server logs for detailed error information. Common causes: database connection issues, missing environment variables, or application errors.',
+			} : {
+				// In development, show full error details
+				name: errName,
+				message: errMessage,
+				stack: errStack.substring(0, 1000), // First 1000 chars
+			}),
+		},
 	}
 }
 
@@ -186,14 +271,24 @@ export function errorMiddleware(
 	_next: NextFunction
 ) {
 	// Enhanced logging with request context
+	// Note: For CORS errors, body might not be parsed yet, so we check if body exists
 	const requestContext = {
 		method: req.method,
 		path: req.path,
 		query: req.query,
-		body: req.method === 'POST' || req.method === 'PUT' ? {
-			...req.body,
-			password: req.body?.password ? '[REDACTED]' : undefined,
-		} : undefined,
+		// Only log body if it exists and has been parsed
+		// CORS errors happen before body parsing, so body might be empty
+		body: (req.method === 'POST' || req.method === 'PUT') && req.body && Object.keys(req.body).length > 0
+			? {
+				...req.body,
+				password: req.body?.password ? '[REDACTED]' : (req.body?.password === undefined ? 'NOT_PROVIDED' : undefined),
+			}
+			: (req.method === 'POST' || req.method === 'PUT') 
+				? 'BODY_NOT_PARSED_OR_EMPTY' 
+				: undefined,
+		// Log headers to see if Content-Type is set (helps debug CORS/preflight issues)
+		contentType: req.get('content-type'),
+		origin: req.get('origin'),
 		ip: req.ip || req.socket.remoteAddress,
 		userAgent: req.get('user-agent'),
 	}

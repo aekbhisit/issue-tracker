@@ -22,12 +22,25 @@ app.use(helmet({
 }))
 
 // CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
-  'http://localhost:4502',
-  'http://localhost:4503',
-  'http://127.0.0.1:4502',
-  'http://127.0.0.1:4503',
-]
+// Support both ALLOWED_ORIGINS and CORS_ORIGIN environment variables
+const corsOriginsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || ''
+const allowedOrigins = corsOriginsEnv
+  ? corsOriginsEnv.split(',').map(o => o.trim()).filter(Boolean)
+  : [
+      'http://localhost:4502',
+      'http://localhost:4503',
+      'http://127.0.0.1:4502',
+      'http://127.0.0.1:4503',
+    ]
+
+// Log CORS configuration on startup (for debugging)
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔐 CORS Configuration:', {
+    allowedOrigins,
+    hasCorsOrigin: !!process.env.CORS_ORIGIN,
+    hasAllowedOrigins: !!process.env.ALLOWED_ORIGINS,
+  })
+}
 
 // CORS configuration
 // Public API endpoints allow all origins (SDK can be embedded anywhere)
@@ -35,7 +48,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true)
+    if (!origin) {
+      return callback(null, true)
+    }
     
     // In development, allow all localhost origins
     if (process.env.NODE_ENV === 'development') {
@@ -51,12 +66,26 @@ app.use(cors({
       return callback(null, true)
     }
     
-    // Check if origin is in allowed list
+    // Check if origin is in allowed list (exact match or wildcard)
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
+      return callback(null, true)
     }
+    
+    // Log CORS rejection for debugging with more context
+    console.warn('🚫 CORS blocked:', {
+      origin,
+      allowedOrigins,
+      nodeEnv: process.env.NODE_ENV,
+      method: req.method,
+      path: req.path,
+      hasBody: !!req.body && Object.keys(req.body).length > 0,
+      contentType: req.get('content-type'),
+    })
+    
+    // Create a more descriptive CORS error
+    const corsError = new Error(`Not allowed by CORS: Origin "${origin}" is not in allowed origins list: ${allowedOrigins.join(', ')}`)
+    corsError.name = 'CorsError'
+    callback(corsError)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
