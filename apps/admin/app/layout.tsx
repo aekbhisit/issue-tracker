@@ -29,21 +29,42 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Use useEffect only for client-side updates to prevent hydration mismatch
   useEffect(() => {
-    document.title = 'Issue Collector - Admin Dashboard';
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Issue Collector - Centralized issue reporting and management system');
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = 'Issue Collector - Centralized issue reporting and management system';
-      document.head.appendChild(meta);
+    // Only update title if it's different (prevents unnecessary updates)
+    if (document.title !== 'Issue Collector - Admin Dashboard') {
+      document.title = 'Issue Collector - Admin Dashboard';
+    }
+    
+    // Update or create meta description only on client side
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', 'Issue Collector - Centralized issue reporting and management system');
+    
+    // Add favicon link if not present
+    let faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+    if (!faviconLink) {
+      faviconLink = document.createElement('link');
+      faviconLink.rel = 'icon';
+      faviconLink.type = 'image/x-icon';
+      document.head.appendChild(faviconLink);
+    }
+    // Set favicon path - Use /admin/favicon.ico (served by Next.js from public folder)
+    const faviconPath = '/admin/favicon.ico';
+    if (faviconLink.href !== faviconPath) {
+      faviconLink.href = faviconPath;
     }
   }, []);
 
   return (
     <html lang="th" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/x-icon" href="/admin/favicon.ico" />
+      </head>
       <body className={`${outfit.className} dark:bg-gray-900`} suppressHydrationWarning>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
