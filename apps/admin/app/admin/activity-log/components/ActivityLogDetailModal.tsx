@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslation } from "react-i18next"
+import { ClientDateFormatter } from "@/components/ui/ClientDateFormatter"
 import type { ActivityLog } from "../types"
 
 interface ActivityLogDetailModalProps {
@@ -65,7 +66,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 								{t("admin.activityLog.detail.timestamp") || "Timestamp"}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">
-								{log.createdAt.toLocaleString()}
+								<ClientDateFormatter date={log.createdAt} />
 							</p>
 						</div>
 						{log.ipAddress && (

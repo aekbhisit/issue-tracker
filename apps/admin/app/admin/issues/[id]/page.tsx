@@ -21,6 +21,7 @@ import { UserApiService } from "@/app/admin/user/api";
 import { useIssue, useUpdateIssue, useAddComment } from "../hooks/useIssues";
 import type { Issue, IssueStatus, IssueSeverity, IssueFormData, IssueScreenshot } from "../types";
 import { SearchField } from "@/components/ui/table";
+import { ClientDateFormatter } from "@/components/ui/ClientDateFormatter";
 
 export default function IssueDetailPage() {
 	const router = useRouter();
@@ -469,7 +470,7 @@ export default function IssueDetailPage() {
 								{t("common.label.createdAt") || "Created At"}
 							</label>
 							<p className="text-gray-600 dark:text-gray-400">
-								{issue.createdAt.toLocaleString()}
+								<ClientDateFormatter date={issue.createdAt} />
 							</p>
 						</div>
 
@@ -478,7 +479,7 @@ export default function IssueDetailPage() {
 								{t("common.label.updatedAt") || "Updated At"}
 							</label>
 							<p className="text-gray-600 dark:text-gray-400">
-								{issue.updatedAt.toLocaleString()}
+								<ClientDateFormatter date={issue.updatedAt} />
 							</p>
 						</div>
 					</div>
@@ -590,7 +591,7 @@ export default function IssueDetailPage() {
 									{t("issue.label.timestamp") || "Timestamp"}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">
-									{new Date(issue.metadata.timestamp).toLocaleString()}
+									<ClientDateFormatter date={issue.metadata.timestamp} />
 								</p>
 							</div>
 						</div>
@@ -715,7 +716,7 @@ export default function IssueDetailPage() {
 											</div>
 											{screenshot.createdAt && (
 												<div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
-													Captured: {screenshot.createdAt.toLocaleString()}
+													Captured: <ClientDateFormatter date={screenshot.createdAt} />
 												</div>
 											)}
 											{hasElementSelector && (
@@ -835,7 +836,7 @@ export default function IssueDetailPage() {
 												</span>
 												{screenshot.createdAt && (
 													<span className="text-xs text-gray-500 dark:text-gray-400">
-														• {screenshot.createdAt.toLocaleString()}
+														• <ClientDateFormatter date={screenshot.createdAt} />
 													</span>
 												)}
 											</div>
@@ -1125,7 +1126,7 @@ export default function IssueDetailPage() {
 																	{log.level?.toUpperCase() || "UNKNOWN"}
 																</Badge>
 																<span className="text-xs text-gray-500 dark:text-gray-400">
-																	{log.timestamp.toLocaleString()}
+																	<ClientDateFormatter date={log.timestamp} />
 																</span>
 															</div>
 															<p className="text-sm text-gray-900 dark:text-white break-words">{log.message}</p>
@@ -1253,7 +1254,7 @@ export default function IssueDetailPage() {
 												{comment.user.name || comment.user.email || `User #${comment.user.id}`}
 											</span>
 											<span className="text-xs text-gray-500 dark:text-gray-400">
-												{comment.createdAt.toLocaleString()}
+												<ClientDateFormatter date={comment.createdAt} />
 											</span>
 										</div>
 									</div>

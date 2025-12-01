@@ -15,8 +15,10 @@ export class DashboardService {
    * Aggregates counts and fetches recent data for dashboard display
    * 
    * @returns Dashboard statistics object
+   * @throws Error if critical operations fail
    */
   async getStatistics(): Promise<DashboardStatistics> {
+    try {
     // Helper function to safely execute a query with error handling
     const safeQuery = async <T>(
       queryName: string,
@@ -282,6 +284,17 @@ export class DashboardService {
       },
       recentIssues: formattedIssues,
       recentActivity: formattedActivity,
+    }
+    } catch (error) {
+      // Log the full error for debugging
+      console.error('❌ DashboardService.getStatistics - Critical error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : 'UnknownError',
+      })
+      
+      // Re-throw to be handled by controller
+      throw error
     }
   }
 }

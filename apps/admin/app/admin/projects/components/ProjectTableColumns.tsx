@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { EditAction, DeleteAction, StatusToggleAction } from "@/components/ui/table/actions";
 import { checkPermission } from "@/lib/utils/permission.util";
+import { ClientTableDate } from "@/components/ui/ClientDateFormatter";
 
 import type { Project } from "../types";
 
@@ -110,9 +111,7 @@ export function useProjectTableColumns({
 				header: t("common.label.createdAt") || "Created",
 				accessorKey: "createdAt",
 				cell: ({ row }) => (
-					<span className="text-gray-600 dark:text-gray-400">
-						{row.original.createdAt.toLocaleDateString()} {row.original.createdAt.toLocaleTimeString()}
-					</span>
+					<ClientTableDate date={row.original.createdAt} />
 				),
 			},
 			{

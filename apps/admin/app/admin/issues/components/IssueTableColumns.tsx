@@ -8,6 +8,7 @@ import Link from "next/link";
 import EditAction from "@/components/ui/table/actions/EditAction";
 import { checkPermission } from "@/lib/utils/permission.util";
 import Badge from "@/components/ui/badge/Badge";
+import { ClientTableDate } from "@/components/ui/ClientDateFormatter";
 
 import type { Issue } from "../types";
 
@@ -158,9 +159,7 @@ export function useIssueTableColumns({
 				header: t("common.label.createdAt") || "Created",
 				accessorKey: "createdAt",
 				cell: ({ row }) => (
-					<span className="text-gray-600 dark:text-gray-400">
-						{row.original.createdAt.toLocaleDateString()} {row.original.createdAt.toLocaleTimeString()}
-					</span>
+					<ClientTableDate date={row.original.createdAt} />
 				),
 			},
 			{

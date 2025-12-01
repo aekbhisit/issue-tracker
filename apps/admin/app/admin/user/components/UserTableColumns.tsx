@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ColumnDef } from "@tanstack/react-table";
 
 import Badge from "@/components/ui/badge/Badge";
+import { ClientTableDate } from "@/components/ui/ClientDateFormatter";
 import { EditAction, DeleteAction } from "@/components/ui/table/actions";
 import { StatusToggleButton } from "@/components/ui/table/StatusToggleButton";
 import { checkPermission } from "@/lib/utils/permission.util";
@@ -129,11 +130,7 @@ export function useUserTableColumns({
 					if (!value) {
 						return <span className="text-gray-400">-</span>;
 					}
-					return (
-						<span className="text-gray-600 dark:text-gray-400">
-							{value.toLocaleDateString()} {value.toLocaleTimeString()}
-						</span>
-					);
+					return <ClientTableDate date={value} />;
 				},
 			},
 			{
@@ -141,9 +138,7 @@ export function useUserTableColumns({
 				header: t("common.label.updatedAt"),
 				accessorKey: "updatedAt",
 				cell: ({ row }) => (
-					<span className="text-gray-600 dark:text-gray-400">
-						{row.original.updatedAt.toLocaleDateString()} {row.original.updatedAt.toLocaleTimeString()}
-					</span>
+					<ClientTableDate date={row.original.updatedAt} />
 				),
 			},
 			{

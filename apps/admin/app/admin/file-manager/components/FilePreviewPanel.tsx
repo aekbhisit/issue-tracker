@@ -2,6 +2,7 @@
 
 import type { FileManagerItem } from '../types'
 import { useTranslation } from 'react-i18next'
+import { ClientDateFormatter } from '@/components/ui/ClientDateFormatter'
 
 const formatBytes = (bytes: number) => {
 	if (!bytes) return '0 B'
@@ -50,7 +51,11 @@ export function FilePreviewPanel({ item, onClose, onSelect, mode }: FilePreviewP
 			</div>
 			<div className="mt-4 space-y-2 text-xs text-gray-500 dark:text-gray-400">
 				<p>{t('admin.fileManager.preview.fileSize', { value: formatBytes(size) })}</p>
-				<p>{t('admin.fileManager.preview.lastUpdated', { value: new Date(modifiedAt).toLocaleString() })}</p>
+				<p>
+					{t('admin.fileManager.preview.lastUpdated', { 
+						value: typeof modifiedAt === 'string' ? new Date(modifiedAt).toISOString() : modifiedAt.toISOString()
+					})}: <ClientDateFormatter date={modifiedAt} />
+				</p>
 			</div>
 			{url && (
 				<div className="mt-4 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">

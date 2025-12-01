@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { ColumnDef } from "@tanstack/react-table"
 
 import Badge from "@/components/ui/badge/Badge"
+import { ClientDateFormatter } from "@/components/ui/ClientDateFormatter"
 import { ViewAction } from "@/components/ui/table/actions"
 import type { ActivityLog } from "../types"
 import { ActivityAction } from "../types"
@@ -87,10 +88,10 @@ export function useActivityLogTableColumns({
 					return (
 						<div className="flex flex-col">
 							<span className="text-sm text-gray-900 dark:text-white">
-								{date.toLocaleDateString()}
+								<ClientDateFormatter date={date} format="date" />
 							</span>
 							<span className="text-xs text-gray-500 dark:text-gray-400">
-								{date.toLocaleTimeString()}
+								<ClientDateFormatter date={date} format="time" />
 							</span>
 						</div>
 					)

@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import Badge from "@/components/ui/badge/Badge"
 import { EditAction, DeleteAction } from "@/components/ui/table/actions"
 import { StatusToggleButton } from "@/components/ui/table/StatusToggleButton"
+import { ClientTableDate } from "@/components/ui/ClientDateFormatter"
 import { AdminMenu } from "../types"
 
 interface AdminMenuTableColumnsProps {
@@ -153,11 +154,7 @@ export function useAdminMenuTableColumns({
 				accessorKey: "updatedAt",
 				cell: ({ row }) => {
 					const date = new Date(row.original.updatedAt)
-					return (
-						<span className="text-gray-600 dark:text-gray-400">
-							{date.toLocaleDateString()} {date.toLocaleTimeString()}
-						</span>
-					)
+					return <ClientTableDate date={date} />
 				},
 			},
 			{
