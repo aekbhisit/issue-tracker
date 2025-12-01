@@ -89,6 +89,19 @@ services:
   api:
     image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/issue-collector-api:${IMAGE_TAG:-latest}
     container_name: issue-collector-api
+    # Environment variables configuration for Portainer deployment
+    # ⚠️ IMPORTANT: Portainer cannot upload files, so env_file won't work
+    # 
+    # How to set environment variables in Portainer:
+    #   1. Go to Stacks → Your stack → Editor → Environment Variables section
+    #   2. Copy ALL variables from infra/stack.env (skip comment lines starting with #)
+    #   3. Paste into Portainer's "Environment Variables" section
+    #   4. Format: Each line should be KEY=VALUE
+    # 
+    # For local docker-compose CLI usage (when stack.env exists on host):
+    #   Uncomment the env_file section below:
+    # env_file:
+    #   - ../stack.env
     depends_on:
       # TEMPORARY: Changed from service_healthy to service_started to skip health checks for debugging
       # Change back to service_healthy after fixing issues
