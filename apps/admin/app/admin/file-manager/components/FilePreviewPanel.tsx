@@ -53,7 +53,11 @@ export function FilePreviewPanel({ item, onClose, onSelect, mode }: FilePreviewP
 				<p>{t('admin.fileManager.preview.fileSize', { value: formatBytes(size) })}</p>
 				<p>
 					{t('admin.fileManager.preview.lastUpdated', { 
-						value: typeof modifiedAt === 'string' ? new Date(modifiedAt).toISOString() : modifiedAt.toISOString()
+						value: typeof modifiedAt === 'string' 
+							? new Date(modifiedAt).toISOString() 
+							: modifiedAt instanceof Date
+								? modifiedAt.toISOString()
+								: String(modifiedAt)
 					})}: <ClientDateFormatter date={modifiedAt} />
 				</p>
 			</div>

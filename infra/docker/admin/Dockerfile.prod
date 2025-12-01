@@ -148,7 +148,7 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
     echo "🚀 Running: pnpm build" && \
     mkdir -p /tmp && \
     touch /tmp/build.log && \
-    pnpm build 2>&1 | tee /tmp/build.log; BUILD_STATUS=${PIPESTATUS[0]} && \
+    (pnpm build 2>&1 | tee /tmp/build.log); BUILD_STATUS=$? && \
     if [ $BUILD_STATUS -ne 0 ]; then \
         echo "" && \
         echo "❌ BUILD FAILED! (Exit code: $BUILD_STATUS)" && \
