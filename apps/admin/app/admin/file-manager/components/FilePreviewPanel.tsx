@@ -55,9 +55,7 @@ export function FilePreviewPanel({ item, onClose, onSelect, mode }: FilePreviewP
 					{t('admin.fileManager.preview.lastUpdated', { 
 						value: typeof modifiedAt === 'string' 
 							? new Date(modifiedAt).toISOString() 
-							: modifiedAt instanceof Date
-								? modifiedAt.toISOString()
-								: String(modifiedAt)
+							: String(modifiedAt)
 					})}: <ClientDateFormatter date={modifiedAt} />
 				</p>
 			</div>
