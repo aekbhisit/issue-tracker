@@ -199,8 +199,12 @@ export class AuthService {
 			roleName: user.role?.name || null,
 		}
 
-		const secret = process.env.JWT_SECRET!
-		const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
+		const secret = process.env.JWT_SECRET
+		if (!secret) {
+			throw new Error('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
+		}
+
+		const expiresIn = process.env.JWT_EXPIRES_IN || process.env.JWT_ACCESS_EXPIRES_IN || '7d'
 
 		// Note: expiresIn accepts numbers or specific string formats.
 		// We trust configuration here and cast to satisfy TypeScript.
@@ -216,7 +220,11 @@ export class AuthService {
 	 */
 	async verifyToken(token: string) {
 		try {
-			return jsonwebtoken.verify(token, process.env.JWT_SECRET!)
+			const secret = process.env.JWT_SECRET
+			if (!secret) {
+				throw new Error('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
+			}
+			return jsonwebtoken.verify(token, secret)
 		} catch (error) {
 			throw new UnauthorizedError('Invalid token')
 		}

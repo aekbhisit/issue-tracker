@@ -58,12 +58,26 @@ export function errorMiddleware(
 	}
 
 	// Default error response
+	// Log full error details for debugging
+	console.error('Unhandled Error:', {
+		name: err.name,
+		message: err.message,
+		stack: err.stack,
+		cause: (err as any).cause,
+	})
+
 	res.status(500).json({
 		error: 'InternalServerError',
 		message: process.env.NODE_ENV === 'production'
 			? 'An unexpected error occurred'
 			: err.message,
 		status: 500,
+		...(process.env.NODE_ENV === 'development' && {
+			details: {
+				name: err.name,
+				stack: err.stack,
+			}
+		}),
 	})
 }
 

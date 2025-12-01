@@ -36,7 +36,15 @@ export class AuthController {
     try {
       const tokens = await this.service.login(req.body)
       sendSuccess(res, tokens, 200, 'Login successful')
-    } catch (error) {
+    } catch (error: any) {
+      // Log detailed error information for debugging
+      console.error('Login error:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack,
+        email: req.body?.email,
+        hasPassword: !!req.body?.password,
+      })
       next(error)
     }
   }

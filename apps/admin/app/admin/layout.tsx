@@ -18,22 +18,15 @@ export default function AdminLayout({
   // Check if current page is a public/auth page (login, signup, reset-password)
   // Normalize pathname by removing trailing slashes for comparison
   // Use useMemo to prevent unnecessary recalculations
+  // IMPORTANT: Only use pathname from usePathname() to avoid hydration mismatches
   const isAuthPage = useMemo(() => {
-    // Get pathname from Next.js hook
-    let currentPath = pathname;
-    
-    // Fallback: if pathname is not available, try to get it from window.location
-    // This is a safety net for edge cases in production
-    if (!currentPath && typeof window !== 'undefined') {
-      currentPath = window.location.pathname;
-    }
-    
-    // If still no pathname, default to false (show sidebar)
-    if (!currentPath) return false;
+    // If pathname is not available, default to false (show sidebar)
+    // Don't use window.location here as it causes hydration mismatches
+    if (!pathname) return false;
     
     // Normalize pathname: remove trailing slashes, query strings, and hashes
     // Split by '?' and '#' to get just the path
-    const pathOnly = currentPath.split('?')[0].split('#')[0];
+    const pathOnly = pathname.split('?')[0].split('#')[0];
     const normalized = pathOnly.replace(/\/+$/, '') || '/';
     
     // Check if it's the login page (exactly /admin)

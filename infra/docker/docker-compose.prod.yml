@@ -116,6 +116,11 @@ services:
       DATABASE_NAME: ${DATABASE_NAME:-issue_collector}
       DATABASE_USER: ${DATABASE_USER:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      
+      # Database Migration (Optional - set to 'true' to run migrations on startup)
+      # ⚠️ WARNING: Only enable for first deployment or when you want to auto-migrate
+      # Set to 'true' for initial setup, then remove or set to 'false' for production
+      RUN_MIGRATIONS_ON_STARTUP: ${RUN_MIGRATIONS_ON_STARTUP:-false}
 
       # Redis
       REDIS_URL: redis://redis:6379

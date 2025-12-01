@@ -164,7 +164,7 @@ export default function SignInForm() {
                     </span>
                   </div>
                   <Link
-                    href="/reset-password"
+                    href="/admin/reset-password"
                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
                     {t('admin.auth.forgotPassword')}
@@ -187,7 +187,7 @@ export default function SignInForm() {
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
                 {t('admin.auth.dontHaveAccount')} {""}
                 <Link
-                  href="/signup"
+                  href="/admin/signup"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
                 >
                   {t('admin.auth.signUp')}
