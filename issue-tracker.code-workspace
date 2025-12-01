@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../android-kiosk-ai-agent"
 		}
 	],
 	"settings": {}
