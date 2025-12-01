@@ -81,16 +81,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      EXTERNAL_RAG_API_URL: ${EXTERNAL_RAG_API_URL}
-      EXTERNAL_RAG_API_KEY: ${EXTERNAL_RAG_API_KEY}
-      EXTERNAL_RAG_API_TIMEOUT: ${EXTERNAL_RAG_API_TIMEOUT:-30000}
-
-      EXTERNAL_CONTEXT_API_URL: ${EXTERNAL_CONTEXT_API_URL:-}
-      EXTERNAL_CONTEXT_API_KEY: ${EXTERNAL_CONTEXT_API_KEY:-}
-
-      EXTERNAL_DATA_API_URL: ${EXTERNAL_DATA_API_URL:-}
-      EXTERNAL_DATA_API_KEY: ${EXTERNAL_DATA_API_KEY:-}
+      # NOTE: OpenAI, RAG, and External API configurations have been REMOVED
+      # These environment variables are NOT USED anywhere in the codebase
+      # They were copied from another project but never implemented
 
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}

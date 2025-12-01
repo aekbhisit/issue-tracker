@@ -9,9 +9,6 @@
 #
 # Common causes:
 #   1. Missing required environment variables:
-#      - OPENAI_API_KEY (required in production, unless SKIP_VALIDATION=1)
-#      - EXTERNAL_RAG_API_URL (required in production, unless SKIP_VALIDATION=1)
-#      - EXTERNAL_RAG_API_KEY (required in production, unless SKIP_VALIDATION=1)
 #      - JWT_SECRET (required in production, min 32 chars, unless SKIP_VALIDATION=1)
 #      - SESSION_SECRET (required in production, min 32 chars, unless SKIP_VALIDATION=1)
 #      - CORS_ORIGIN (optional - only affects browser CORS, not container startup)
@@ -125,21 +122,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
-      # OpenAI Configuration (REQUIRED for Voice Chat)
-      OPENAI_API_KEY: ${OPENAI_API_KEY}  # Required - OpenAI API key for Realtime Voice Mode
-
-      # External RAG API (REQUIRED for AI responses)
-      EXTERNAL_RAG_API_URL: ${EXTERNAL_RAG_API_URL}
-      EXTERNAL_RAG_API_KEY: ${EXTERNAL_RAG_API_KEY}
-      EXTERNAL_RAG_API_TIMEOUT: ${EXTERNAL_RAG_API_TIMEOUT:-30000}
-
-      # External Context API (optional - for hotel info, FAQs)
-      EXTERNAL_CONTEXT_API_URL: ${EXTERNAL_CONTEXT_API_URL:-}
-      EXTERNAL_CONTEXT_API_KEY: ${EXTERNAL_CONTEXT_API_KEY:-}
-
-      # External Data API (optional - for hotel services, bookings)
-      EXTERNAL_DATA_API_URL: ${EXTERNAL_DATA_API_URL:-}
-      EXTERNAL_DATA_API_KEY: ${EXTERNAL_DATA_API_KEY:-}
+      # NOTE: OpenAI, RAG, and External API configurations have been REMOVED
+      # These environment variables are NOT USED anywhere in the codebase
+      # They were copied from another project but never implemented
+      # If AI features are needed in the future (IC-9), add them back then
 
       # Security
       JWT_SECRET: ${JWT_SECRET}  # Required - minimum 32 characters
