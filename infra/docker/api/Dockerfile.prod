@@ -157,16 +157,11 @@ FROM base AS production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/packages ./packages
 # Copy infra directory (needed for database package)
-# This includes Prisma schema files and migrations needed for db:migrate:deploy
 COPY --from=dependencies /app/infra ./infra
 # Copy root package metadata (needed by runtime helpers that look for project root)
 COPY --from=dependencies /app/package.json ./
 # Overlay compiled database package output
 COPY --from=build /app/infra/database/dist ./infra/database/dist
-# Ensure Prisma schema and migrations are available (needed for migrations at runtime)
-COPY --from=build /app/infra/database/prisma ./infra/database/prisma
-COPY --from=build /app/infra/database/scripts ./infra/database/scripts
-COPY --from=build /app/infra/database/package.json ./infra/database/package.json
 # Overlay compiled shared packages
 COPY --from=build /app/packages/types/dist ./packages/types/dist
 COPY --from=build /app/packages/utils/dist ./packages/utils/dist

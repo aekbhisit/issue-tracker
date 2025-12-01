@@ -2,11 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@workspace/types', '@workspace/utils'],
-  
-  // Configure basePath and assetPrefix for path-based routing (e.g., /admin)
-  // These are set from environment variables to support different deployment scenarios
-  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
-  assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || '/admin',
   images: {
     remotePatterns: [
       {
@@ -37,7 +32,6 @@ const nextConfig = {
   },
   async rewrites() {
     // Always rewrite storage paths to API server
-    // Note: rewrites are relative to basePath, so /storage works correctly
     return [
       {
         source: '/storage/:path*',
