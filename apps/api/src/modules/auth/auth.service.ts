@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs'
 // @ts-ignore - jsonwebtoken has default export at runtime
 import jsonwebtoken from 'jsonwebtoken'
 import { LoginDto, RegisterDto, AuthTokens } from './auth.types'
-import { UnauthorizedError, ConflictError, BadRequestError } from '../../shared/utils/error.util'
+import { UnauthorizedError, ConflictError, BadRequestError, DatabaseConnectionError, ConfigurationError } from '../../shared/utils/error.util'
 
 export class AuthService {
 	/**
@@ -104,27 +104,55 @@ export class AuthService {
 			throw new BadRequestError('Username or email is required')
 		}
 
-		// Find user by username or email
-		const user = await db.user.findFirst({
-			where: {
-				OR: [
-					data.username ? { username: data.username } : {},
-					data.email ? { email: data.email } : {},
-				].filter(Boolean),
-				deletedAt: null, // Exclude soft-deleted users
-			},
-			include: {
-				role: {
-					include: {
-						rolePermissions: {
-							include: {
-								permission: true,
+		// Check JWT_SECRET before proceeding
+		if (!process.env.JWT_SECRET) {
+			throw new ConfigurationError('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
+		}
+
+		let user
+		try {
+			// Find user by username or email
+			user = await db.user.findFirst({
+				where: {
+					OR: [
+						data.username ? { username: data.username } : {},
+						data.email ? { email: data.email } : {},
+					].filter(Boolean),
+					deletedAt: null, // Exclude soft-deleted users
+				},
+				include: {
+					role: {
+						include: {
+							rolePermissions: {
+								include: {
+									permission: true,
+								},
 							},
 						},
 					},
 				},
-			},
-		})
+			})
+		} catch (dbError: any) {
+			// Handle database connection errors
+			if (
+				dbError.name === 'PrismaClientInitializationError' ||
+				dbError.message?.includes('Can\'t reach database server') ||
+				dbError.message?.includes('Connection refused') ||
+				dbError.message?.includes('ECONNREFUSED') ||
+				dbError.code === 'P1001' ||
+				dbError.code === 'P1000'
+			) {
+				throw new DatabaseConnectionError(
+					'Unable to connect to database. Please check database configuration.',
+					{
+						code: dbError.code || 'DATABASE_CONNECTION_ERROR',
+						message: process.env.NODE_ENV === 'development' ? dbError.message : undefined,
+					}
+				)
+			}
+			// Re-throw other database errors
+			throw dbError
+		}
 
 		// Check if user exists
 		if (!user) {
@@ -201,14 +229,24 @@ export class AuthService {
 
 		const secret = process.env.JWT_SECRET
 		if (!secret) {
-			throw new Error('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
+			throw new ConfigurationError('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
 		}
 
 		const expiresIn = process.env.JWT_EXPIRES_IN || process.env.JWT_ACCESS_EXPIRES_IN || '7d'
 
-		// Note: expiresIn accepts numbers or specific string formats.
-		// We trust configuration here and cast to satisfy TypeScript.
-		return jsonwebtoken.sign(payload, secret, { expiresIn: expiresIn as any })
+		try {
+			// Note: expiresIn accepts numbers or specific string formats.
+			// We trust configuration here and cast to satisfy TypeScript.
+			return jsonwebtoken.sign(payload, secret, { expiresIn: expiresIn as any })
+		} catch (jwtError: any) {
+			throw new ConfigurationError(
+				'Failed to generate authentication token. Please check JWT configuration.',
+				{
+					code: 'JWT_SIGN_ERROR',
+					message: process.env.NODE_ENV === 'development' ? jwtError.message : undefined,
+				}
+			)
+		}
 	}
 
 	/**
@@ -222,10 +260,19 @@ export class AuthService {
 		try {
 			const secret = process.env.JWT_SECRET
 			if (!secret) {
-				throw new Error('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
+				throw new ConfigurationError('JWT_SECRET is not configured. Please set JWT_SECRET environment variable.')
 			}
 			return jsonwebtoken.verify(token, secret)
-		} catch (error) {
+		} catch (error: any) {
+			if (error.name === 'TokenExpiredError') {
+				throw new UnauthorizedError('Your session has expired. Please log in again.')
+			}
+			if (error.name === 'JsonWebTokenError') {
+				throw new UnauthorizedError('Invalid authentication token. Please log in again.')
+			}
+			if (error instanceof ConfigurationError) {
+				throw error
+			}
 			throw new UnauthorizedError('Invalid token')
 		}
 	}

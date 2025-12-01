@@ -73,3 +73,21 @@ export class BadRequestError extends BaseApiError {
   }
 }
 
+/**
+ * Database Connection Error (503)
+ */
+export class DatabaseConnectionError extends BaseApiError {
+  constructor(message = 'Unable to connect to database', details?: any) {
+    super(message, HttpStatus.SERVICE_UNAVAILABLE, details)
+  }
+}
+
+/**
+ * Configuration Error (500)
+ */
+export class ConfigurationError extends BaseApiError {
+  constructor(message = 'Configuration error', details?: any) {
+    super(message, HttpStatus.INTERNAL_SERVER_ERROR, details)
+  }
+}
+
