@@ -28,15 +28,22 @@ function formatTimeAgo(date: Date | string): string {
 // This component only renders after client-side hydration completes
 function ClientTimeAgo({ date }: { date: Date | string }) {
   const [timeAgo, setTimeAgo] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Only calculate time after component mounts (client-side only)
+    // Mark as mounted (client-side only)
+    setMounted(true);
+    // Calculate time after component mounts
     setTimeAgo(formatTimeAgo(date));
   }, [date]);
 
-  // Return empty string during SSR to prevent hydration mismatch
-  // The actual time will be set after hydration
-  return <span suppressHydrationWarning>{timeAgo || ''}</span>;
+  // During SSR, return empty string to prevent hydration mismatch
+  // After hydration, render the actual time
+  if (!mounted) {
+    return <span suppressHydrationWarning></span>;
+  }
+
+  return <span suppressHydrationWarning>{timeAgo}</span>;
 }
 
 function getStatusColor(status: string): string {
@@ -170,7 +177,7 @@ export default function DashboardPage() {
               apiStatus === 'offline' ? 'bg-red-500' : 
               'bg-yellow-500 animate-pulse'
             }`}></div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
               API {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Checking...'}
               {apiVersion && ` (v${apiVersion})`}
             </span>
