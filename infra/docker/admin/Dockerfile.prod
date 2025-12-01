@@ -139,8 +139,36 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
     echo "  Contents before build:" && \
     ls -la . | head -10 && \
     echo "" && \
+    echo "📋 Checking dependencies before build..." && \
+    (test -d /app/packages/types/dist && echo "✅ @workspace/types built" || (echo "❌ @workspace/types not built" && exit 1)) && \
+    (test -d /app/packages/utils/dist && echo "✅ @workspace/utils built" || (echo "❌ @workspace/utils not built" && exit 1)) && \
+    (test -f /app/apps/admin/public/collector.min.js && echo "✅ collector.min.js exists" || echo "⚠️ collector.min.js not found (will create empty)") && \
+    echo "" && \
     echo "🚀 Running: pnpm build" && \
-    pnpm build || (echo "❌ BUILD FAILED!" && echo "Build output:" && cat .next/build-manifest.json 2>&1 || echo "No build manifest found" && exit 1) && \
+    (pnpm build 2>&1 | tee /tmp/build.log) || ( \
+        echo "" && \
+        echo "❌ BUILD FAILED!" && \
+        echo "" && \
+        echo "📋 Full Build Error Output:" && \
+        echo "==========================================" && \
+        cat /tmp/build.log && \
+        echo "==========================================" && \
+        echo "" && \
+        echo "🔍 Diagnostic Information:" && \
+        echo "  Current directory: $(pwd)" && \
+        echo "  Checking for .next directory:" && \
+        (ls -la .next 2>&1 || echo "    ❌ No .next directory found") && \
+        echo "  Checking node_modules:" && \
+        (test -d node_modules && echo "    ✅ node_modules exists" || echo "    ❌ node_modules missing") && \
+        (test -d /app/node_modules && echo "    ✅ root node_modules exists" || echo "    ❌ root node_modules missing") && \
+        echo "  Checking workspace packages:" && \
+        (test -d /app/packages/types/dist && echo "    ✅ @workspace/types/dist exists" || echo "    ❌ @workspace/types/dist missing") && \
+        (test -d /app/packages/utils/dist && echo "    ✅ @workspace/utils/dist exists" || echo "    ❌ @workspace/utils/dist missing") && \
+        echo "  Checking Next.js:" && \
+        (test -d /app/node_modules/next && echo "    ✅ Next.js in root node_modules" || echo "    ⚠️ Next.js not in root node_modules") && \
+        (test -d /app/apps/admin/node_modules/next && echo "    ✅ Next.js in admin node_modules" || echo "    ⚠️ Next.js not in admin node_modules") && \
+        exit 1 \
+    ) && \
     echo "" && \
     echo "🔍 Verifying .next directory was created..." && \
     if [ ! -d /app/apps/admin/.next ]; then \
