@@ -231,13 +231,15 @@ services:
       
       # Disable Next.js telemetry
       NEXT_TELEMETRY_DISABLED: 1
-      # Set NODE_PATH for proper module resolution
-      NODE_PATH: /app/node_modules
+      # Set NODE_PATH for proper module resolution (matches Dockerfile.prod)
+      # Include both root and admin node_modules for proper module resolution
+      NODE_PATH: /app/node_modules:/app/apps/admin/node_modules
     ports:
       - "${ADMIN_PORT:-3411}:3411"
     # Override command to use node directly (avoids npx/pnpm exec downloading deps)
-    # Try .bin symlink first (pnpm standard), fallback to direct path
-    command: ["sh", "-c", "cd /app/apps/admin && if [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found. Checking...' && ls -la /app/node_modules/.bin/next 2>&1 && ls -la /app/node_modules/next/dist/bin/next 2>&1 && exit 1; fi"]
+    # Check admin's node_modules first (where Next.js actually lives), then root as fallback
+    # Path priority: /app/apps/admin/node_modules > /app/node_modules
+    command: ["sh", "-c", "cd /app/apps/admin && if [ -L node_modules/.bin/next ] || [ -f node_modules/.bin/next ]; then exec node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f node_modules/next/dist/bin/next ]; then exec node node_modules/next/dist/bin/next start -p ${PORT:-3411}; elif [ -L /app/node_modules/.bin/next ] || [ -f /app/node_modules/.bin/next ]; then exec /app/node_modules/.bin/next start -p ${PORT:-3411}; elif [ -f /app/node_modules/next/dist/bin/next ]; then exec node /app/node_modules/next/dist/bin/next start -p ${PORT:-3411}; else echo '❌ Next.js not found. Checking paths...' && echo 'Checking /app/apps/admin/node_modules/.bin/next:' && ls -la /app/apps/admin/node_modules/.bin/next 2>&1 || echo 'Not found' && echo 'Checking /app/apps/admin/node_modules/next/dist/bin/next:' && ls -la /app/apps/admin/node_modules/next/dist/bin/next 2>&1 || echo 'Not found' && echo 'Checking /app/node_modules/.bin/next:' && ls -la /app/node_modules/.bin/next 2>&1 || echo 'Not found' && echo 'Checking /app/node_modules/next/dist/bin/next:' && ls -la /app/node_modules/next/dist/bin/next 2>&1 || echo 'Not found' && echo 'Available Next.js locations:' && find /app -name 'next' -type d 2>/dev/null | head -10 && exit 1; fi"]
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:
     #   # Health check for admin Next.js app
