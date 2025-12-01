@@ -17,7 +17,26 @@ export class DashboardService {
    * @returns Dashboard statistics object
    */
   async getStatistics(): Promise<DashboardStatistics> {
-    // Execute all queries in parallel for better performance
+    // Helper function to safely execute a query with error handling
+    const safeQuery = async <T>(
+      queryName: string,
+      queryFn: () => Promise<T>,
+      defaultValue: T
+    ): Promise<T> => {
+      try {
+        return await queryFn()
+      } catch (error) {
+        console.error(`❌ Dashboard query failed [${queryName}]:`, {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          name: error instanceof Error ? error.name : 'UnknownError',
+        })
+        return defaultValue
+      }
+    }
+
+    // Execute all queries in parallel with individual error handling
+    // This allows partial data to be returned even if some queries fail
     const [
       projectCounts,
       issueCounts,
@@ -28,90 +47,118 @@ export class DashboardService {
       recentActivity,
     ] = await Promise.all([
       // Project counts
-      Promise.all([
-        db.project.count({
-          where: { deletedAt: null },
-        }),
-        db.project.count({
-          where: { deletedAt: null, status: true },
-        }),
-      ]),
+      safeQuery(
+        'projectCounts',
+        async () => Promise.all([
+          db.project.count({
+            where: { deletedAt: null },
+          }),
+          db.project.count({
+            where: { deletedAt: null, status: true },
+          }),
+        ]),
+        [0, 0] as [number, number]
+      ),
 
       // Total issue count
-      db.issue.count(),
+      safeQuery(
+        'issueCounts',
+        () => db.issue.count(),
+        0
+      ),
 
       // Issues by status
-      db.issue.groupBy({
-        by: ['status'],
-        _count: {
-          id: true,
-        },
-      }),
+      safeQuery(
+        'issueStatusCounts',
+        () => db.issue.groupBy({
+          by: ['status'],
+          _count: {
+            id: true,
+          },
+        }),
+        [] as Array<{ status: string; _count: { id: number } }>
+      ),
 
       // Issues by severity
-      db.issue.groupBy({
-        by: ['severity'],
-        _count: {
-          id: true,
-        },
-      }),
+      safeQuery(
+        'issueSeverityCounts',
+        () => db.issue.groupBy({
+          by: ['severity'],
+          _count: {
+            id: true,
+          },
+        }),
+        [] as Array<{ severity: string; _count: { id: number } }>
+      ),
 
       // User counts
-      Promise.all([
-        db.user.count({
-          where: { deletedAt: null },
-        }),
-        db.user.count({
-          where: { deletedAt: null, status: true },
-        }),
-      ]),
+      safeQuery(
+        'userCounts',
+        async () => Promise.all([
+          db.user.count({
+            where: { deletedAt: null },
+          }),
+          db.user.count({
+            where: { deletedAt: null, status: true },
+          }),
+        ]),
+        [0, 0] as [number, number]
+      ),
 
       // Recent issues (last 10)
-      db.issue.findMany({
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          project: {
-            select: {
-              id: true,
-              name: true,
-              publicKey: true,
+      safeQuery(
+        'recentIssues',
+        () => db.issue.findMany({
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            project: {
+              select: {
+                id: true,
+                name: true,
+                publicKey: true,
+              },
+            },
+            assignee: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            screenshots: {
+              take: 1,
+              orderBy: { createdAt: 'asc' },
             },
           },
-          assignee: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          screenshots: {
-            take: 1,
-            orderBy: { createdAt: 'asc' },
-          },
-        },
-      }),
+        }),
+        []
+      ),
 
       // Recent activity (last 10, filtered to Issue and Project models)
-      db.activityLog.findMany({
-        take: 10,
-        where: {
-          model: {
-            in: ['Issue', 'Project'],
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              email: true,
+      safeQuery(
+        'recentActivity',
+        () => db.activityLog.findMany({
+          take: 10,
+          where: {
+            model: {
+              in: ['Issue', 'Project'],
             },
           },
-        },
-      }),
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                email: true,
+              },
+            },
+          },
+        }),
+        []
+      ),
     ])
 
     // Process issue status counts

@@ -24,6 +24,21 @@ function formatTimeAgo(date: Date | string): string {
   return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
 }
 
+// Client-only component to prevent hydration mismatch
+// This component only renders after client-side hydration completes
+function ClientTimeAgo({ date }: { date: Date | string }) {
+  const [timeAgo, setTimeAgo] = useState<string>('');
+
+  useEffect(() => {
+    // Only calculate time after component mounts (client-side only)
+    setTimeAgo(formatTimeAgo(date));
+  }, [date]);
+
+  // Return empty string during SSR to prevent hydration mismatch
+  // The actual time will be set after hydration
+  return <span suppressHydrationWarning>{timeAgo || ''}</span>;
+}
+
 function getStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case 'open':
@@ -456,7 +471,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatTimeAgo(issue.createdAt)}
+                          <ClientTimeAgo date={issue.createdAt} />
                         </td>
                       </tr>
                     ))}
@@ -492,7 +507,7 @@ export default function DashboardPage() {
                         )}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {formatTimeAgo(activity.createdAt)}
+                        <ClientTimeAgo date={activity.createdAt} />
                       </p>
                     </div>
                   </div>

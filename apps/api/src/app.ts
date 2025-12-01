@@ -151,19 +151,61 @@ app.get('/health', (_req, res) => {
 // Version endpoint
 app.get('/version', (_req, res) => {
   try {
-    const packageJsonPath = path.join(__dirname, '../package.json')
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
-    
+    // Try multiple paths to find package.json (works in both dev and Docker production)
+    const possiblePaths = [
+      path.join(__dirname, '../../package.json'), // From dist/ to root (production Docker)
+      path.join(__dirname, '../package.json'), // From dist/ to apps/api (development)
+      path.join(process.cwd(), 'package.json'), // Current working directory
+      path.join(process.cwd(), 'apps/api/package.json'), // From monorepo root
+    ]
+
+    let packageJson: any = null
+    let packageJsonPath: string | null = null
+
+    // Try each path until we find package.json
+    for (const possiblePath of possiblePaths) {
+      try {
+        if (fs.existsSync(possiblePath)) {
+          packageJsonPath = possiblePath
+          packageJson = JSON.parse(fs.readFileSync(possiblePath, 'utf-8'))
+          break
+        }
+      } catch (err) {
+        // Continue to next path
+        continue
+      }
+    }
+
+    // Fallback to environment variable or default values
+    if (!packageJson) {
+      console.warn('⚠️ Could not find package.json, using fallback values')
+      res.json({
+        version: process.env.API_VERSION || process.env.npm_package_version || '1.0.0',
+        name: process.env.API_NAME || 'issue-collector-api',
+        description: process.env.API_DESCRIPTION || 'Express API Server',
+        timestamp: new Date().toISOString(),
+        source: 'environment',
+      })
+      return
+    }
+
     res.json({
       version: packageJson.version || '1.0.0',
       name: packageJson.name || 'issue-collector-api',
       description: packageJson.description || 'Express API Server',
       timestamp: new Date().toISOString(),
+      source: packageJsonPath || 'unknown',
     })
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to read version information',
+    console.error('❌ Error reading version information:', error)
+    // Return fallback values instead of 500 error
+    res.json({
+      version: process.env.API_VERSION || '1.0.0',
+      name: 'issue-collector-api',
+      description: 'Express API Server',
       timestamp: new Date().toISOString(),
+      source: 'fallback',
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
     })
   }
 })
