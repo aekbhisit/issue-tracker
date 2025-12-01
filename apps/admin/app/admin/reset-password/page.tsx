@@ -2,7 +2,7 @@
 
 import Input from "@/components/form/inputs/TextInput";
 import Label from "@/components/form/Label";
-import Button from "@/components/Button";
+import Button from "@/components/ui/button/Button";
 import Link from "next/link";
 import { ChevronLeftIcon } from "@/public/icons";
 import React, { useState } from "react";

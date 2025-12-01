@@ -24,7 +24,9 @@ COPY packages ./packages
 COPY apps/frontend/package.json ./apps/frontend/
 
 # Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prod
 
 # ===========================================
 # Build Stage
@@ -41,7 +43,9 @@ COPY packages ./packages
 COPY apps/frontend ./apps/frontend
 
 # Install all dependencies (including dev dependencies for build)
-RUN pnpm install --frozen-lockfile
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Build shared workspace packages needed by Frontend (CommonJS dist for Node/Next resolution)
 # Use subshells to isolate directory changes and ensure we're back at /app after each build
@@ -69,7 +73,9 @@ WORKDIR /app/apps/frontend
 RUN mkdir -p public || true
 # Create storage directory (symlink won't work in Docker, create empty dir instead)
 RUN rm -f storage 2>/dev/null || true && mkdir -p storage || true
-RUN pnpm build
+# Use BuildKit cache mount for Next.js build cache (speeds up subsequent builds)
+RUN --mount=type=cache,target=/app/apps/frontend/.next/cache \
+    pnpm build
 
 # ===========================================
 # Production Stage

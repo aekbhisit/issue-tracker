@@ -30,7 +30,9 @@ COPY apps/api/package.json ./apps/api/
 # Install production dependencies for all workspace packages
 # pnpm will install dependencies for all packages listed in pnpm-workspace.yaml
 # Using --filter ensures API dependencies are installed
-RUN echo "📦 Installing production dependencies..." && \
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "📦 Installing production dependencies..." && \
     pnpm install --frozen-lockfile --prod --filter "api" --filter "@workspace/*" && \
     echo "✅ Dependencies installed"
 
@@ -58,7 +60,9 @@ COPY infra ./infra
 COPY apps/api ./apps/api
 
 # Install all dependencies (including dev dependencies for build)
-RUN pnpm install --frozen-lockfile
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Generate Prisma client
 WORKDIR /app

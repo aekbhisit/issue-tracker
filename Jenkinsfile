@@ -11,8 +11,8 @@ pipeline {
     HARBOR_URL     = 'reg.haahii.com'
     HARBOR_PROJECT = 'haahii'
     HARBOR_CRED    = 'reg-haahii-robot-build'
-    // Disable BuildKit if buildx is not available (set to '0' or unset)
-    // DOCKER_BUILDKIT  = '1'
+    // Enable BuildKit for better caching and performance (requires Docker 20.10+)
+    DOCKER_BUILDKIT  = '1'
     TAG              = "${env.BUILD_NUMBER}"
     GIT_COMMIT_SHORT = 'unknown'  // Will be updated after checkout
     
@@ -21,6 +21,10 @@ pipeline {
     // These can be set as Jenkins job parameters or environment variables
     // Default values are provided in the build stages if not set
     // Runtime configuration (DATABASE_URL, JWT_SECRET, etc.) is provided via docker-compose
+    
+    // Build cache configuration
+    USE_BUILD_CACHE  = "${env.USE_BUILD_CACHE ?: 'true'}"  // Enable/disable build cache
+    USE_BUILDX       = "${env.USE_BUILDX ?: 'true'}"        // Use buildx for better caching
   }
 
   stages {
@@ -30,29 +34,34 @@ pipeline {
         sh '''
           set -eu
           echo "🔍 Checking Docker environment..."
-          command -v docker
           docker version
-          docker info || true
+          # Check if buildx is available (for better caching)
+          if docker buildx version > /dev/null 2>&1; then
+            echo "✅ Docker Buildx available"
+            # Create builder if it doesn't exist
+            docker buildx create --name multiarch --use --driver docker-container 2>/dev/null || \
+            docker buildx use multiarch 2>/dev/null || true
+          else
+            echo "⚠️  Docker Buildx not available, using standard build"
+          fi
           echo "📊 Available disk space:"
           df -h /var/lib/docker || df -h .
           # Check disk space and fail if less than 5GB free
           AVAILABLE=$(df -BG . | tail -1 | awk '{print $4}' | sed 's/G//')
           if [ "$AVAILABLE" -lt 5 ]; then
             echo "⚠️  WARNING: Less than 5GB free disk space (${AVAILABLE}GB available)"
-            echo "🧹 Running aggressive cleanup..."
-            docker system prune -af --volumes || true
-            docker builder prune -af || true
+            echo "🧹 Running selective cleanup..."
+            # Only remove stopped containers and dangling images (preserve cache)
+            docker container prune -f || true
+            docker image prune -f || true
             # Check again after cleanup
             AVAILABLE=$(df -BG . | tail -1 | awk '{print $4}' | sed 's/G//')
             if [ "$AVAILABLE" -lt 2 ]; then
               echo "❌ CRITICAL: Less than 2GB free after cleanup (${AVAILABLE}GB available)"
-              echo "Build cannot proceed. Please free up disk space manually."
               exit 1
             fi
           fi
           echo "✅ Disk space check passed (${AVAILABLE}GB available)"
-          echo "🔐 Harbor registry connectivity:"
-          docker login ${HARBOR_URL} -u ${HARBOR_CRED} --password-stdin < /dev/null || echo "Harbor login will be handled by docker.withRegistry"
         '''
       }
     }
@@ -63,27 +72,6 @@ pipeline {
         script {
           env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         }
-        sh 'echo "✅ Repository checked out at commit ${GIT_COMMIT_SHORT}"'
-      }
-    }
-
-    stage('Docker Cleanup') {
-      steps {
-        sh '''
-          set -eu
-          echo "🧹 Cleaning up Docker data before build..."
-          # Remove stopped containers
-          docker container prune -f || true
-          # Remove unused images (keep last 10)
-          docker image prune -af || true
-          # Remove unused build cache
-          docker builder prune -af || true
-          # Remove unused volumes (be careful - this removes all unused volumes)
-          docker volume prune -f || true
-          echo "📊 Disk usage after cleanup:"
-          docker system df || true
-          df -h . || true
-        '''
       }
     }
 
@@ -102,36 +90,42 @@ pipeline {
                 sh """
                   set -eu
                   echo "🚀 Building ${image}"
-                  echo "Build context: \$(pwd)"
-                  echo "Image tag: ${imageTag}"
-                  echo "Checking Dockerfile..."
-                  if test ! -f infra/docker/postgres/Dockerfile.prod; then
-                    echo "❌ Dockerfile.prod not found!"
-                    exit 1
+                  
+                  # Quick file checks (fail fast)
+                  test -f infra/docker/postgres/Dockerfile.prod || { echo "❌ Dockerfile.prod not found!"; exit 1; }
+                  test -d infra/docker/postgres/initdb || { echo "❌ Init scripts directory not found!"; exit 1; }
+                  
+                  # Setup cache
+                  CACHE_OPTS=""
+                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
+                    # Use registry cache backend (faster than inline cache)
+                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      # Also pull latest for cache
+                      docker pull ${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
+                    else
+                      # Fallback to inline cache
+                      docker pull ${repo}:latest 2>/dev/null || echo "⚠️  No previous image for cache"
+                      CACHE_OPTS="--cache-from ${repo}:latest"
+                    fi
                   fi
-                  echo "Checking init scripts directory..."
-                  if test ! -d infra/docker/postgres/initdb; then
-                    echo "❌ Init scripts directory not found!"
-                    exit 1
+                  
+                  # Build (using buildx if available for better caching)
+                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
+                      -t ${repo}:${imageTag} -t ${repo}:latest \\
+                      infra/docker/postgres || exit 1
+                  else
+                    docker build ${CACHE_OPTS} -f infra/docker/postgres/Dockerfile.prod \\
+                      -t ${repo}:${imageTag} -t ${repo}:latest \\
+                      infra/docker/postgres || exit 1
                   fi
-                  # Note: Dockerfile COPY will fail if init script is missing, so we just check directory exists
-                  echo "✅ Dockerfile and init scripts directory found"
-                  # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/postgres/Dockerfile.prod \\
-                    -t ${repo}:${imageTag} -t ${repo}:latest \\
-                    infra/docker/postgres || {
-                    echo "❌ Docker build failed"
-                    exit 1
-                  }
-                  echo "📤 Pushing ${image}"
-                  for tag in ${imageTag} latest; do
-                    echo "Pushing tag: \$tag"
-                    docker push ${repo}:\$tag || {
-                      echo "❌ Push failed for \$tag"
-                      exit 1
-                    }
-                    echo "✅ Successfully pushed ${repo}:\$tag"
-                  done
+                  
+                  # Push both tags in parallel (background)
+                  docker push ${repo}:${imageTag} &
+                  docker push ${repo}:latest &
+                  wait
+                  echo "✅ ${image} built and pushed"
                 """
               }
             }
@@ -146,69 +140,59 @@ pipeline {
               def image = 'issue-collector-api'
               def repo  = "${HARBOR_URL}/${HARBOR_PROJECT}/${image}"
               def gitCommit = env.GIT_COMMIT_SHORT ?: 'unknown'
-              // Optional: disable Docker layer cache when DOCKER_NO_CACHE=1 is set in Jenkins env
               def noCacheFlag = (env.DOCKER_NO_CACHE ?: '') == '1' ? '--no-cache' : ''
               docker.withRegistry("https://${HARBOR_URL}", HARBOR_CRED) {
                 sh """
                   set -eu
                   echo "🚀 Building ${image}"
-                  echo "Build context: \$(pwd)"
-                  echo "Git commit: ${gitCommit}"
-                  echo "Checking lockfile..."
-                  if test ! -f pnpm-lock.yaml; then
-                    echo "❌ pnpm-lock.yaml not found!"
-                    exit 1
+                  
+                  # Quick file checks (fail fast, combined)
+                  test -f pnpm-lock.yaml && test -f apps/api/package.json && \\
+                  test -f infra/docker/api/Dockerfile.prod && test -d apps/api/src && \\
+                  test -d infra/database && test -f infra/database/scripts/merge-schema.js && \\
+                  test -d infra/database/prisma/schema || { echo "❌ Required files/directories missing!"; exit 1; }
+                  
+                  # Setup cache
+                  CACHE_OPTS=""
+                  if [ "${USE_BUILD_CACHE}" = "true" ] && [ -z "${noCacheFlag}" ]; then
+                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                      # Use registry cache backend (much faster)
+                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      # Pull previous images for cache (in background, don't wait)
+                      docker pull ${repo}:latest 2>/dev/null &
+                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                    else
+                      # Fallback: pull for inline cache
+                      docker pull ${repo}:latest 2>/dev/null || true
+                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                    fi
                   fi
-                  echo "Verifying package.json..."
-                  if test ! -f apps/api/package.json; then
-                    echo "❌ apps/api/package.json not found!"
-                    exit 1
+                  
+                  # Build
+                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load ${CACHE_OPTS} ${noCacheFlag} \\
+                      -f infra/docker/api/Dockerfile.prod \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  else
+                    docker build ${CACHE_OPTS} ${noCacheFlag} \\
+                      --build-arg BUILDKIT_INLINE_CACHE=1 \\
+                      -f infra/docker/api/Dockerfile.prod \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
                   fi
-                  echo "Checking Dockerfile..."
-                  if test ! -f infra/docker/api/Dockerfile.prod; then
-                    echo "❌ infra/docker/api/Dockerfile.prod not found!"
-                    exit 1
-                  fi
-                  echo "Verifying required directories..."
-                  if test ! -d apps/api/src; then
-                    echo "❌ apps/api/src directory not found!"
-                    exit 1
-                  fi
-                  if test ! -d infra/database; then
-                    echo "❌ infra/database directory not found!"
-                    exit 1
-                  fi
-                  if test ! -f infra/database/scripts/merge-schema.js; then
-                    echo "❌ infra/database/scripts/merge-schema.js not found!"
-                    exit 1
-                  fi
-                  if test ! -d infra/database/prisma/schema; then
-                    echo "❌ infra/database/prisma/schema directory not found!"
-                    exit 1
-                  fi
-                  echo "✅ All required files and directories found"
-                  # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull ${noCacheFlag} -f infra/docker/api/Dockerfile.prod \\
-                    -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
-                    echo "❌ Docker build failed"
-                    exit 1
-                  }
-                  echo "✅ Build completed successfully"
-                  echo "Verifying image structure..."
-                  docker run --rm ${repo}:${TAG} sh -c "test -d /app/apps/api/dist && test -f /app/apps/api/dist/index.js && echo '✅ dist/index.js verified' && ls -la /app/apps/api/dist/ | head -10 || (echo '❌ dist/index.js NOT FOUND' && echo 'Current directory structure:' && ls -la /app/apps/api/ && exit 1)" || {
+                  
+                  # Quick verification (only critical check)
+                  docker run --rm ${repo}:${TAG} test -f /app/apps/api/dist/index.js || {
                     echo "❌ CRITICAL: dist/index.js not found in image!"
-                    echo "Build verification failed - image will not work correctly"
                     exit 1
                   }
-                  echo "📤 Pushing ${image}"
-                  for tag in ${TAG} ${gitCommit} latest; do
-                    echo "Pushing tag: \$tag"
-                    docker push ${repo}:\$tag || {
-                      echo "❌ Push failed for \$tag"
-                      exit 1
-                    }
-                    echo "✅ Successfully pushed ${repo}:\$tag"
-                  done
+                  
+                  # Push all tags in parallel
+                  docker push ${repo}:${TAG} &
+                  docker push ${repo}:${gitCommit} &
+                  docker push ${repo}:latest &
+                  wait
+                  echo "✅ ${image} built and pushed"
                 """
               }
             }
@@ -223,10 +207,6 @@ pipeline {
               def image = 'issue-collector-admin'
               def repo  = "${HARBOR_URL}/${HARBOR_PROJECT}/${image}"
               def gitCommit = env.GIT_COMMIT_SHORT ?: 'unknown'
-              // Build arguments for Next.js (NEXT_PUBLIC_* variables must be set at build time)
-              // Empty NEXT_PUBLIC_ADMIN_API_URL = relative URLs (for production with Nginx proxy)
-              // Set to full URL if needed for your deployment
-              // NEXT_PUBLIC_ADMIN_ASSET_PREFIX: '/admin' for path-based routing, empty for subdomain-based
               def buildArgs = [
                 "--build-arg NEXT_PUBLIC_ADMIN_API_URL=${env.NEXT_PUBLIC_ADMIN_API_URL ?: ''}",
                 "--build-arg NEXT_PUBLIC_ADMIN_AI_CHATBOT_ENABLED=${env.NEXT_PUBLIC_ADMIN_AI_CHATBOT_ENABLED ?: 'true'}",
@@ -238,46 +218,49 @@ pipeline {
                 sh """
                   set -eu
                   echo "🚀 Building ${image}"
-                  echo "Build context: \$(pwd)"
-                  echo "Git commit: ${gitCommit}"
-                  echo "Build args: ${buildArgs}"
-                  echo "Checking Dockerfile..."
-                  if test ! -f infra/docker/admin/Dockerfile.prod; then
-                    echo "❌ infra/docker/admin/Dockerfile.prod not found!"
-                    exit 1
+                  
+                  # Quick file checks
+                  test -f infra/docker/admin/Dockerfile.prod && test -d apps/admin && \\
+                  test -d apps/collector-sdk || { echo "❌ Required files/directories missing!"; exit 1; }
+                  
+                  # Setup cache
+                  CACHE_OPTS=""
+                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
+                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                      # Use registry cache backend
+                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      # Pull previous images (in background)
+                      docker pull ${repo}:latest 2>/dev/null &
+                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                    else
+                      # Fallback
+                      docker pull ${repo}:latest 2>/dev/null || true
+                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                    fi
                   fi
-                  echo "Verifying required directories..."
-                  if test ! -d apps/admin; then
-                    echo "❌ apps/admin directory not found!"
-                    exit 1
+                  
+                  # Build
+                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod ${buildArgs} \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  else
+                    docker build ${CACHE_OPTS} -f infra/docker/admin/Dockerfile.prod ${buildArgs} \\
+                      --build-arg BUILDKIT_INLINE_CACHE=1 \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
                   fi
-                  if test ! -d apps/collector-sdk; then
-                    echo "❌ apps/collector-sdk directory not found!"
-                    exit 1
-                  fi
-                  echo "✅ All required files and directories found"
-                  # Collector SDK is now built inside the Admin Dockerfile (multi-stage build).
-                  # Jenkins no longer needs to run a separate Node container here.
-                  # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/admin/Dockerfile.prod ${buildArgs} \\
-                    -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
-                    echo "❌ Docker build failed"
-                    exit 1
+                  
+                  # Quick verification
+                  docker run --rm ${repo}:${TAG} test -d /app/apps/admin/.next || {
+                    echo "⚠️  Warning: .next directory not found"
                   }
-                  echo "✅ Build completed successfully"
-                  echo "Verifying image structure..."
-                  docker run --rm ${repo}:${TAG} ls -la /app/apps/admin/.next/ || {
-                    echo "⚠️  Warning: Could not verify .next directory structure"
-                  }
-                  echo "📤 Pushing ${image}"
-                  for tag in ${TAG} ${gitCommit} latest; do
-                    echo "Pushing tag: \$tag"
-                    docker push ${repo}:\$tag || {
-                      echo "❌ Push failed for \$tag"
-                      exit 1
-                    }
-                    echo "✅ Successfully pushed ${repo}:\$tag"
-                  done
+                  
+                  # Push all tags in parallel
+                  docker push ${repo}:${TAG} &
+                  docker push ${repo}:${gitCommit} &
+                  docker push ${repo}:latest &
+                  wait
+                  echo "✅ ${image} built and pushed"
                 """
               }
             }
@@ -292,9 +275,6 @@ pipeline {
               def image = 'issue-collector-frontend'
               def repo  = "${HARBOR_URL}/${HARBOR_PROJECT}/${image}"
               def gitCommit = env.GIT_COMMIT_SHORT ?: 'unknown'
-              // Build arguments for Next.js (NEXT_PUBLIC_* variables must be set at build time)
-              // Empty NEXT_PUBLIC_FRONTEND_API_URL = relative URLs (for production with Nginx proxy)
-              // Set to full URL if needed for your deployment
               def buildArgs = [
                 "--build-arg NEXT_PUBLIC_FRONTEND_API_URL=${env.NEXT_PUBLIC_FRONTEND_API_URL ?: ''}",
                 "--build-arg NEXT_TELEMETRY_DISABLED=1"
@@ -303,40 +283,51 @@ pipeline {
                 sh """
                   set -eu
                   echo "🚀 Building ${image}"
-                  echo "Build context: \$(pwd)"
-                  echo "Git commit: ${gitCommit}"
-                  echo "Build args: ${buildArgs}"
-                  echo "Checking Dockerfile..."
-                  if test ! -f infra/docker/frontend/Dockerfile.prod; then
-                    echo "❌ infra/docker/frontend/Dockerfile.prod not found!"
-                    exit 1
-                  fi
-                  echo "Verifying required directories..."
-                  if test ! -d apps/frontend; then
-                    echo "❌ apps/frontend directory not found!"
-                    exit 1
-                  fi
-                  echo "✅ All required files and directories found"
-                  # Disable BuildKit if buildx is not available
-                  DOCKER_BUILDKIT=0 docker build --pull -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
-                    -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || {
-                    echo "❌ Docker build failed"
+                  
+                  # Quick file checks
+                  test -f infra/docker/frontend/Dockerfile.prod && test -d apps/frontend || {
+                    echo "❌ Required files/directories missing!"
                     exit 1
                   }
-                  echo "✅ Build completed successfully"
-                  echo "Verifying image structure..."
-                  docker run --rm ${repo}:${TAG} ls -la /app/apps/frontend/.next/ || {
-                    echo "⚠️  Warning: Could not verify .next directory structure"
+                  
+                  # Setup cache
+                  CACHE_OPTS=""
+                  if [ "${USE_BUILD_CACHE}" = "true" ]; then
+                    if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                      # Use registry cache backend
+                      CACHE_OPTS="--cache-from type=registry,ref=${repo}:buildcache --cache-to type=registry,ref=${repo}:buildcache,mode=max"
+                      # Pull previous images (in background)
+                      docker pull ${repo}:latest 2>/dev/null &
+                      docker pull ${repo}:${gitCommit} 2>/dev/null &
+                    else
+                      # Fallback
+                      docker pull ${repo}:latest 2>/dev/null || true
+                      docker pull ${repo}:${gitCommit} 2>/dev/null || true
+                      CACHE_OPTS="--cache-from ${repo}:latest --cache-from ${repo}:${gitCommit}"
+                    fi
+                  fi
+                  
+                  # Build
+                  if [ "${USE_BUILDX}" = "true" ] && docker buildx version > /dev/null 2>&1; then
+                    docker buildx build --load ${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  else
+                    docker build ${CACHE_OPTS} -f infra/docker/frontend/Dockerfile.prod ${buildArgs} \\
+                      --build-arg BUILDKIT_INLINE_CACHE=1 \\
+                      -t ${repo}:${TAG} -t ${repo}:${gitCommit} -t ${repo}:latest . || exit 1
+                  fi
+                  
+                  # Quick verification
+                  docker run --rm ${repo}:${TAG} test -d /app/apps/frontend/.next || {
+                    echo "⚠️  Warning: .next directory not found"
                   }
-                  echo "📤 Pushing ${image}"
-                  for tag in ${TAG} ${gitCommit} latest; do
-                    echo "Pushing tag: \$tag"
-                    docker push ${repo}:\$tag || {
-                      echo "❌ Push failed for \$tag"
-                      exit 1
-                    }
-                    echo "✅ Successfully pushed ${repo}:\$tag"
-                  done
+                  
+                  # Push all tags in parallel
+                  docker push ${repo}:${TAG} &
+                  docker push ${repo}:${gitCommit} &
+                  docker push ${repo}:latest &
+                  wait
+                  echo "✅ ${image} built and pushed"
                 """
               }
             }
@@ -345,19 +336,16 @@ pipeline {
       }
     }
 
-    stage('Cleanup Local Images') {
+    stage('Cleanup') {
       steps {
         sh '''
           set +e
           echo "🧽 Cleaning local build images..."
-          # Remove images from this build
+          # Only remove images from this specific build (preserve cache)
           docker images | awk -v R="${HARBOR_URL}/${HARBOR_PROJECT}" -v T="${TAG}" '$1 ~ R && $2 == T {print $3}' | xargs -r docker rmi -f || true
-          # Aggressive cleanup of dangling images and build cache
-          docker image prune -af || true
-          docker builder prune -af || true
-          echo "✅ Cleanup complete"
-          echo "📊 Final disk usage:"
-          df -h . || true
+          # Only prune very old cache (older than 7 days) to preserve recent cache
+          docker builder prune -af --filter "until=168h" || true
+          echo "✅ Cleanup complete (cache preserved)"
         '''
       }
     }
@@ -398,13 +386,6 @@ pipeline {
       ========================================
       """
       }
-    }
-
-    always {
-      sh '''
-        echo "[POST] Final Disk Usage:"
-        docker system df || true
-      '''
     }
   }
 }

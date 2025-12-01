@@ -29,7 +29,9 @@ COPY apps/admin/package.json ./apps/admin/
 # CRITICAL: Use --filter to explicitly install admin app dependencies (Next.js, React, etc.)
 # Without --filter, pnpm might only install root dependencies, not workspace app dependencies
 # This matches the pattern used in API Dockerfile which works correctly
-RUN echo "📦 Installing production dependencies for admin and workspace packages..." && \
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "📦 Installing production dependencies for admin and workspace packages..." && \
     echo "📁 Workspace structure:" && \
     ls -la apps/ && \
     ls -la apps/admin/ && \
@@ -75,7 +77,9 @@ COPY apps/admin ./apps/admin
 COPY apps/collector-sdk ./apps/collector-sdk
 
 # Install all dependencies (including dev dependencies for build)
-RUN pnpm install --frozen-lockfile
+# Use BuildKit cache mount for pnpm store (speeds up subsequent builds)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Build shared workspace packages needed by Admin (CommonJS dist for Node/Next resolution)
 # Use subshells to isolate directory changes and ensure we're back at /app after each build
@@ -124,7 +128,9 @@ WORKDIR /app/apps/admin
 
 # Build with explicit error handling
 # Use set -e to fail immediately on any error
-RUN set -euxo pipefail && \
+# Use BuildKit cache mount for Next.js build cache (speeds up subsequent builds)
+RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
+    set -euxo pipefail && \
     echo "🔨 Building Admin app..." && \
     echo "📋 Build environment:" && \
     echo "  NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}" && \
