@@ -23,23 +23,36 @@ export function EmbedScriptSection({ project }: EmbedScriptSectionProps) {
 			// Fallback to current origin (for same-origin deployment)
 			return window.location.origin.replace(/\/$/, "");
 		}
-		// Default for SSR
-		return "http://localhost:4501";
+		// Server-side: use env var or empty (will be resolved on client)
+		return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
 	}, []);
 
 	// Get SDK script URL (for now, use local build path - can be configured for CDN)
 	const sdkScriptUrl = useMemo(() => {
-		// For development: use local build path
-		// For production: this should be configured to CDN URL
+		// Check environment variable first
+		const envSdkUrl = process.env.NEXT_PUBLIC_SDK_URL;
+		if (envSdkUrl) {
+			return envSdkUrl;
+		}
+		
+		// Client-side: use relative path or current origin
 		if (typeof window !== "undefined") {
-			const envSdkUrl = process.env.NEXT_PUBLIC_SDK_URL;
-			if (envSdkUrl) {
-				return envSdkUrl;
+			// In production, use relative path (works with nginx)
+			const isProduction = window.location.origin.startsWith('https://') || 
+			                     (!window.location.origin.includes('localhost') && 
+			                      !window.location.origin.includes('127.0.0.1'));
+			
+			if (isProduction) {
+				// Use relative path in production
+				return "/collector.min.js";
 			}
-			// Default to local build path
+			
+			// Development: use relative path (works with Next.js dev server)
 			return "/collector.min.js";
 		}
-		return "https://cdn.example.com/collector.min.js";
+		
+		// Server-side fallback: use relative path
+		return "/collector.min.js";
 	}, []);
 
 	// Generate embed script code

@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Base path for serving the app at /admin subpath
-  // This ensures all routes and static assets are prefixed with /admin
-  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // Note: We don't use basePath because routes are already under app/admin/
+  // which creates routes at /admin/... automatically
   // Asset prefix for static assets (CSS, JS, fonts, etc.)
   // This ensures _next/static files are served from /admin/_next/static
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || '/admin',
@@ -38,10 +37,15 @@ const nextConfig = {
   },
   async rewrites() {
     // Always rewrite storage paths to API server
+    // In production, use relative URL (nginx will proxy)
+    // In development, use environment variable or default to localhost
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
+                   (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4501')
+    
     return [
       {
         source: '/storage/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4501'}/storage/:path*`
+        destination: apiUrl ? `${apiUrl}/storage/:path*` : '/storage/:path*'
       }
     ]
   },

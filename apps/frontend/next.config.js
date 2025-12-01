@@ -7,10 +7,15 @@ const nextConfig = {
   },
   async rewrites() {
     // Always rewrite storage paths to API server
+    // In production, use relative URL (nginx will proxy)
+    // In development, use environment variable or default to localhost
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
+                   (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4501')
+    
     return [
       {
         source: '/storage/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4501'}/storage/:path*`
+        destination: apiUrl ? `${apiUrl}/storage/:path*` : '/storage/:path*'
       }
     ]
   },

@@ -4,8 +4,22 @@
  */
 
 import axios from 'axios'
+import { getApiBaseUrl } from './getApiUrl'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_ADMIN_URL || 'http://localhost:4501/api/admin/v1'
+// Get API base URL - append /api/admin/v1 for this client
+const getAdminApiBaseUrl = (): string => {
+  const baseUrl = getApiBaseUrl()
+  
+  // If baseUrl is empty (production with relative URLs), use relative path
+  if (!baseUrl) {
+    return '/api/admin/v1'
+  }
+  
+  // Otherwise, append the admin API path
+  return `${baseUrl.replace(/\/+$/, '')}/api/admin/v1`
+}
+
+const API_BASE_URL = getAdminApiBaseUrl()
 
 /**
  * Axios instance for admin API

@@ -4,8 +4,22 @@
  */
 
 import axios from 'axios'
+import { getApiBaseUrl } from './getApiUrl'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/public/v1'
+// Get API base URL - append /api/public/v1 for this client
+const getPublicApiBaseUrl = (): string => {
+  const baseUrl = getApiBaseUrl()
+  
+  // If baseUrl is empty (production with relative URLs), use relative path
+  if (!baseUrl) {
+    return '/api/public/v1'
+  }
+  
+  // Otherwise, append the public API path
+  return `${baseUrl.replace(/\/+$/, '')}/api/public/v1`
+}
+
+const API_BASE_URL = getPublicApiBaseUrl()
 
 /**
  * Axios instance for public API

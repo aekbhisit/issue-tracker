@@ -30,10 +30,20 @@ export default function TestSDKPage() {
 
 	const projectId = params?.id ? parseInt(params.id as string, 10) : null;
 
-	// Get API URL
-	const apiUrl = typeof window !== "undefined" 
-		? (process.env.NEXT_PUBLIC_API_URL || window.location.origin).replace(/\/$/, "")
-		: "http://localhost:4501";
+	// Get API URL using utility function
+	const apiUrl = useMemo(() => {
+		if (typeof window !== "undefined") {
+			// Client-side: use env var or current origin
+			const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+			if (envApiUrl) {
+				return envApiUrl.replace(/\/$/, "");
+			}
+			// Fallback to current origin (for same-origin deployment)
+			return window.location.origin.replace(/\/$/, "");
+		}
+		// Server-side: use env var or empty (will be resolved on client)
+		return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+	}, []);
 
 	// Get SDK script URL
 	const sdkScriptUrl = typeof window !== "undefined"

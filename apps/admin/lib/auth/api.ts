@@ -1,13 +1,14 @@
 import axios, { AxiosError } from 'axios'
 import type { LoginCredentials, LoginResponse, AuthError, User } from '@/lib/auth/auth'
 import { setToken, setUser, clearAuth, getToken } from './token'
+import { getApiBaseUrl } from '@/lib/api/getApiUrl'
 
-// API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+// API base URL - uses utility function for proper production/development handling
+const API_BASE_URL = getApiBaseUrl()
 
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || undefined, // Empty string means relative URLs (for production)
   headers: {
     'Content-Type': 'application/json'
   }
@@ -27,11 +28,13 @@ apiClient.interceptors.request.use((config) => {
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
-    console.log('🌐 API Request to:', `${API_BASE_URL}/api/admin/v1/auth/login`);
+    const endpoint = '/api/admin/v1/auth/login'
+    const fullUrl = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint
+    console.log('🌐 API Request to:', fullUrl);
     console.log('📦 Request body:', { ...credentials, password: '***' });
     
     const response = await apiClient.post<LoginResponse>(
-      '/api/admin/v1/auth/login',
+      endpoint,
       credentials
     )
 

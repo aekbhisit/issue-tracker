@@ -4,8 +4,7 @@
  */
 
 import axios from 'axios'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+import { getApiUrl } from './getApiUrl'
 
 /**
  * Health check response type
@@ -33,7 +32,8 @@ export interface VersionResponse {
  */
 export async function checkApiHealth(): Promise<HealthCheckResponse | null> {
   try {
-    const response = await axios.get<HealthCheckResponse>(`${API_BASE_URL}/health`, {
+    const url = getApiUrl('/health')
+    const response = await axios.get<HealthCheckResponse>(url, {
       timeout: 5000, // 5 second timeout
     })
     return response.data
@@ -49,7 +49,8 @@ export async function checkApiHealth(): Promise<HealthCheckResponse | null> {
  */
 export async function getApiVersion(): Promise<VersionResponse | null> {
   try {
-    const response = await axios.get<VersionResponse>(`${API_BASE_URL}/version`, {
+    const url = getApiUrl('/version')
+    const response = await axios.get<VersionResponse>(url, {
       timeout: 5000, // 5 second timeout
     })
     return response.data
