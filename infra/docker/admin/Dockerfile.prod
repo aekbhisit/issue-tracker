@@ -127,10 +127,11 @@ RUN if [ -f /app/apps/collector-sdk/package.json ]; then \
 WORKDIR /app/apps/admin
 
 # Build with explicit error handling
-# Use set -e to fail immediately on any error
 # Use BuildKit cache mount for Next.js build cache (speeds up subsequent builds)
+# Note: We use 'set -uxo pipefail' (without -e) to allow error handling to run
+# This ensures we can capture and display build errors properly
 RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
-    set -euxo pipefail && \
+    set -uxo pipefail && \
     echo "🔨 Building Admin app..." && \
     echo "📋 Build environment:" && \
     echo "  NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}" && \
@@ -146,9 +147,11 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
     echo "" && \
     echo "🚀 Running: pnpm build" && \
     mkdir -p /tmp && \
-    if ! pnpm build 2>&1 | tee /tmp/build.log; then \
+    touch /tmp/build.log && \
+    pnpm build 2>&1 | tee /tmp/build.log; BUILD_STATUS=${PIPESTATUS[0]} && \
+    if [ $BUILD_STATUS -ne 0 ]; then \
         echo "" && \
-        echo "❌ BUILD FAILED!" && \
+        echo "❌ BUILD FAILED! (Exit code: $BUILD_STATUS)" && \
         echo "" && \
         echo "📋 Full Build Error Output:" && \
         echo "==========================================" && \
@@ -168,7 +171,9 @@ RUN --mount=type=cache,target=/app/apps/admin/.next/cache \
         echo "  Checking Next.js:" && \
         (test -d /app/node_modules/next && echo "    ✅ Next.js in root node_modules" || echo "    ⚠️ Next.js not in root node_modules") && \
         (test -d /app/apps/admin/node_modules/next && echo "    ✅ Next.js in admin node_modules" || echo "    ⚠️ Next.js not in admin node_modules") && \
-        exit 1; \
+        echo "" && \
+        echo "💡 Tip: Check the build log above for TypeScript errors, missing imports, or syntax errors." && \
+        exit $BUILD_STATUS; \
     fi && \
     echo "" && \
     echo "🔍 Verifying .next directory was created..." && \
