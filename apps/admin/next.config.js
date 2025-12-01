@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Base path for serving the app at /admin subpath
+  // This ensures all routes and static assets are prefixed with /admin
+  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // Asset prefix for static assets (CSS, JS, fonts, etc.)
+  // This ensures _next/static files are served from /admin/_next/static
+  assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   images: {
     remotePatterns: [
