@@ -90,12 +90,12 @@ services:
     image: ${HARBOR_URL:-harbor-bo-bkk2.ndg-internal.com}/${HARBOR_PROJECT:-haahii}/issue-collector-api:${IMAGE_TAG:-latest}
     container_name: issue-collector-api
     depends_on:
-      # TEMPORARY: Changed from service_healthy to service_started to skip health checks for debugging
-      # Change back to service_healthy after fixing issues
+      # Wait for PostgreSQL to be healthy before starting API
+      # This ensures database is ready for migrations
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     environment:
       # Application
       NODE_ENV: production
@@ -164,14 +164,14 @@ services:
     ports:
       - "${API_PORT:-3410}:3410"
     
-    # Ensure logs directory exists before starting
-    # This is a workaround for Harbor images that may not have the logs directory pre-created
-    # The volume mount ensures the directory exists, but we create it explicitly to avoid permission issues
-    # Note: Explicitly cd to /app/apps/api and verify path before running
-    # IMPORTANT: Make sure Docker image is rebuilt with latest Dockerfile.prod
-    # For permanent fix: Rebuild Harbor images with updated Dockerfile that creates /app/logs with proper permissions
-    # Verify NODE_PATH and node_modules before starting
-    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && echo '🔍 Debugging module resolution...' && echo 'NODE_PATH='$NODE_PATH && echo 'Checking /app/node_modules:' && ls -la /app/node_modules/ 2>&1 | head -10 || echo 'No /app/node_modules' && echo 'Checking for dotenv:' && test -d /app/node_modules/dotenv && echo '✅ dotenv found' || echo '❌ dotenv NOT found' && echo 'Current directory:' && pwd && cd /app/apps/api && echo 'In /app/apps/api, checking dist:' && ls -la dist/ && echo 'Starting application...' && exec node dist/index.js"]
+    # Run database migrations before starting API
+    # This ensures database tables exist before the API tries to use them
+    # The command:
+    # 1. Waits for PostgreSQL to be ready (healthcheck ensures this via depends_on)
+    # 2. Runs Prisma migrations (creates tables if they don't exist)
+    # 3. Seeds database if needed (only if tables are empty)
+    # 4. Starts the API server
+    command: ["sh", "-c", "mkdir -p /app/logs 2>/dev/null || true && echo '🗄️  Running database migrations...' && cd /app/infra/database && node scripts/merge-schema.js && prisma migrate deploy --schema=./prisma/schema.prisma && echo '✅ Migrations completed' && echo '🌱 Seeding database (if needed)...' && (pnpm prisma db seed --schema=./prisma/schema.prisma || echo '⚠️  Seeding skipped or already done') && echo '🚀 Starting API server...' && cd /app/apps/api && exec node dist/index.js"]
 
     # TEMPORARY: Health check disabled for debugging - uncomment after fixing issues
     # healthcheck:
