@@ -154,10 +154,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
             {t('admin.dashboard.title')}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1" suppressHydrationWarning>
             {t('admin.dashboard.welcome')}
           </p>
         </div>
@@ -178,8 +178,8 @@ export default function DashboardPage() {
               'bg-yellow-500 animate-pulse'
             }`}></div>
             <span className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
-              API {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Checking...'}
-              {apiVersion && ` (v${apiVersion})`}
+              {apiStatus === 'checking' ? 'API Checking...' : apiStatus === 'online' ? 'API Online' : 'API Offline'}
+              {apiVersion && <span suppressHydrationWarning> (v{apiVersion})</span>}
             </span>
           </div>
         </div>

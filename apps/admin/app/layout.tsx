@@ -43,8 +43,8 @@ export default function AdminLayout({
   }, []);
 
   return (
-    <html lang="en">
-      <body className={`${outfit.className} dark:bg-gray-900`}>
+    <html lang="th" suppressHydrationWarning>
+      <body className={`${outfit.className} dark:bg-gray-900`} suppressHydrationWarning>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <SidebarProvider>

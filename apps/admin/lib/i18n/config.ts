@@ -62,15 +62,31 @@ i18nInstance
 
 // On client side, detect and change language AFTER initialization (prevents hydration mismatch)
 if (isClient) {
-  // Use setTimeout to ensure this runs after React hydration
-  setTimeout(() => {
-    const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
-    if (detectedLang !== i18nInstance.language) {
-      i18nInstance.changeLanguage(detectedLang).catch(() => {
-        // Silently fail if language change fails
+  // Use requestAnimationFrame to ensure this runs after React hydration completes
+  // This is more reliable than setTimeout(0) as it waits for the browser to be ready
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(() => {
+      // Use another requestAnimationFrame to ensure React hydration is complete
+      requestAnimationFrame(() => {
+        const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
+        if (detectedLang !== i18nInstance.language) {
+          i18nInstance.changeLanguage(detectedLang).catch(() => {
+            // Silently fail if language change fails
+          })
+        }
       })
-    }
-  }, 0)
+    })
+  } else {
+    // Fallback for environments without requestAnimationFrame
+    setTimeout(() => {
+      const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
+      if (detectedLang !== i18nInstance.language) {
+        i18nInstance.changeLanguage(detectedLang).catch(() => {
+          // Silently fail if language change fails
+        })
+      }
+    }, 100) // Slightly longer delay to ensure hydration completes
+  }
 }
 
 export default i18nInstance
