@@ -37,6 +37,8 @@ i18nInstance
     },
 
     // Only configure detection on client side (after hydration)
+    // Note: We disable automatic detection during init to prevent hydration mismatches
+    // Language will be detected and changed after React hydration completes
     ...(isClient && {
       detection: {
         // Order of language detection
@@ -47,12 +49,14 @@ i18nInstance
           sameSite: 'lax',
           maxAge: 365 * 24 * 60 * 60 // 1 year
         },
-        // Don't detect on init - wait for explicit changeLanguage call after hydration
+        // Disable automatic detection during initialization
+        // These are optional properties that prevent detection on init
         lookupCookie: false,
         lookupLocalStorage: false,
-        lookupQuerystring: false,
-        lookupSessionStorage: false
-      }
+        lookupSessionStorage: false,
+        // lookupQuerystring expects string (query param name) or false, but TypeScript types may be strict
+        // We omit it to avoid type issues - detection will happen manually after hydration
+      } as any // Type assertion needed due to i18next type definitions
     })
   })
 

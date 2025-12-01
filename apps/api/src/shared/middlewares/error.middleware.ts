@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
-import { BaseApiError, DatabaseConnectionError, ConfigurationError } from '../utils/error.util'
+import { BaseApiError } from '../utils/error.util'
 
 /**
  * Categorize error and provide user-friendly message
