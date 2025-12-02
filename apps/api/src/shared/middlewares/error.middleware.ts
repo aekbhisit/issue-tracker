@@ -270,6 +270,24 @@ export function errorMiddleware(
 	res: Response,
 	_next: NextFunction
 ) {
+	// Preserve CORS headers for public API routes
+	// This ensures CORS headers are present even when errors occur
+	const path = req.path || ''
+	const baseUrl = req.baseUrl || ''
+	const fullPath = baseUrl + path
+	const isPublicApiRoute = fullPath.startsWith('/api/public/v1') || path.startsWith('/api/public/v1')
+	
+	if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true') {
+		const origin = req.headers.origin
+		if (origin) {
+			res.setHeader('Access-Control-Allow-Origin', origin)
+		} else {
+			res.setHeader('Access-Control-Allow-Origin', '*')
+		}
+		res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+		res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+		res.setHeader('Access-Control-Max-Age', '86400')
+	}
 	// Enhanced logging with request context
 	// Note: For CORS errors, body might not be parsed yet, so we check if body exists
 	const requestContext = {
