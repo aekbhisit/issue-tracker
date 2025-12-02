@@ -187,14 +187,20 @@ export class IssueService {
         } : null,
       })
       
-      try {
-        console.log('[API Service] Saving screenshot to storage...')
-        const saveResult = await storageService.saveScreenshot(
-          data.screenshot.screenshot,
-          projectId, // Pass projectId for proper organization
-          issue.id,
-          data.screenshot.selector
-        )
+      // Only save screenshot if screenshot data is available
+      // If only selector is available (screenshot capture failed), just save selector
+      const hasScreenshotData = data.screenshot.screenshot && typeof data.screenshot.screenshot === 'object'
+      const hasSelector = data.screenshot.selector && typeof data.screenshot.selector === 'object'
+      
+      if (hasScreenshotData) {
+        try {
+          console.log('[API Service] Saving screenshot to storage...')
+          const saveResult = await storageService.saveScreenshot(
+            data.screenshot.screenshot,
+            projectId, // Pass projectId for proper organization
+            issue.id,
+            data.screenshot.selector
+          )
         console.log('[API Service] Screenshot saved to storage:', {
           storagePath: saveResult.storagePath,
           projectId: saveResult.projectId,
@@ -239,38 +245,104 @@ export class IssueService {
           keys: elementSelectorData !== Prisma.JsonNull ? Object.keys(elementSelectorData) : [],
         })
 
-        const screenshotRecord = await db.issueScreenshot.create({
-          data: {
-            issueId: issue.id,
-            storagePath: saveResult.storagePath,
-            storageType: saveResult.storageType,
-            mimeType: data.screenshot.screenshot.mimeType,
-            width: data.screenshot.screenshot.width,
-            height: data.screenshot.screenshot.height,
-            fileSize: data.screenshot.screenshot.fileSize,
-            elementSelector: elementSelectorData,
-          },
-        })
-        
-        console.log('[API Service] Screenshot record created in database:', {
-          id: screenshotRecord.id,
-          issueId: screenshotRecord.issueId,
-          storagePath: screenshotRecord.storagePath,
-          hasElementSelector: screenshotRecord.elementSelector !== null,
-          elementSelectorType: typeof screenshotRecord.elementSelector,
-        })
-      } catch (error) {
-        // Log error but don't fail issue creation
-        console.error(`[API Service] ❌ FAILED to save screenshot for issue ${issue.id}:`, error)
-        if (error instanceof Error) {
-          console.error('[API Service] Error details:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
+          const screenshotRecord = await db.issueScreenshot.create({
+            data: {
+              issueId: issue.id,
+              storagePath: saveResult.storagePath,
+              storageType: saveResult.storageType,
+              mimeType: data.screenshot.screenshot.mimeType,
+              width: data.screenshot.screenshot.width,
+              height: data.screenshot.screenshot.height,
+              fileSize: data.screenshot.screenshot.fileSize,
+              elementSelector: elementSelectorData,
+            },
           })
-        } else {
-          console.error('[API Service] Unknown error type:', typeof error, error)
+          
+          console.log('[API Service] Screenshot record created in database:', {
+            id: screenshotRecord.id,
+            issueId: screenshotRecord.issueId,
+            storagePath: screenshotRecord.storagePath,
+            hasElementSelector: screenshotRecord.elementSelector !== null,
+            elementSelectorType: typeof screenshotRecord.elementSelector,
+          })
+        } catch (error) {
+          // Log error but don't fail issue creation
+          console.error(`[API Service] ❌ FAILED to save screenshot for issue ${issue.id}:`, error)
+          if (error instanceof Error) {
+            console.error('[API Service] Error details:', {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            })
+          } else {
+            console.error('[API Service] Unknown error type:', typeof error, error)
+          }
         }
+      } else if (hasSelector) {
+        // Screenshot capture failed but selector is available
+        // Save only selector data without screenshot image
+        console.log('[API Service] Screenshot capture failed, but saving selector data only...')
+        
+        try {
+          // Ensure selector data is properly stored
+          let elementSelectorData: any = Prisma.JsonNull
+          if (data.screenshot.selector && typeof data.screenshot.selector === 'object') {
+            // Verify selector has required fields
+            if (data.screenshot.selector.cssSelector && 
+                data.screenshot.selector.xpath && 
+                data.screenshot.selector.outerHTML &&
+                data.screenshot.selector.boundingBox) {
+              elementSelectorData = data.screenshot.selector as any
+              console.log('[API Service] Element selector data validated and ready to store:', {
+                hasCssSelector: !!elementSelectorData.cssSelector,
+                hasXpath: !!elementSelectorData.xpath,
+                hasOuterHTML: !!elementSelectorData.outerHTML,
+                outerHTMLLength: elementSelectorData.outerHTML?.length || 0,
+                hasBoundingBox: !!elementSelectorData.boundingBox,
+              })
+            } else {
+              console.warn('[API Service] Element selector missing required fields:', {
+                hasCssSelector: !!data.screenshot.selector.cssSelector,
+                hasXpath: !!data.screenshot.selector.xpath,
+                hasOuterHTML: !!data.screenshot.selector.outerHTML,
+                hasBoundingBox: !!data.screenshot.selector.boundingBox,
+              })
+            }
+          }
+          
+          // Create screenshot record with only selector (no image)
+          const screenshotRecord = await db.issueScreenshot.create({
+            data: {
+              issueId: issue.id,
+              storagePath: '', // No storage path since no image
+              storageType: 'none', // Indicate no image stored
+              mimeType: null,
+              width: null,
+              height: null,
+              fileSize: null,
+              elementSelector: elementSelectorData,
+            },
+          })
+          
+          console.log('[API Service] Selector-only screenshot record created in database:', {
+            id: screenshotRecord.id,
+            issueId: screenshotRecord.issueId,
+            hasElementSelector: screenshotRecord.elementSelector !== null,
+            elementSelectorType: typeof screenshotRecord.elementSelector,
+          })
+        } catch (error) {
+          // Log error but don't fail issue creation
+          console.error(`[API Service] ❌ FAILED to save selector data for issue ${issue.id}:`, error)
+          if (error instanceof Error) {
+            console.error('[API Service] Error details:', {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            })
+          }
+        }
+      } else {
+        console.log('[API Service] ⚠️  Screenshot object provided but has neither screenshot data nor selector')
       }
     } else {
       console.log('[API Service] ⚠️  No screenshot provided in request - data.screenshot is:', data.screenshot)

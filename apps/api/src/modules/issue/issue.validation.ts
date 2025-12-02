@@ -98,71 +98,76 @@ export const issueValidation = {
       .withMessage('Screenshot must be an object')
       .custom((value) => {
         if (value) {
-          // Validate screenshot data
-          if (!value.screenshot || typeof value.screenshot !== 'object') {
-            throw new Error('Screenshot must include screenshot data object')
+          // Screenshot object must have either screenshot data OR selector (or both)
+          // This allows submission when screenshot capture fails but selector is available
+          const hasScreenshotData = value.screenshot && typeof value.screenshot === 'object'
+          const hasSelector = value.selector && typeof value.selector === 'object'
+          
+          if (!hasScreenshotData && !hasSelector) {
+            throw new Error('Screenshot must include either screenshot data or selector (or both)')
           }
           
-          const screenshot = value.screenshot
-          if (!screenshot.dataUrl || typeof screenshot.dataUrl !== 'string') {
-            throw new Error('Screenshot dataUrl is required and must be a string')
+          // If screenshot data is provided, validate it
+          if (hasScreenshotData) {
+            const screenshot = value.screenshot
+            if (!screenshot.dataUrl || typeof screenshot.dataUrl !== 'string') {
+              throw new Error('Screenshot dataUrl is required and must be a string')
+            }
+            
+            // Validate data URL format
+            if (!screenshot.dataUrl.startsWith('data:image/')) {
+              throw new Error('Screenshot dataUrl must be a valid data URL starting with "data:image/"')
+            }
+            
+            // Validate mime type
+            if (!screenshot.mimeType || typeof screenshot.mimeType !== 'string') {
+              throw new Error('Screenshot mimeType is required')
+            }
+            if (!['image/jpeg', 'image/png'].includes(screenshot.mimeType)) {
+              throw new Error('Screenshot mimeType must be image/jpeg or image/png')
+            }
+            
+            // Validate file size (max 10MB)
+            const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+            if (typeof screenshot.fileSize !== 'number' || screenshot.fileSize <= 0) {
+              throw new Error('Screenshot fileSize must be a positive number')
+            }
+            if (screenshot.fileSize > MAX_FILE_SIZE) {
+              throw new Error(`Screenshot fileSize must not exceed ${MAX_FILE_SIZE / 1024 / 1024}MB`)
+            }
+            
+            // Validate dimensions (max 4096x4096)
+            const MAX_DIMENSION = 4096
+            if (typeof screenshot.width !== 'number' || screenshot.width <= 0) {
+              throw new Error('Screenshot width must be a positive number')
+            }
+            if (typeof screenshot.height !== 'number' || screenshot.height <= 0) {
+              throw new Error('Screenshot height must be a positive number')
+            }
+            if (screenshot.width > MAX_DIMENSION || screenshot.height > MAX_DIMENSION) {
+              throw new Error(`Screenshot dimensions must not exceed ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`)
+            }
           }
           
-          // Validate data URL format
-          if (!screenshot.dataUrl.startsWith('data:image/')) {
-            throw new Error('Screenshot dataUrl must be a valid data URL starting with "data:image/"')
-          }
-          
-          // Validate mime type
-          if (!screenshot.mimeType || typeof screenshot.mimeType !== 'string') {
-            throw new Error('Screenshot mimeType is required')
-          }
-          if (!['image/jpeg', 'image/png'].includes(screenshot.mimeType)) {
-            throw new Error('Screenshot mimeType must be image/jpeg or image/png')
-          }
-          
-          // Validate file size (max 10MB)
-          const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-          if (typeof screenshot.fileSize !== 'number' || screenshot.fileSize <= 0) {
-            throw new Error('Screenshot fileSize must be a positive number')
-          }
-          if (screenshot.fileSize > MAX_FILE_SIZE) {
-            throw new Error(`Screenshot fileSize must not exceed ${MAX_FILE_SIZE / 1024 / 1024}MB`)
-          }
-          
-          // Validate dimensions (max 4096x4096)
-          const MAX_DIMENSION = 4096
-          if (typeof screenshot.width !== 'number' || screenshot.width <= 0) {
-            throw new Error('Screenshot width must be a positive number')
-          }
-          if (typeof screenshot.height !== 'number' || screenshot.height <= 0) {
-            throw new Error('Screenshot height must be a positive number')
-          }
-          if (screenshot.width > MAX_DIMENSION || screenshot.height > MAX_DIMENSION) {
-            throw new Error(`Screenshot dimensions must not exceed ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`)
-          }
-          
-          // Validate selector data
-          if (!value.selector || typeof value.selector !== 'object') {
-            throw new Error('Screenshot must include selector data object')
-          }
-          
-          const selector = value.selector
-          if (!selector.cssSelector || typeof selector.cssSelector !== 'string') {
-            throw new Error('Selector cssSelector is required and must be a string')
-          }
-          if (!selector.xpath || typeof selector.xpath !== 'string') {
-            throw new Error('Selector xpath is required and must be a string')
-          }
-          if (!selector.boundingBox || typeof selector.boundingBox !== 'object') {
-            throw new Error('Selector boundingBox is required and must be an object')
-          }
-          if (typeof selector.boundingBox.x !== 'number' || typeof selector.boundingBox.y !== 'number' ||
-              typeof selector.boundingBox.width !== 'number' || typeof selector.boundingBox.height !== 'number') {
-            throw new Error('Selector boundingBox must have numeric x, y, width, and height properties')
-          }
-          if (!selector.outerHTML || typeof selector.outerHTML !== 'string') {
-            throw new Error('Selector outerHTML is required and must be a string')
+          // If selector is provided, validate it
+          if (hasSelector) {
+            const selector = value.selector
+            if (!selector.cssSelector || typeof selector.cssSelector !== 'string') {
+              throw new Error('Selector cssSelector is required and must be a string')
+            }
+            if (!selector.xpath || typeof selector.xpath !== 'string') {
+              throw new Error('Selector xpath is required and must be a string')
+            }
+            if (!selector.boundingBox || typeof selector.boundingBox !== 'object') {
+              throw new Error('Selector boundingBox is required and must be an object')
+            }
+            if (typeof selector.boundingBox.x !== 'number' || typeof selector.boundingBox.y !== 'number' ||
+                typeof selector.boundingBox.width !== 'number' || typeof selector.boundingBox.height !== 'number') {
+              throw new Error('Selector boundingBox must have numeric x, y, width, and height properties')
+            }
+            if (!selector.outerHTML || typeof selector.outerHTML !== 'string') {
+              throw new Error('Selector outerHTML is required and must be a string')
+            }
           }
         }
         return true

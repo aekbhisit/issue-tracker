@@ -142,13 +142,37 @@ function categorizeError(err: Error): { category: string; userMessage: string; s
 		}
 
 		if (code === 'P2002') {
+			const field = prismaErr.meta?.target?.[0] || 'unknown'
+			const constraint = prismaErr.meta?.target || []
+			
+			// Special handling for id field unique constraint violations
+			// This usually indicates a database sequence sync issue
+			if (field === 'id' || constraint.includes('id')) {
+				return {
+					category: 'DatabaseError',
+					userMessage: 'Database sequence error. Please try again or contact support.',
+					status: 500,
+					details: {
+						code: 'SEQUENCE_SYNC_ERROR',
+						field: 'id',
+						hint: 'The database sequence may be out of sync. This requires database administrator intervention.',
+						...(process.env.NODE_ENV === 'development' && {
+							prismaCode: code,
+							prismaMeta: prismaErr.meta,
+						}),
+					}
+				}
+			}
+			
+			// Regular unique constraint violation for other fields
 			return {
 				category: 'ConflictError',
 				userMessage: 'A record with this value already exists.',
 				status: 409,
 				details: {
 					code: 'UNIQUE_CONSTRAINT_VIOLATION',
-					field: prismaErr.meta?.target?.[0],
+					field: field,
+					constraint: constraint,
 				}
 			}
 		}
