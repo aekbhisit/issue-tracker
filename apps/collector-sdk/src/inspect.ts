@@ -92,9 +92,40 @@ function showLoadingOverlayImmediate(): void {
   
   if (document.body) {
     document.body.appendChild(overlay)
-    // Force immediate render
+    // Force immediate render and layout
     void overlay.offsetHeight
-    console.log('[SDK Inspect] Loading overlay shown immediately')
+    // Force a reflow to ensure visibility
+    overlay.style.display = 'flex'
+    // Verify it's actually visible
+    const isVisible = overlay.offsetParent !== null
+    console.log('[SDK Inspect] Loading overlay shown immediately, visible:', isVisible, {
+      display: window.getComputedStyle(overlay).display,
+      visibility: window.getComputedStyle(overlay).visibility,
+      opacity: window.getComputedStyle(overlay).opacity,
+      zIndex: window.getComputedStyle(overlay).zIndex,
+    })
+    
+    // If not visible, try to fix it
+    if (!isVisible) {
+      console.warn('[SDK Inspect] Overlay not visible, attempting to fix...')
+      overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: blur(3px) !important;
+        z-index: 2147483647 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      `
+      void overlay.offsetHeight // Force reflow again
+    }
   }
 }
 

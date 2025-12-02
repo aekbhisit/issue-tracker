@@ -179,9 +179,21 @@ export class IssueCollectorWidget {
     
     this.stopInspectMode = startInspectMode(
       (element: HTMLElement) => {
-        // CRITICAL: Show loading overlay IMMEDIATELY when element is clicked
-        // This appears before panel animation, giving instant feedback
-        this.showLoadingOverlay()
+        // CRITICAL: Loading overlay is already shown by inspect.ts
+        // Don't hide and recreate it - just ensure it's visible
+        // The inspect.ts showLoadingOverlayImmediate() already created it
+        const existingOverlay = document.getElementById('issue-collector-loading-overlay')
+        if (existingOverlay) {
+          // Overlay already exists from inspect.ts, just ensure it's visible
+          existingOverlay.style.display = 'flex'
+          existingOverlay.style.visibility = 'visible'
+          existingOverlay.style.opacity = '1'
+          this.loadingOverlay = existingOverlay
+          console.log('[SDK] Using existing loading overlay from inspect mode')
+        } else {
+          // Fallback: create new overlay if it doesn't exist
+          this.showLoadingOverlay()
+        }
         
         // CRITICAL: Do all synchronous UI updates FIRST before any async work
         // This ensures the panel opens immediately without waiting for screenshot
@@ -598,12 +610,45 @@ export class IssueCollectorWidget {
     if (document.body) {
       document.body.appendChild(overlay)
       this.loadingOverlay = overlay
-      console.log('[SDK] Loading overlay appended to body, element:', overlay)
-      console.log('[SDK] Loading overlay visible:', overlay.offsetParent !== null)
-      console.log('[SDK] Loading overlay computed style:', window.getComputedStyle(overlay).display)
       
       // Force a reflow to ensure it's rendered
       void overlay.offsetHeight
+      
+      // Verify visibility
+      const isVisible = overlay.offsetParent !== null
+      const computedStyle = window.getComputedStyle(overlay)
+      
+      console.log('[SDK] Loading overlay appended to body:', {
+        element: overlay,
+        visible: isVisible,
+        display: computedStyle.display,
+        visibility: computedStyle.visibility,
+        opacity: computedStyle.opacity,
+        zIndex: computedStyle.zIndex,
+      })
+      
+      // If not visible, try to fix it
+      if (!isVisible) {
+        console.warn('[SDK] Overlay not visible, attempting to fix...')
+        overlay.style.cssText = `
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          background-color: rgba(0, 0, 0, 0.4) !important;
+          backdrop-filter: blur(3px) !important;
+          z-index: 2147483647 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          pointer-events: auto !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+        `
+        void overlay.offsetHeight // Force reflow again
+        console.log('[SDK] Overlay fixed, now visible:', overlay.offsetParent !== null)
+      }
     } else {
       console.error('[SDK] Cannot show loading overlay - document.body is null')
     }
