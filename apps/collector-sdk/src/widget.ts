@@ -326,8 +326,13 @@ export class IssueCollectorWidget {
               console.warn('[SDK] Panel updateScreenshot method not available')
             }
             
-            // Hide loading overlay now that screenshot is ready
-            widgetInstance.hideLoadingOverlay()
+            // CRITICAL: Hide loading overlay AFTER panel update
+            // Use setTimeout to ensure panel update completes first
+            console.log('[SDK] Screenshot ready, hiding loading overlay...')
+            setTimeout(() => {
+              widgetInstance.hideLoadingOverlay()
+              console.log('[SDK] Loading overlay hide called')
+            }, 50)
             
             // Only stop inspect mode after screenshot is complete
             widgetInstance.isInspectModeActive = false
@@ -357,7 +362,11 @@ export class IssueCollectorWidget {
             }
             
             // Hide loading overlay even on error
-            widgetInstance.hideLoadingOverlay()
+            console.log('[SDK] Screenshot capture failed, hiding loading overlay...')
+            setTimeout(() => {
+              widgetInstance.hideLoadingOverlay()
+              console.log('[SDK] Loading overlay hide called (error case)')
+            }, 50)
             
             // Show error message in the panel instead of alert
             if ((panelRef as any).showScreenshotError) {
@@ -380,7 +389,11 @@ export class IssueCollectorWidget {
           console.error('[SDK] Unhandled error in screenshot capture:', err)
           
           // Ensure loading overlay is hidden even on unhandled errors
-          widgetInstance.hideLoadingOverlay()
+          console.log('[SDK] Unhandled error, hiding loading overlay...')
+          setTimeout(() => {
+            widgetInstance.hideLoadingOverlay()
+            console.log('[SDK] Loading overlay hide called (unhandled error)')
+          }, 50)
           
           // Ensure inspect mode is stopped
           widgetInstance.isInspectModeActive = false
@@ -660,17 +673,45 @@ export class IssueCollectorWidget {
   private hideLoadingOverlay(): void {
     const existingOverlay = document.getElementById('issue-collector-loading-overlay')
     if (existingOverlay) {
-      console.log('[SDK] Hiding loading overlay')
+      console.log('[SDK] Hiding loading overlay, element:', existingOverlay)
+      console.log('[SDK] Overlay parent:', existingOverlay.parentNode)
+      console.log('[SDK] Overlay computed style before hide:', {
+        display: window.getComputedStyle(existingOverlay).display,
+        opacity: window.getComputedStyle(existingOverlay).opacity,
+        visibility: window.getComputedStyle(existingOverlay).visibility,
+      })
+      
       // Add fade out animation
       existingOverlay.style.transition = 'opacity 0.2s ease-out'
       existingOverlay.style.opacity = '0'
       
+      // Also set visibility to hidden immediately for faster feedback
+      existingOverlay.style.visibility = 'hidden'
+      
       setTimeout(() => {
         if (existingOverlay.parentNode) {
+          console.log('[SDK] Removing overlay from DOM, parent:', existingOverlay.parentNode)
           existingOverlay.parentNode.removeChild(existingOverlay)
+          console.log('[SDK] Loading overlay removed from DOM')
+        } else {
+          console.warn('[SDK] Overlay already removed from DOM')
         }
-        console.log('[SDK] Loading overlay removed from DOM')
+        
+        // Verify it's actually gone
+        const stillExists = document.getElementById('issue-collector-loading-overlay')
+        if (stillExists) {
+          console.error('[SDK] ERROR: Overlay still exists after removal attempt!')
+          // Force remove
+          if (stillExists.parentNode) {
+            stillExists.parentNode.removeChild(stillExists)
+            console.log('[SDK] Force removed overlay')
+          }
+        } else {
+          console.log('[SDK] Overlay successfully removed and verified')
+        }
       }, 200)
+    } else {
+      console.warn('[SDK] No loading overlay found to hide')
     }
     this.loadingOverlay = null
   }
