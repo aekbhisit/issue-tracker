@@ -49,11 +49,37 @@ console.log('🔐 CORS Configuration:', {
 // Public API endpoints allow all origins (SDK can be embedded anywhere)
 // Admin/Member API endpoints use restricted CORS
 app.use((req, res, next) => {
-  // Check if this is a public API route (check both path and baseUrl)
+  // Check if this is a public API route
+  // Express strips path prefixes as it goes through routers, so we need to check:
+  // 1. req.originalUrl - the original URL before any routing
+  // 2. req.url - the current URL (may be modified by routers)
+  // 3. req.baseUrl + req.path - reconstructed path
+  const originalUrl = req.originalUrl || req.url || ''
   const path = req.path || ''
   const baseUrl = req.baseUrl || ''
   const fullPath = baseUrl + path
-  const isPublicApiRoute = fullPath.startsWith('/api/public/v1') || path.startsWith('/api/public/v1')
+  
+  // Check if this is a public API route (multiple ways to detect it)
+  const isPublicApiRoute = 
+    originalUrl.startsWith('/api/public/v1') ||
+    fullPath.startsWith('/api/public/v1') ||
+    path.startsWith('/api/public/v1') ||
+    (baseUrl === '/api' && path.startsWith('/public/v1'))
+  
+  // Debug logging (remove in production if needed)
+  if (process.env.NODE_ENV === 'development' || process.env.DEBUG_CORS === 'true') {
+    console.log('🔍 CORS Check:', {
+      originalUrl,
+      url: req.url,
+      path,
+      baseUrl,
+      fullPath,
+      isPublicApiRoute,
+      allowPublicCors: process.env.ALLOW_PUBLIC_API_CORS,
+      method: req.method,
+      origin: req.headers.origin,
+    })
+  }
   
   // For public API routes, use permissive CORS if ALLOW_PUBLIC_API_CORS is enabled
   if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true') {

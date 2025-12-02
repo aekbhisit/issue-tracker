@@ -272,12 +272,21 @@ export function errorMiddleware(
 ) {
 	// Preserve CORS headers for public API routes
 	// This ensures CORS headers are present even when errors occur
+	// IMPORTANT: Set headers BEFORE checking if headers are already sent
+	const originalUrl = req.originalUrl || req.url || ''
 	const path = req.path || ''
 	const baseUrl = req.baseUrl || ''
 	const fullPath = baseUrl + path
-	const isPublicApiRoute = fullPath.startsWith('/api/public/v1') || path.startsWith('/api/public/v1')
 	
-	if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true') {
+	// Check if this is a public API route (multiple ways to detect it)
+	const isPublicApiRoute = 
+		originalUrl.startsWith('/api/public/v1') ||
+		fullPath.startsWith('/api/public/v1') ||
+		path.startsWith('/api/public/v1') ||
+		(baseUrl === '/api' && path.startsWith('/public/v1'))
+	
+	// Set CORS headers for public API routes (only if headers not already sent)
+	if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true' && !res.headersSent) {
 		const origin = req.headers.origin
 		if (origin) {
 			res.setHeader('Access-Control-Allow-Origin', origin)
