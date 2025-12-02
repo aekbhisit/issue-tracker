@@ -16,7 +16,9 @@ export default function AdminPage() {
     if (isAuthenticated()) {
       // User has token - redirect to dashboard
       // If token is invalid, dashboard will get 401 and redirect back here
-      router.push('/admin/dashboard');
+      // Use relative path without /admin prefix since basePath is already /admin
+      // router.push() automatically adds basePath, so '/dashboard' becomes '/admin/dashboard'
+      router.push('/dashboard');
     }
   }, [router]);
 

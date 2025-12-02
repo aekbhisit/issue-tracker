@@ -65,7 +65,7 @@ export default function IssueDetailPage() {
 					showError({
 						message: t("common.errors.noPermission"),
 					});
-					router.push("/admin/issues");
+					router.push("/issues");
 				}
 			}
 		).then(setHasPermission);

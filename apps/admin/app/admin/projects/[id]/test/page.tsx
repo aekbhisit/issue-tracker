@@ -59,7 +59,7 @@ export default function TestSDKPage() {
 					showError({
 						message: t("common.errors.noPermission"),
 					});
-					router.push("/admin/projects");
+					router.push("/projects");
 				}
 			}
 		).then(setHasPermission);
@@ -189,11 +189,11 @@ export default function TestSDKPage() {
 	}, [project?.publicKey, apiUrl, sdkScriptUrl, notification]);
 
 	const handleBack = useCallback(() => {
-		router.push(`/admin/projects/${projectId}`);
+		router.push(`/projects/${projectId}`);
 	}, [router, projectId]);
 
 	const handleViewIssues = useCallback(() => {
-		router.push(`/admin/issues?projectId=${projectId}`);
+		router.push(`/issues?projectId=${projectId}`);
 	}, [router, projectId]);
 
 	if (hasPermission === false || loading) {

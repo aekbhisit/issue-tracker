@@ -122,57 +122,74 @@ const AppSidebar: React.FC = () => {
   }, []);
 
   // Default main menu items (core functionality)
+  // NOTE: With basePath='/admin', paths should NOT include /admin prefix
+  // Next.js automatically adds basePath, so '/dashboard' becomes '/admin/dashboard'
   const defaultMainMenuItems: NavItem[] = useMemo(() => [
     {
       icon: <GridIcon />,
       name: t('admin.menu.dashboard'),
-      path: "/admin/dashboard",
+      path: "/dashboard",
     },
     {
       icon: <FolderIcon />,
       name: t('admin.menu.projects') || 'Projects',
-      path: "/admin/projects",
+      path: "/projects",
     },
     {
       icon: <AlertCircleIcon />,
       name: t('admin.menu.issues') || 'Issues',
-      path: "/admin/issues",
+      path: "/issues",
     },
   ], [t]);
 
   // System menu items (administration only - for super admin)
+  // NOTE: With basePath='/admin', paths should NOT include /admin prefix
   const systemMenuItems: NavItem[] = useMemo(() => [
     {
       icon: <GridIcon />,
       name: t('admin.menu.admin_menu'),
-      path: "/admin/admin-menu",
+      path: "/admin-menu",
     },
     {
       icon: <UserCircleIcon />,
       name: t('admin.menu.user_management'),
-      path: "/admin/user",
+      path: "/user",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.roles'),
-      path: "/admin/role/admin",
+      path: "/role/admin",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.permissions'),
-      path: "/admin/permission/admin",
+      path: "/permission/admin",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.activity_logs'),
-      path: "/admin/activity-log",
+      path: "/activity-log",
     },
     {
       icon: <BoxCubeIcon />,
       name: t('admin.menu.file_manager'),
-      path: "/admin/file-manager",
+      path: "/file-manager",
     },
   ], [t]);
+
+  // Normalize path by removing /admin prefix if present
+  // With basePath='/admin', paths should NOT include /admin prefix
+  const normalizePath = (path: string | null | undefined): string | undefined => {
+    if (!path || path === '#') return path === '#' ? '#' : undefined;
+    // Remove /admin prefix if present (database might have paths with /admin/ prefix)
+    const normalized = path.startsWith('/admin/') 
+      ? path.substring(7) // Remove '/admin/' (7 chars)
+      : path.startsWith('/admin') 
+        ? path.substring(6) // Remove '/admin' (6 chars)
+        : path;
+    // Ensure path starts with /
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+  };
 
   // Convert DB menu to NavItem format
   const convertDBMenuToNavItems = useCallback((menus: AdminMenu[]): NavItem[] => {
@@ -220,7 +237,7 @@ const AppSidebar: React.FC = () => {
               .sort(sortBySequence)
               .map((child) => ({
                 name: getMenuName(child, t('admin.menu.fallback.subMenu')),
-                path: child.path || '#',
+                path: normalizePath(child.path) || '#',
                 pro: false,
                 new: false,
               }))
@@ -229,7 +246,7 @@ const AppSidebar: React.FC = () => {
         return {
           name: getMenuName(menu, t('admin.menu.fallback.menu')),
           icon: getIconComponent(menu.icon),
-          path: subItems ? undefined : menu.path || undefined,
+          path: subItems ? undefined : normalizePath(menu.path),
           subItems,
         };
       });

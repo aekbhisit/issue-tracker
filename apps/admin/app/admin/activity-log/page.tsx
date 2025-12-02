@@ -100,7 +100,7 @@ export default function ActivityLogPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					})
-					router.push("/admin/dashboard")
+					router.push("/dashboard")
 				}
 			}
 		).then(setHasPermission)

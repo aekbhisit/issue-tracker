@@ -35,7 +35,7 @@ export default function EditProjectPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/admin/projects");
+					router.push("/projects");
 				}
 			}
 		).then(setHasPermission);

@@ -35,7 +35,8 @@ export default function UserDropdown() {
     try {
       setIsLoggingOut(true);
       await logout();
-      router.push("/admin");
+      // Use "/" to go to login page - basePath will make it "/admin"
+      router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {

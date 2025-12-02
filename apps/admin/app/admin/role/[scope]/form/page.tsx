@@ -41,7 +41,7 @@ function RoleFormContentInternal() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push(`/admin/role/${resolvedScope}`);
+					router.push(`/role/${resolvedScope}`);
 				}
 			}
 		).then(setHasPermission);

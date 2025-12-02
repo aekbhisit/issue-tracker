@@ -30,7 +30,7 @@ export default function CreateProjectPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/admin/projects");
+					router.push("/projects");
 				}
 			}
 		).then(setHasPermission);
@@ -44,7 +44,7 @@ export default function CreateProjectPage() {
 				showSuccess({
 					message: "Project created successfully",
 				});
-				router.push(`/admin/projects/${response.data.id}`);
+				router.push(`/projects/${response.data.id}`);
 			} catch (error) {
 				logger.error("Failed to create project", error);
 				showError({

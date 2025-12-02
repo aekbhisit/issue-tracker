@@ -403,7 +403,7 @@ export default function DashboardPage() {
                   {t('admin.dashboard.sections.recentIssues', 'Recent Issues')}
                 </h2>
                 <Link
-                  href="/admin/issues"
+                  href="/issues"
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View all →
@@ -435,7 +435,7 @@ export default function DashboardPage() {
                       <tr
                         key={issue.id}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                        onClick={() => router.push(`/admin/issues/${issue.id}`)}
+                        onClick={() => router.push(`/issues/${issue.id}`)}
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -496,7 +496,7 @@ export default function DashboardPage() {
                   {t('admin.dashboard.sections.recentActivity', 'Recent Activity')}
                 </h2>
                 <Link
-                  href="/admin/activity-log"
+                  href="/activity-log"
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View all →

@@ -40,7 +40,7 @@ function UserFormContentInternal({ searchParams }: UserFormContentProps) {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/admin/user");
+					router.push("/user");
 				}
 			}
 		).then(setHasPermission);

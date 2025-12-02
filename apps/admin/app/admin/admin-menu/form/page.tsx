@@ -34,7 +34,7 @@ function AdminMenuFormContent() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/admin/admin-menu");
+					router.push("/admin-menu");
 				}
 			}
 		).then(setHasPermission);

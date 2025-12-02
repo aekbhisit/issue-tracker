@@ -49,7 +49,7 @@ function IssuesPageContent() {
 					notification.showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/admin/dashboard");
+					router.push("/dashboard");
 				}
 			}
 		).then(setHasPermission);
@@ -100,7 +100,7 @@ function IssuesPageContent() {
 
 	const handleEdit = useCallback(
 		(issue: Issue) => {
-			router.push(`/admin/issues/${issue.id}`);
+			router.push(`/issues/${issue.id}`);
 		},
 		[router]
 	);
