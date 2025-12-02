@@ -133,3 +133,4 @@ For future development:
 2. Use root paths `/images/` only for frontend app
 3. Or use environment-based path resolution utility
 
+

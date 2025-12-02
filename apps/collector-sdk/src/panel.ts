@@ -3,7 +3,7 @@
  * @description Chat-style widget panel with tabbed interface for issue reporting
  */
 
-import type { Severity, IssuePayload, ScreenshotMetadata } from './types'
+import type { Severity, IssuePayload, ScreenshotMetadata, ElementSelector } from './types'
 import { submitIssue, fetchIssues, fetchProjectDetails } from './api'
 import { collectMetadata, getUserInfo, collectStorageData } from './metadata'
 
@@ -928,6 +928,20 @@ function initializeSubmitTab(
       const logs = panelCallbacks.getLogs ? panelCallbacks.getLogs() : undefined
       
       // Create payload
+      // Ensure screenshot is valid (has either screenshot data or selector, or both)
+      let validScreenshot: ScreenshotMetadata | undefined = currentScreenshot
+      if (currentScreenshot) {
+        // Only include screenshot if it has either screenshot data or selector
+        if (!currentScreenshot.screenshot && !currentScreenshot.selector) {
+          // Invalid screenshot metadata, don't include it
+          validScreenshot = undefined
+        } else if (!currentScreenshot.screenshot && currentScreenshot.selector) {
+          // Valid: has selector but no screenshot (screenshot capture failed)
+          // This is acceptable - selector data is still useful
+          validScreenshot = currentScreenshot
+        }
+      }
+      
       const payload: IssuePayload = {
         projectKey: panel.projectKey,
         title: titleInput.value.trim(),
@@ -935,7 +949,7 @@ function initializeSubmitTab(
         severity: severitySelect.value as Severity,
         metadata,
         userInfo,
-        screenshot: currentScreenshot,
+        screenshot: validScreenshot,
         logs,
         storageData,
         formData,

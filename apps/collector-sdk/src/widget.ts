@@ -187,17 +187,41 @@ export class IssueCollectorWidget {
         // This ensures the panel opens immediately without waiting for screenshot
         
         // Extract selector synchronously (fast operation)
-        const selector = extractElementSelector(element)
+        // Wrap in try-catch to prevent errors from breaking the flow
+        let selector
+        try {
+          selector = extractElementSelector(element)
+        } catch (selectorError) {
+          console.error('[SDK] Failed to extract element selector:', selectorError)
+          // Create minimal selector as fallback
+          selector = {
+            cssSelector: element.tagName.toLowerCase() + (element.id ? `#${element.id}` : ''),
+            xpath: element.id ? `//*[@id="${element.id}"]` : '',
+            boundingBox: {
+              x: Math.round(element.getBoundingClientRect().left + window.scrollX),
+              y: Math.round(element.getBoundingClientRect().top + window.scrollY),
+              width: Math.round(element.getBoundingClientRect().width),
+              height: Math.round(element.getBoundingClientRect().height),
+            },
+            outerHTML: element.outerHTML || `<${element.tagName.toLowerCase()}>`,
+          }
+        }
         
         console.log('[SDK] Element selected, showing loading overlay and opening panel:', {
           tagName: element.tagName,
           cssSelector: selector.cssSelector?.substring(0, 50),
         })
         
-        // Collect form data synchronously
-        const formData = collectFormData(element)
-        if (formData && (panelRef as any).formData) {
-          ;(panelRef as any).formData = formData
+        // Collect form data synchronously (wrap in try-catch)
+        let formData
+        try {
+          formData = collectFormData(element)
+          if (formData && (panelRef as any).formData) {
+            ;(panelRef as any).formData = formData
+          }
+        } catch (formDataError) {
+          console.warn('[SDK] Failed to collect form data:', formDataError)
+          // Continue without form data
         }
         
         // IMMEDIATELY show panel and form (synchronous operations)
@@ -219,13 +243,20 @@ export class IssueCollectorWidget {
         console.log('[SDK] Panel opened, starting async screenshot capture...')
         
         // NOW start async screenshot capture (non-blocking)
-        // Use setTimeout to ensure UI updates are rendered first
-        setTimeout(async () => {
+        // Capture immediately to ensure element is still in DOM and visible
+        const widgetInstance = this
+        const captureAsync = async () => {
           try {
+            // Verify element is still in DOM before capturing
+            if (!element.isConnected) {
+              throw new Error('Element is no longer in DOM')
+            }
+            
             console.log('[SDK] Starting screenshot capture for element:', {
               tagName: element.tagName,
               id: element.id,
               className: element.className,
+              isConnected: element.isConnected,
             })
             
             const screenshot = await captureScreenshot(element)
@@ -255,31 +286,58 @@ export class IssueCollectorWidget {
             }
             
             // Hide loading overlay now that screenshot is ready
-            this.hideLoadingOverlay()
+            widgetInstance.hideLoadingOverlay()
             
-            this.isInspectModeActive = false
-            this.stopInspectMode = null
+            // Only stop inspect mode after screenshot is complete
+            widgetInstance.isInspectModeActive = false
+            if (widgetInstance.stopInspectMode) {
+              widgetInstance.stopInspectMode()
+              widgetInstance.stopInspectMode = null
+            }
           } catch (error) {
             console.error('[SDK] Failed to capture screenshot:', error)
             
-            // Even if screenshot capture fails, store the selector data
+            // Even if screenshot capture fails, store the selector data (without screenshot)
+            // This allows users to submit issues with selector info even if screenshot fails
+            const screenshotMetadataWithoutImage: ScreenshotMetadata = {
+              screenshot: undefined as any, // No screenshot, but we have selector
+              selector,
+            }
+            
             console.warn('[SDK] Screenshot capture failed, but element selector was extracted:', selector)
             
+            // Update panel with selector data even without screenshot
+            if ((panelRef as any).updateScreenshot) {
+              try {
+                ;(panelRef as any).updateScreenshot(screenshotMetadataWithoutImage)
+              } catch (updateError) {
+                console.error('[SDK] Failed to update panel with selector data:', updateError)
+              }
+            }
+            
             // Hide loading overlay even on error
-            this.hideLoadingOverlay()
+            widgetInstance.hideLoadingOverlay()
             
             // Show error message in the panel instead of alert
             if ((panelRef as any).showScreenshotError) {
-              ;(panelRef as any).showScreenshotError(selector, error instanceof Error ? error.message : 'Unknown error')
-            } else {
-              // Fallback to alert if method doesn't exist
-              alert(`Failed to capture screenshot: ${error instanceof Error ? error.message : 'Unknown error'}\n\nElement selector information has been captured and will be included if you submit the issue.`)
+              try {
+                ;(panelRef as any).showScreenshotError(selector, error instanceof Error ? error.message : 'Unknown error')
+              } catch (showError) {
+                console.error('[SDK] Failed to show screenshot error:', showError)
+              }
             }
             
-            this.isInspectModeActive = false
-            this.stopInspectMode = null
+            // Stop inspect mode even if screenshot failed
+            widgetInstance.isInspectModeActive = false
+            if (widgetInstance.stopInspectMode) {
+              widgetInstance.stopInspectMode()
+              widgetInstance.stopInspectMode = null
+            }
           }
-        }, 0) // Use setTimeout with 0ms to ensure UI updates render first
+        }
+        captureAsync().catch((err) => {
+          console.error('[SDK] Unhandled error in screenshot capture:', err)
+        })
       },
       () => {
         // Hide loading overlay if visible

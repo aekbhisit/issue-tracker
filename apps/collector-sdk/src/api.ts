@@ -51,13 +51,13 @@ export async function submitIssue(
       selector: apiPayload.screenshot.selector,
     } : null,
   }
-  console.log('[SDK API] Submitting payload (attempt):', {
-    attempt: attempt + 1,
-    url: `${apiUrl}/api/public/v1/issues`,
-    payload: logPayload,
-  })
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    console.log('[SDK API] Submitting payload (attempt):', {
+      attempt: attempt + 1,
+      url: `${apiUrl}/api/public/v1/issues`,
+      payload: logPayload,
+    })
     try {
       const response = await fetch(`${apiUrl}/api/public/v1/issues`, {
         method: 'POST',

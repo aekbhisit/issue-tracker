@@ -279,3 +279,4 @@ Potential future enhancements:
 - `apps/api/src/shared/utils/error.util.ts` - Error classes
 - `apps/api/src/modules/auth/auth.service.ts` - Auth service with improved error handling
 
+

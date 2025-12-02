@@ -129,3 +129,4 @@ echo "  3. Reload nginx: sudo systemctl reload nginx"
 echo "  4. Check nginx error logs: sudo tail -f /var/log/nginx/error.log"
 echo ""
 
+

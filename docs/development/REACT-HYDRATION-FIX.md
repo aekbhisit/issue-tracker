@@ -132,3 +132,4 @@ After fixes, verify:
 3. Dynamic content updates after hydration
 4. i18n language switching works correctly
 
+

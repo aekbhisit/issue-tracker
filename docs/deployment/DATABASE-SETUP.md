@@ -206,3 +206,4 @@ DATABASE_URL=postgresql://postgres:IC4544!SecureP@ssw0rd@postgres:5432/issue_col
 - Change default passwords in production
 - Never expose database port publicly
 
+

@@ -193,3 +193,4 @@ curl -s http://localhost:3411/admin > /dev/null && echo " - Admin OK" || echo " 
 curl -s http://localhost:3412/ > /dev/null && echo " - Frontend OK" || echo " - Frontend FAILED"
 ```
 
+

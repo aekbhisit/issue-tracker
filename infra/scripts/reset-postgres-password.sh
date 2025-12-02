@@ -123,3 +123,4 @@ echo ""
 echo "🔐 Connection string:"
 echo "   postgresql://$DATABASE_USER:$DATABASE_PASSWORD@postgres:5432/$DATABASE_NAME"
 
+

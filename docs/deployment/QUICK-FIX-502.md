@@ -156,3 +156,4 @@ After fixing, you should see:
 3. Verify Docker images are built correctly
 4. Check network connectivity between containers
 
+

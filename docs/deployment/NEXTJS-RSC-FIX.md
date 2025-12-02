@@ -171,3 +171,4 @@ RSC requests:
 - [Next.js 15 RSC Documentation](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
 - [Nginx Location Matching](https://nginx.org/en/docs/http/ngx_http_core_module.html#location)
 
+
