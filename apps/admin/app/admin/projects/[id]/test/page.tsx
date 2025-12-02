@@ -57,7 +57,7 @@ export default function TestSDKPage() {
 			(denied) => {
 				if (denied) {
 					showError({
-						message: t("common.errors.noPermission") || "You do not have permission to access this page",
+						message: t("common.errors.noPermission"),
 					});
 					router.push("/admin/projects");
 				}
@@ -205,10 +205,10 @@ export default function TestSDKPage() {
 	}
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard") || "Dashboard", href: "/admin/dashboard" },
-		{ label: t("common.label.projects") || "Projects", href: "/admin/projects" },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.projects"), href: "/admin/projects" },
 		{ label: project.name, href: `/admin/projects/${project.id}` },
-		{ label: t("admin.project.form.testSDK") || "Test SDK" },
+		{ label: t("admin.project.form.testSDK") },
 	];
 
 	return (

@@ -31,7 +31,7 @@ export function useProjectTableColumns({
 			{
 				id: "name",
 				accessorKey: "name",
-				header: t("common.label.name") || "Name",
+				header: t("common.label.name"),
 				cell: ({ row }) => {
 					const project = row.original;
 					return (
@@ -53,7 +53,7 @@ export function useProjectTableColumns({
 			},
 			{
 				id: "issues",
-				header: t("common.label.issues") || "Issues",
+				header: t("common.label.issues"),
 				cell: ({ row }) => {
 					const project = row.original;
 					const pendingCount = project.issueCounts?.pending ?? 0;
@@ -70,10 +70,10 @@ export function useProjectTableColumns({
 								) : (
 									<span className="text-gray-500 dark:text-gray-400">0</span>
 								)}
-								<span className="text-gray-400 dark:text-gray-500">{t("admin.issue.table.pending") || "pending"}</span>
+								<span className="text-gray-400 dark:text-gray-500">{t("admin.issue.table.pending")}</span>
 								<span className="text-gray-300 dark:text-gray-600">/</span>
 								<span className="text-gray-600 dark:text-gray-300">{totalCount}</span>
-								<span className="text-gray-400 dark:text-gray-500">{t("admin.issue.table.total") || "total"}</span>
+								<span className="text-gray-400 dark:text-gray-500">{t("admin.issue.table.total")}</span>
 							</span>
 							<svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -85,7 +85,7 @@ export function useProjectTableColumns({
 			},
 			{
 				id: "allowedDomains",
-				header: t("admin.project.form.allowedDomains") || "Allowed Domains",
+				header: t("admin.project.form.allowedDomains"),
 				cell: ({ row }) => {
 					const project = row.original;
 					const domains = project.allowedDomains || [];
@@ -94,7 +94,7 @@ export function useProjectTableColumns({
 					}
 					return (
 						<div className="flex flex-col">
-							<span className="text-gray-900 dark:text-white">{domains.length} {t("admin.project.table.domain") || "domain(s)"}</span>
+							<span className="text-gray-900 dark:text-white">{domains.length} {t("admin.project.table.domain")}</span>
 							{domains.length > 0 && (
 								<span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1" title={domains.join(", ")}>
 									{domains[0]}
@@ -108,7 +108,7 @@ export function useProjectTableColumns({
 			},
 			{
 				id: "createdAt",
-				header: t("common.label.createdAt") || "Created",
+				header: t("common.label.createdAt"),
 				accessorKey: "createdAt",
 				cell: ({ row }) => (
 					<ClientTableDate date={row.original.createdAt} />
@@ -116,7 +116,7 @@ export function useProjectTableColumns({
 			},
 			{
 				id: "actions",
-				header: t("common.label.action") || "Actions",
+				header: t("common.label.action"),
 				cell: ({ row }) => {
 					const project = row.original;
 					const canEdit = checkPermission("project", "edit_data", "admin");
@@ -129,14 +129,14 @@ export function useProjectTableColumns({
 								<StatusToggleAction
 									isActive={project.status}
 									onClick={() => onToggleStatus(project)}
-									title={project.status ? (t("common.table.actions.deactivate") || "Deactivate") : (t("common.table.actions.activate") || "Activate")}
+									title={project.status ? t("common.table.actions.deactivate") : t("common.table.actions.activate")}
 								/>
 							)}
 							{canEdit && (
-								<EditAction onClick={() => onEdit(project)} title={t("common.table.actions.edit") || "Edit"} />
+								<EditAction onClick={() => onEdit(project)} title={t("common.table.actions.edit")} />
 							)}
 							{canDeleteAction && (
-								<DeleteAction onClick={() => onDelete(project)} title={t("common.table.actions.delete") || "Delete"} />
+								<DeleteAction onClick={() => onDelete(project)} title={t("common.table.actions.delete")} />
 							)}
 						</div>
 					);

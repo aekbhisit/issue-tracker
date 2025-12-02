@@ -18,7 +18,9 @@
       "login": "Login",
       "moveUp": "Move Up",
       "moveDown": "Move Down",
-      "clear": "Clear"
+      "clear": "Clear",
+      "view": "View",
+      "add": "Add"
     },
     "label": {
       "email": "Email",
@@ -58,7 +60,11 @@
       "logs": "Logs",
       "project": "Project",
       "severity": "Severity",
-      "dateRange": "Date Range"
+      "dateRange": "Date Range",
+      "unassigned": "Unassigned",
+      "userId": "User ID",
+      "assignee": "Assignee",
+      "action": "Action"
     },
     "message": {
       "success": "Success",
@@ -86,7 +92,8 @@
       "networkError": "Network connection error",
       "unauthorized": "Unauthorized access",
       "notFound": "Not found",
-      "serverError": "Server error"
+      "serverError": "Server error",
+      "noPermission": "You do not have permission"
     },
     "validation": {
       "required": "{{field}} is required",
@@ -123,8 +130,10 @@
         "deactivate": "Deactivate",
         "deleteSelected": "Delete Selected",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "view": "View"
       },
+      "itemsPerPage": "Items per page",
       "actionsHeader": "Actions",
       "treeSort": "Tree Sort",
       "treeDragHint": "Drag and drop to reorder menu items."

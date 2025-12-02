@@ -22,7 +22,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 			<div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
 				<div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
 					<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-						{t("admin.activityLog.detail.title") || "Activity Log Details"}
+						{t("admin.activityLog.detail.title")}
 					</h3>
 					<button
 						onClick={onClose}
@@ -37,25 +37,25 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 					<div className="grid grid-cols-2 gap-4 mb-6">
 						<div>
 							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("admin.activityLog.detail.action") || "Action"}
+								{t("admin.activityLog.detail.action")}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">{log.action}</p>
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("admin.activityLog.detail.model") || "Model"}
+								{t("admin.activityLog.detail.model")}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">{log.model}</p>
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("admin.activityLog.detail.modelId") || "Model ID"}
+								{t("admin.activityLog.detail.modelId")}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">{log.modelId}</p>
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("admin.activityLog.detail.user") || "User"}
+								{t("admin.activityLog.detail.user")}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">
 								{log.user?.name || log.user?.username || log.user?.email || "System"}
@@ -63,7 +63,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 						</div>
 						<div>
 							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("admin.activityLog.detail.timestamp") || "Timestamp"}
+								{t("admin.activityLog.detail.timestamp")}
 							</label>
 							<p className="mt-1 text-sm text-gray-900 dark:text-white">
 								<ClientDateFormatter date={log.createdAt} />
@@ -72,7 +72,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 						{log.ipAddress && (
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("admin.activityLog.detail.ipAddress") || "IP Address"}
+									{t("admin.activityLog.detail.ipAddress")}
 								</label>
 								<p className="mt-1 text-sm text-gray-900 dark:text-white">{log.ipAddress}</p>
 							</div>
@@ -82,7 +82,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 					{log.action === "UPDATE" && log.changes && (
 						<div className="mb-6">
 							<h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
-								{t("admin.activityLog.detail.changes") || "Changes"}
+								{t("admin.activityLog.detail.changes")}
 							</h4>
 							<div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
 								<pre className="overflow-x-auto text-xs text-gray-800 dark:text-gray-200">
@@ -96,7 +96,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 						{log.oldData && (
 							<div>
 								<h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
-									{t("admin.activityLog.detail.oldData") || "Old Data"}
+									{t("admin.activityLog.detail.oldData")}
 								</h4>
 								<div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
 									<pre className="overflow-x-auto text-xs text-gray-800 dark:text-gray-200 max-h-96">
@@ -108,7 +108,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 						{log.newData && (
 							<div>
 								<h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
-									{t("admin.activityLog.detail.newData") || "New Data"}
+									{t("admin.activityLog.detail.newData")}
 								</h4>
 								<div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
 									<pre className="overflow-x-auto text-xs text-gray-800 dark:text-gray-200 max-h-96">
@@ -124,7 +124,7 @@ export function ActivityLogDetailModal({ log, isOpen, onClose }: ActivityLogDeta
 						onClick={onClose}
 						className="rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
 					>
-						{t("common.button.close") || "Close"}
+						{t("common.button.close")}
 					</button>
 				</div>
 			</div>

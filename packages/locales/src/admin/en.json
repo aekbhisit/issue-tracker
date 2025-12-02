@@ -813,6 +813,44 @@
         "unassigned": "Unassigned",
         "pending": "pending",
         "total": "total"
+      },
+      "label": {
+        "reporterInfo": "Reporter Information",
+        "metadata": "Metadata",
+        "url": "URL",
+        "userAgent": "User Agent",
+        "viewport": "Viewport",
+        "screen": "Screen",
+        "language": "Language",
+        "timezone": "Timezone",
+        "timestamp": "Timestamp",
+        "screenshots": "Screenshots",
+        "noImage": "No image available",
+        "elementSelector": "Element Inspect",
+        "elementInspectDetails": "Element Inspect Details",
+        "noScreenshots": "No screenshots available",
+        "screenshot": "Screenshot",
+        "logs": "Logs",
+        "stackTrace": "Stack Trace",
+        "noLogsFound": "No logs found matching your search",
+        "noLogs": "No logs available",
+        "comments": "Comments",
+        "addComment": "Add Comment"
+      },
+      "status": {
+        "open": "Open",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "placeholder": {
+        "comment": "Write a comment..."
       }
     },
     "activityLog": {
@@ -850,6 +888,18 @@
         "model": "Model",
         "modelId": "Model ID",
         "timestamp": "Timestamp"
+      },
+      "detail": {
+        "title": "Activity Log Details",
+        "action": "Action",
+        "model": "Model",
+        "modelId": "Model ID",
+        "user": "User",
+        "timestamp": "Timestamp",
+        "ipAddress": "IP Address",
+        "changes": "Changes",
+        "oldData": "Old Data",
+        "newData": "New Data"
       },
       "notifications": {
         "loadError": "Failed to load activity logs"

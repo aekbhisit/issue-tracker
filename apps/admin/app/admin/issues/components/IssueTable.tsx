@@ -113,7 +113,7 @@ export function IssueTable({
 		() =>
 			[10, 20, 50].map((size) => ({
 				value: size,
-				label: t("common.table.perPage", { count: size }) || `${size} per page`,
+				label: t("common.table.perPage", { count: size }),
 			})),
 		[t]
 	);
@@ -129,7 +129,7 @@ export function IssueTable({
 					<div className="flex items-center gap-3">
 						<h3 className="text-lg font-medium text-gray-900 dark:text-white">Issues</h3>
 						<span className="text-sm text-gray-500 dark:text-gray-400">
-							{t("common.table.totalItems", { count: totalItems }) || `Total: ${totalItems}`}
+							{t("common.table.totalItems", { count: totalItems })}
 						</span>
 					</div>
 				</div>
@@ -166,7 +166,7 @@ export function IssueTable({
 						{table.getRowModel().rows.length === 0 ? (
 							<tr>
 								<td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-									{t("common.table.noData") || "No issues found"}
+									{t("common.table.noData")}
 								</td>
 							</tr>
 						) : (
@@ -191,8 +191,8 @@ export function IssueTable({
 					<div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-gray-700 dark:text-gray-300">
-								{t("common.table.showing") || "Showing"} {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} -{" "}
-								{Math.min(currentPage * itemsPerPage, totalItems)} {t("common.table.of") || "of"} {totalItems}
+								{t("common.table.showing")} {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} -{" "}
+								{Math.min(currentPage * itemsPerPage, totalItems)} {t("common.table.of")} {totalItems}
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
@@ -202,10 +202,10 @@ export function IssueTable({
 								onClick={() => onPageChange(currentPage - 1)}
 								disabled={currentPage === 1}
 							>
-								{t("common.table.previous") || "Previous"}
+								{t("common.table.previous")}
 							</Button>
 							<span className="text-sm text-gray-700 dark:text-gray-300">
-								{t("common.table.page") || "Page"} {currentPage} {t("common.table.of") || "of"} {totalPages}
+								{t("common.table.page")} {currentPage} {t("common.table.of")} {totalPages}
 							</span>
 							<Button
 								variant="outline"
@@ -213,12 +213,12 @@ export function IssueTable({
 								onClick={() => onPageChange(currentPage + 1)}
 								disabled={currentPage >= totalPages}
 							>
-								{t("common.table.next") || "Next"}
+								{t("common.table.next")}
 							</Button>
 						</div>
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-gray-700 dark:text-gray-300">
-								{t("common.table.itemsPerPage") || "Items per page"}:
+								{t("common.table.itemsPerPage")}:
 							</span>
 							<ReactSelect
 								options={perPageOptions}

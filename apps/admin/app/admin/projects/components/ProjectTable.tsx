@@ -166,7 +166,7 @@ export function ProjectTable({
 						{table.getRowModel().rows.length === 0 ? (
 							<tr>
 								<td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-									{t("common.table.noData") || "No projects found"}
+									{t("common.table.noData")}
 								</td>
 							</tr>
 						) : (
@@ -202,10 +202,10 @@ export function ProjectTable({
 								onClick={() => onPageChange(currentPage - 1)}
 								disabled={currentPage === 1}
 							>
-								{t("common.table.previous") || "Previous"}
+								{t("common.table.previous")}
 							</Button>
 							<span className="text-sm text-gray-700 dark:text-gray-300">
-								{t("common.table.page") || "Page"} {currentPage} {t("common.table.of") || "of"} {totalPages}
+								{t("common.table.page")} {currentPage} {t("common.table.of")} {totalPages}
 							</span>
 							<Button
 								variant="outline"
@@ -213,12 +213,12 @@ export function ProjectTable({
 								onClick={() => onPageChange(currentPage + 1)}
 								disabled={currentPage >= totalPages}
 							>
-								{t("common.table.next") || "Next"}
+								{t("common.table.next")}
 							</Button>
 						</div>
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-gray-700 dark:text-gray-300">
-								{t("common.table.itemsPerPage") || "Items per page"}:
+								{t("common.table.itemsPerPage")}:
 							</span>
 							<ReactSelect
 								options={perPageOptions}

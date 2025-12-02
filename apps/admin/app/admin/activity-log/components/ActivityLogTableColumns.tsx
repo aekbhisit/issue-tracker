@@ -43,7 +43,7 @@ export function useActivityLogTableColumns({
 			{
 				id: "user",
 				accessorKey: "user",
-				header: t("admin.activityLog.table.user") || "User",
+				header: t("admin.activityLog.table.user"),
 				cell: ({ row }) => {
 					const user = row.original.user
 					if (!user) {
@@ -64,7 +64,7 @@ export function useActivityLogTableColumns({
 			{
 				id: "model",
 				accessorKey: "model",
-				header: t("admin.activityLog.table.model") || "Model",
+				header: t("admin.activityLog.table.model"),
 				cell: ({ row }) => {
 					return (
 						<span className="font-medium text-gray-900 dark:text-white">{row.original.model}</span>
@@ -74,7 +74,7 @@ export function useActivityLogTableColumns({
 			{
 				id: "modelId",
 				accessorKey: "modelId",
-				header: t("admin.activityLog.table.modelId") || "Model ID",
+				header: t("admin.activityLog.table.modelId"),
 				cell: ({ row }) => {
 					return <span className="text-gray-600 dark:text-gray-400">{row.original.modelId}</span>
 				},
@@ -82,7 +82,7 @@ export function useActivityLogTableColumns({
 			{
 				id: "createdAt",
 				accessorKey: "createdAt",
-				header: t("admin.activityLog.table.timestamp") || "Timestamp",
+				header: t("admin.activityLog.table.timestamp"),
 				cell: ({ row }) => {
 					const date = row.original.createdAt
 					return (
@@ -99,13 +99,13 @@ export function useActivityLogTableColumns({
 			},
 			{
 				id: "actions",
-				header: t("common.table.actionsHeader") || "Actions",
+				header: t("common.table.actionsHeader"),
 				cell: ({ row }) => {
 					return (
 						<div className="flex items-center space-x-1">
 							<ViewAction
 								onClick={() => onView(row.original)}
-								title={t("common.button.view") || "View"}
+								title={t("common.button.view")}
 							/>
 						</div>
 					)

@@ -754,7 +754,13 @@
         "allowedOriginsPlaceholder": "https://app.example.com หรือ https://*.example.com",
         "allowedOriginsHelper": "กรอกต้นทางที่แน่นอน (เช่น https://app.example.com) หรือใช้ wildcard (เช่น https://*.example.com)",
         "add": "เพิ่ม",
-        "remove": "ลบ"
+        "remove": "ลบ",
+        "environment": {
+          "dev": "Development",
+          "staging": "Staging",
+          "prod": "Production",
+          "test": "Test"
+        }
       },
       "table": {
         "issues": "ปัญหา",
@@ -826,6 +832,18 @@
         "model": "โมดูล",
         "modelId": "รหัสโมดูล",
         "timestamp": "วันที่และเวลา"
+      },
+      "detail": {
+        "title": "รายละเอียดบันทึกกิจกรรม",
+        "action": "การดำเนินการ",
+        "model": "โมดูล",
+        "modelId": "รหัสโมดูล",
+        "user": "ผู้ใช้",
+        "timestamp": "วันที่และเวลา",
+        "ipAddress": "ที่อยู่ IP",
+        "changes": "การเปลี่ยนแปลง",
+        "oldData": "ข้อมูลเดิม",
+        "newData": "ข้อมูลใหม่"
       },
       "notifications": {
         "loadError": "ไม่สามารถโหลดบันทึกกิจกรรมได้"

@@ -40,7 +40,7 @@ export function useIssueTableColumns({
 			{
 				id: "title",
 				accessorKey: "title",
-				header: t("common.label.title") || "Title",
+				header: t("common.label.title"),
 				cell: ({ row }) => {
 					const issue = row.original;
 					return (
@@ -62,7 +62,7 @@ export function useIssueTableColumns({
 			},
 			{
 				id: "project",
-				header: t("common.label.project") || "Project",
+				header: t("common.label.project"),
 				cell: ({ row }) => {
 					const issue = row.original;
 					if (!issue.project) {
@@ -82,7 +82,7 @@ export function useIssueTableColumns({
 			{
 				id: "severity",
 				accessorKey: "severity",
-				header: t("common.label.severity") || "Severity",
+				header: t("common.label.severity"),
 				cell: ({ row }) => {
 					const severity = row.original.severity;
 					const severityColors: Record<string, "success" | "warning" | "error" | "info"> = {
@@ -108,7 +108,7 @@ export function useIssueTableColumns({
 			{
 				id: "status",
 				accessorKey: "status",
-				header: t("common.label.status") || "Status",
+				header: t("common.label.status"),
 				cell: ({ row }) => {
 					const status = row.original.status;
 					const statusColors: Record<string, "success" | "warning" | "error" | "info"> = {
@@ -118,10 +118,10 @@ export function useIssueTableColumns({
 						closed: "info",
 					};
 					const statusLabels: Record<string, string> = {
-						open: t("admin.dashboard.status.open") || "Open",
-						"in-progress": t("admin.dashboard.status.inProgress") || "In Progress",
-						resolved: t("admin.dashboard.status.resolved") || "Resolved",
-						closed: t("admin.dashboard.status.closed") || "Closed",
+						open: t("admin.issue.status.open"),
+						"in-progress": t("admin.issue.status.inProgress"),
+						resolved: t("admin.issue.status.resolved"),
+						closed: t("admin.issue.status.closed"),
 					};
 					const color = statusColors[status] || "info";
 					return (
@@ -133,11 +133,11 @@ export function useIssueTableColumns({
 			},
 			{
 				id: "assignee",
-				header: t("admin.issue.table.assignee") || "Assignee",
+				header: t("admin.issue.table.assignee"),
 				cell: ({ row }) => {
 					const issue = row.original;
 					if (!issue.assignee) {
-						return <span className="text-gray-400">{t("admin.issue.table.unassigned") || "Unassigned"}</span>;
+						return <span className="text-gray-400">{t("admin.issue.table.unassigned")}</span>;
 					}
 					return (
 						<div className="flex flex-col">
@@ -156,7 +156,7 @@ export function useIssueTableColumns({
 			},
 			{
 				id: "createdAt",
-				header: t("common.label.createdAt") || "Created",
+				header: t("common.label.createdAt"),
 				accessorKey: "createdAt",
 				cell: ({ row }) => (
 					<ClientTableDate date={row.original.createdAt} />
@@ -164,7 +164,7 @@ export function useIssueTableColumns({
 			},
 			{
 				id: "actions",
-				header: t("common.label.action") || "Actions",
+				header: t("common.label.action"),
 				cell: ({ row }) => {
 					const issue = row.original;
 					const canEdit = checkPermission("issue", "edit_data", "admin");
@@ -175,7 +175,7 @@ export function useIssueTableColumns({
 							{canView && (
 								<EditAction
 									onClick={() => onEdit(issue)}
-									title={t("common.table.actions.view") || "View"}
+									title={t("common.table.actions.view")}
 								/>
 							)}
 						</div>

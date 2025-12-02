@@ -46,10 +46,10 @@ export function IssueToolbar({
 	const [loadingUsers, setLoadingUsers] = useState(false);
 
 	const statusOptions: SelectOption[] = [
-		{ value: "open", label: t("admin.dashboard.status.open") || "Open" },
-		{ value: "in-progress", label: t("admin.dashboard.status.inProgress") || "In Progress" },
-		{ value: "resolved", label: t("admin.dashboard.status.resolved") || "Resolved" },
-		{ value: "closed", label: t("admin.dashboard.status.closed") || "Closed" },
+		{ value: "open", label: t("admin.issue.status.open") },
+		{ value: "in-progress", label: t("admin.issue.status.inProgress") },
+		{ value: "resolved", label: t("admin.issue.status.resolved") },
+		{ value: "closed", label: t("admin.issue.status.closed") },
 	];
 
 	const severityOptions: SelectOption[] = [

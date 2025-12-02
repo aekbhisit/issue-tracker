@@ -63,7 +63,7 @@ export default function IssueDetailPage() {
 			(denied) => {
 				if (denied) {
 					showError({
-						message: t("common.errors.noPermission") || "You do not have permission to access this page",
+						message: t("common.errors.noPermission"),
 					});
 					router.push("/admin/issues");
 				}
@@ -104,7 +104,7 @@ export default function IssueDetailPage() {
 				if (!mounted) return;
 
 				const options: SelectOption[] = [
-					{ value: -1, label: t("common.label.unassigned") || "Unassigned" },
+					{ value: -1, label: t("common.label.unassigned") },
 					...allUsers.map((user) => ({
 						value: parseInt(user.id),
 						label: user.name || user.username || user.email || `User #${user.id}`,
@@ -140,7 +140,7 @@ export default function IssueDetailPage() {
 			if (!issueIdNum) return;
 
 			try {
-				showLoading(t("common.message.loading") || "Loading...");
+				showLoading(t("common.message.loading"));
 				await updateIssueMutation.mutateAsync({
 					id: issueIdNum,
 					data: formData,
@@ -284,20 +284,20 @@ export default function IssueDetailPage() {
 
 	const statusOptions: SelectOption[] = useMemo(
 		() => [
-			{ value: "open", label: t("issue.status.open") || "Open" },
-			{ value: "in_progress", label: t("issue.status.inProgress") || "In Progress" },
-			{ value: "resolved", label: t("issue.status.resolved") || "Resolved" },
-			{ value: "closed", label: t("issue.status.closed") || "Closed" },
+			{ value: "open", label: t("admin.issue.status.open") },
+			{ value: "in_progress", label: t("admin.issue.status.inProgress") },
+			{ value: "resolved", label: t("admin.issue.status.resolved") },
+			{ value: "closed", label: t("admin.issue.status.closed") },
 		],
 		[t]
 	);
 
 	const severityOptions: SelectOption[] = useMemo(
 		() => [
-			{ value: "low", label: t("issue.severity.low") || "Low" },
-			{ value: "medium", label: t("issue.severity.medium") || "Medium" },
-			{ value: "high", label: t("issue.severity.high") || "High" },
-			{ value: "critical", label: t("issue.severity.critical") || "Critical" },
+			{ value: "low", label: t("admin.issue.severity.low") },
+			{ value: "medium", label: t("admin.issue.severity.medium") },
+			{ value: "high", label: t("admin.issue.severity.high") },
+			{ value: "critical", label: t("admin.issue.severity.critical") },
 		],
 		[t]
 	);
@@ -325,8 +325,8 @@ export default function IssueDetailPage() {
 	}
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard") || "Dashboard", href: "/admin/dashboard" },
-		{ label: t("common.label.issues") || "Issues", href: "/admin/issues" },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.issues"), href: "/admin/issues" },
 		{ label: issue.title || `Issue #${issue.id}` },
 	];
 
@@ -335,19 +335,19 @@ export default function IssueDetailPage() {
 			{isEditing ? (
 				<>
 					<Button variant="outline" onClick={handleCancel}>
-						{t("common.button.cancel") || "Cancel"}
+						{t("common.button.cancel")}
 					</Button>
 					<Button variant="primary" onClick={handleSubmit}>
-						{t("common.button.save") || "Save"}
+						{t("common.button.save")}
 					</Button>
 				</>
 			) : (
 				<>
 					<Button variant="outline" onClick={handleCancelNavigation}>
-						{t("common.button.back") || "Back"}
+						{t("common.button.back")}
 					</Button>
 					<Button variant="primary" onClick={() => setIsEditing(true)}>
-						{t("common.button.edit") || "Edit"}
+						{t("common.button.edit")}
 					</Button>
 				</>
 			)}
@@ -369,14 +369,14 @@ export default function IssueDetailPage() {
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 						</svg>
 						<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-							{t("common.label.basicInformation") || "Basic Information"}
+							{t("common.label.basicInformation")}
 						</h3>
 					</div>
 					<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 						<div className="md:col-span-2">
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("common.label.title") || "Title"}
+									{t("common.label.title")}
 								</label>
 								<p className="text-gray-900 dark:text-white">{issue.title}</p>
 							</div>
@@ -385,7 +385,7 @@ export default function IssueDetailPage() {
 						<div className="md:col-span-2">
 							{isEditing ? (
 								<TextareaInput
-									label={t("common.label.description") || "Description"}
+									label={t("common.label.description")}
 									value={formData.description || ""}
 									onChange={(value) => setFormData({ ...formData, description: value })}
 									rows={4}
@@ -393,7 +393,7 @@ export default function IssueDetailPage() {
 							) : (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.description") || "Description"}
+										{t("common.label.description")}
 									</label>
 									<p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
 										{issue.description || <span className="text-gray-400 italic">No description</span>}
@@ -405,7 +405,7 @@ export default function IssueDetailPage() {
 						<div>
 							{isEditing ? (
 								<ReactSelect
-									label={t("common.label.status") || "Status"}
+									label={t("common.label.status")}
 									options={statusOptions}
 									value={formData.status || issue.status}
 									onChange={(value) => {
@@ -417,7 +417,7 @@ export default function IssueDetailPage() {
 							) : (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.status") || "Status"}
+										{t("common.label.status")}
 									</label>
 									<Badge color={statusColorMap[issue.status]} size="sm">
 										{issue.status.replace(/_/g, " ")}
@@ -429,7 +429,7 @@ export default function IssueDetailPage() {
 						<div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("common.label.severity") || "Severity"}
+									{t("common.label.severity")}
 								</label>
 								<Badge color={severityColorMap[issue.severity]} size="sm">
 									{issue.severity}
@@ -440,7 +440,7 @@ export default function IssueDetailPage() {
 						<div>
 							{isEditing ? (
 								<ReactSelect
-									label={t("common.label.assignee") || "Assignee"}
+									label={t("common.label.assignee")}
 									options={users}
 									value={formData.assigneeId ?? -1}
 									onChange={(value) => setFormData({ ...formData, assigneeId: value === -1 ? null : (value as number) })}
@@ -449,7 +449,7 @@ export default function IssueDetailPage() {
 							) : (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.assignee") || "Assignee"}
+										{t("common.label.assignee")}
 									</label>
 									<p className="text-gray-600 dark:text-gray-400">
 										{issue.assignee?.name || issue.assignee?.email || "Unassigned"}
@@ -460,14 +460,14 @@ export default function IssueDetailPage() {
 
 						<div>
 							<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("common.label.project") || "Project"}
+								{t("common.label.project")}
 							</label>
 							<p className="text-gray-600 dark:text-gray-400">{issue.project?.name || "N/A"}</p>
 						</div>
 
 						<div>
 							<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("common.label.createdAt") || "Created At"}
+								{t("common.label.createdAt")}
 							</label>
 							<p className="text-gray-600 dark:text-gray-400">
 								<ClientDateFormatter date={issue.createdAt} />
@@ -476,7 +476,7 @@ export default function IssueDetailPage() {
 
 						<div>
 							<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-								{t("common.label.updatedAt") || "Updated At"}
+								{t("common.label.updatedAt")}
 							</label>
 							<p className="text-gray-600 dark:text-gray-400">
 								<ClientDateFormatter date={issue.updatedAt} />
@@ -493,14 +493,14 @@ export default function IssueDetailPage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 							</svg>
 							<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-								{t("issue.label.reporterInfo") || "Reporter Information"}
+								{t("admin.issue.label.reporterInfo")}
 							</h3>
 						</div>
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 							{issue.reporterInfo.name && (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.name") || "Name"}
+										{t("common.label.name")}
 									</label>
 									<p className="text-gray-600 dark:text-gray-400">{issue.reporterInfo.name}</p>
 								</div>
@@ -508,7 +508,7 @@ export default function IssueDetailPage() {
 							{issue.reporterInfo.email && (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.email") || "Email"}
+										{t("common.label.email")}
 									</label>
 									<p className="text-gray-600 dark:text-gray-400">{issue.reporterInfo.email}</p>
 								</div>
@@ -516,7 +516,7 @@ export default function IssueDetailPage() {
 							{issue.reporterInfo.id && (
 								<div>
 									<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-										{t("common.label.userId") || "User ID"}
+										{t("common.label.userId")}
 									</label>
 									<p className="text-gray-600 dark:text-gray-400">{issue.reporterInfo.id}</p>
 								</div>
@@ -539,7 +539,7 @@ export default function IssueDetailPage() {
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.url") || "URL"}
+									{t("admin.issue.label.url")}
 								</label>
 								<a
 									href={issue.metadata.url}
@@ -552,7 +552,7 @@ export default function IssueDetailPage() {
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.userAgent") || "User Agent"}
+									{t("admin.issue.label.userAgent")}
 								</label>
 								<p className="text-sm text-gray-600 dark:text-gray-400 break-all">
 									{issue.metadata.userAgent}
@@ -560,7 +560,7 @@ export default function IssueDetailPage() {
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.viewport") || "Viewport"}
+									{t("admin.issue.label.viewport")}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">
 									{issue.metadata.viewport.width} × {issue.metadata.viewport.height}
@@ -568,7 +568,7 @@ export default function IssueDetailPage() {
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.screen") || "Screen"}
+									{t("admin.issue.label.screen")}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">
 									{issue.metadata.screen.width} × {issue.metadata.screen.height}
@@ -576,19 +576,19 @@ export default function IssueDetailPage() {
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.language") || "Language"}
+									{t("admin.issue.label.language")}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">{issue.metadata.language}</p>
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.timezone") || "Timezone"}
+									{t("admin.issue.label.timezone")}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">{issue.metadata.timezone}</p>
 							</div>
 							<div>
 								<label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									{t("issue.label.timestamp") || "Timestamp"}
+									{t("admin.issue.label.timestamp")}
 								</label>
 								<p className="text-gray-600 dark:text-gray-400">
 									<ClientDateFormatter date={issue.metadata.timestamp} />
@@ -605,7 +605,7 @@ export default function IssueDetailPage() {
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
 						</svg>
 						<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-							{t("issue.label.screenshots") || "Screenshots"} ({issue?.screenshots?.length || 0})
+							{t("admin.issue.label.screenshots")} ({issue?.screenshots?.length || 0})
 						</h3>
 					</div>
 					{issue?.screenshots && issue.screenshots.length > 0 ? (
@@ -677,7 +677,7 @@ export default function IssueDetailPage() {
 													<svg className="mb-2 h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
 													</svg>
-													<p className="text-sm">{t("issue.label.noImage") || "No image available"}</p>
+													<p className="text-sm">{t("admin.issue.label.noImage")}</p>
 													{hasError && (
 														<p className="mt-1 text-xs text-red-500">Failed to load image</p>
 													)}
@@ -723,7 +723,7 @@ export default function IssueDetailPage() {
 												<div className="mt-2 rounded border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
 													<div className="mb-2 flex items-center justify-between">
 														<span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-															{t("issue.label.elementSelector") || "Element Inspect"}
+															{t("admin.issue.label.elementSelector")}
 														</span>
 													</div>
 													<div className="space-y-2">
@@ -801,7 +801,7 @@ export default function IssueDetailPage() {
 							<svg className="mb-4 h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
 							</svg>
-							<p className="text-gray-500 dark:text-gray-400">{t("issue.label.noScreenshots") || "No screenshots available"}</p>
+							<p className="text-gray-500 dark:text-gray-400">{t("admin.issue.label.noScreenshots")}</p>
 						</div>
 					)}
 				</div>
@@ -815,10 +815,10 @@ export default function IssueDetailPage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
 							</svg>
 							<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-								{t("issue.label.elementInspectDetails") || "Element Inspect Details"}
+								{t("admin.issue.label.elementInspectDetails")}
 							</h3>
 							<Badge color="info" className="ml-2">
-								{issue.screenshots.filter(s => s.elementSelector).length} {t("issue.label.screenshots") || "screenshots"}
+								{issue.screenshots.filter(s => s.elementSelector).length} {t("admin.issue.label.screenshots")}
 							</Badge>
 						</div>
 						<div className="space-y-4">
@@ -832,7 +832,7 @@ export default function IssueDetailPage() {
 										<div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
 											<div className="flex items-center gap-2">
 												<span className="text-sm font-semibold text-gray-900 dark:text-white">
-													{t("issue.label.screenshot") || "Screenshot"} #{screenshot.id}
+													{t("admin.issue.label.screenshot")} #{screenshot.id}
 												</span>
 												{screenshot.createdAt && (
 													<span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1085,7 +1085,7 @@ export default function IssueDetailPage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 							</svg>
 							<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-								{t("issue.label.logs") || "Logs"} 
+								{t("admin.issue.label.logs")} 
 								{issue?.logs && (
 									<span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
 										({filteredLogs.length} / {issue.logs.length})
@@ -1133,7 +1133,7 @@ export default function IssueDetailPage() {
 															{log.stack && (
 																<details className="mt-2">
 																	<summary className="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-																		{t("issue.label.stackTrace") || "Stack Trace"}
+																		{t("admin.issue.label.stackTrace")}
 																	</summary>
 																	<pre className="mt-2 overflow-x-auto rounded bg-gray-100 p-2 text-xs dark:bg-gray-800">
 																		{log.stack}
@@ -1143,7 +1143,7 @@ export default function IssueDetailPage() {
 															{log.metadata && (
 																<details className="mt-2">
 																	<summary className="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-																		{t("issue.label.metadata") || "Metadata"}
+																		{t("admin.issue.label.metadata")}
 																	</summary>
 																	<pre className="mt-2 overflow-x-auto rounded bg-gray-100 p-2 text-xs dark:bg-gray-800">
 																		{JSON.stringify(log.metadata, null, 2)}
@@ -1172,7 +1172,7 @@ export default function IssueDetailPage() {
 													onClick={() => setLogsPage(Math.max(1, logsPage - 1))}
 													disabled={logsPage <= 1}
 												>
-													{t("common.button.previous") || "Previous"}
+													{t("common.button.previous")}
 												</Button>
 												<span className="text-sm text-gray-600 dark:text-gray-300">
 													{t("common.table.pageOf", { page: logsPage, totalPages: totalLogPages }) || `Page ${logsPage} of ${totalLogPages}`}
@@ -1183,7 +1183,7 @@ export default function IssueDetailPage() {
 													onClick={() => setLogsPage(Math.min(totalLogPages, logsPage + 1))}
 													disabled={logsPage >= totalLogPages}
 												>
-													{t("common.button.next") || "Next"}
+													{t("common.button.next")}
 												</Button>
 												<ReactSelect
 													className="ml-3 min-w-[120px]"
@@ -1214,7 +1214,7 @@ export default function IssueDetailPage() {
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 									</svg>
 									<p className="text-gray-500 dark:text-gray-400">
-										{t("issue.label.noLogsFound") || "No logs found matching your search"}
+										{t("admin.issue.label.noLogsFound")}
 									</p>
 								</div>
 							)}
@@ -1224,7 +1224,7 @@ export default function IssueDetailPage() {
 							<svg className="mb-4 h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 							</svg>
-							<p className="text-gray-500 dark:text-gray-400">{t("issue.label.noLogs") || "No logs available"}</p>
+							<p className="text-gray-500 dark:text-gray-400">{t("admin.issue.label.noLogs")}</p>
 						</div>
 					)}
 				</div>
@@ -1236,7 +1236,7 @@ export default function IssueDetailPage() {
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
 						</svg>
 						<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-							{t("issue.label.comments") || "Comments"} ({issue?.comments?.length || 0})
+							{t("admin.issue.label.comments")} ({issue?.comments?.length || 0})
 						</h3>
 					</div>
 					
@@ -1269,11 +1269,11 @@ export default function IssueDetailPage() {
 					{/* Add Comment Form */}
 					<div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
 						<TextareaInput
-							label={t("issue.label.addComment") || "Add Comment"}
+							label={t("admin.issue.label.addComment")}
 							value={commentContent}
 							onChange={setCommentContent}
 							rows={4}
-							placeholder={t("issue.placeholder.comment") || "Write a comment..."}
+							placeholder={t("admin.issue.placeholder.comment")}
 						/>
 						<div className="flex justify-end">
 							<Button
@@ -1283,8 +1283,8 @@ export default function IssueDetailPage() {
 								disabled={!commentContent.trim() || addCommentMutation.isPending}
 							>
 								{addCommentMutation.isPending
-									? t("common.message.loading") || "Loading..."
-									: t("common.button.add") || "Add Comment"}
+									? t("common.message.loading")
+									: t("common.button.add")}
 							</Button>
 						</div>
 					</div>

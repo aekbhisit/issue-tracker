@@ -153,7 +153,7 @@ export function ActivityLogTable({
 						) : data.length === 0 ? (
 							<tr>
 								<td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
-									{t("common.table.noData") || "No data available"}
+									{t("common.table.noData")}
 								</td>
 							</tr>
 						) : (
