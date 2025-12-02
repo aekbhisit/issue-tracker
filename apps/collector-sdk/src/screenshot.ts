@@ -202,11 +202,18 @@ export async function captureScreenshot(
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject(new Error(`Screenshot capture timed out after ${timeout}ms`))
+      reject(new Error(`Screenshot capture timed out after ${timeout}ms. The element may be too large or complex.`))
     }, timeout)
   })
 
   // Capture screenshot with html2canvas
+  console.log('[Screenshot] Initializing html2canvas with options:', {
+    scale,
+    width: elementWidth,
+    height: elementHeight,
+    timeout,
+  })
+  
   const capturePromise = html2canvas(element, {
     useCORS: true,
     allowTaint: false,
@@ -278,14 +285,18 @@ export async function captureScreenshot(
 
   let canvas: HTMLCanvasElement
   try {
+    console.log('[Screenshot] Starting capture with timeout:', timeout, 'ms')
     // Race between capture and timeout
     canvas = await Promise.race([capturePromise, timeoutPromise])
+    console.log('[Screenshot] Capture completed successfully')
   } catch (error: any) {
     const message = error?.message || String(error || '')
+    console.error('[Screenshot] Capture failed:', message)
 
     // Handle timeout separately
-    if (message.includes('timed out')) {
-      throw new Error(`Screenshot capture timed out. The element may be too large or complex.`)
+    if (message.includes('timed out') || message.includes('timeout')) {
+      console.warn('[Screenshot] Capture timed out, element may be too large or complex')
+      throw new Error(`Screenshot capture timed out after ${timeout}ms. The element may be too large or complex. Try selecting a smaller element.`)
     }
 
     // html2canvas currently cannot parse some modern CSS color functions (e.g. "oklch")
@@ -302,8 +313,11 @@ export async function captureScreenshot(
     throw new Error(`Failed to capture screenshot: ${message || 'Unknown error'}`)
   }
 
+  console.log('[Screenshot] Canvas captured, dimensions:', canvas.width, 'x', canvas.height)
+  
   // Resize canvas if needed
   if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    console.log('[Screenshot] Resizing canvas from', canvas.width, 'x', canvas.height, 'to', targetWidth, 'x', targetHeight)
     const resizedCanvas = document.createElement('canvas')
     resizedCanvas.width = targetWidth
     resizedCanvas.height = targetHeight
@@ -313,9 +327,11 @@ export async function captureScreenshot(
     }
     ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight)
     canvas = resizedCanvas
+    console.log('[Screenshot] Canvas resized successfully')
   }
 
   // Compress image
+  console.log('[Screenshot] Starting image compression...')
   let dataUrl: string | undefined = undefined
   let fileSize: number | undefined = undefined
   let attempts = 0
@@ -323,11 +339,14 @@ export async function captureScreenshot(
 
   while (attempts < maxAttempts) {
     const currentQuality = attempts === 0 ? quality : quality * (1 - attempts * 0.1)
+    console.log('[Screenshot] Compression attempt', attempts + 1, 'with quality', currentQuality)
     dataUrl = await compressImage(canvas, Math.max(0.1, currentQuality), 'image/jpeg')
     fileSize = getDataUrlSize(dataUrl)
+    console.log('[Screenshot] Compressed size:', Math.round(fileSize / 1024), 'KB')
 
     // If file size is acceptable, break
     if (fileSize <= MAX_FILE_SIZE) {
+      console.log('[Screenshot] File size acceptable, compression complete')
       break
     }
 
@@ -337,6 +356,7 @@ export async function captureScreenshot(
         `Screenshot file size (${Math.round(fileSize / 1024)}KB) exceeds maximum allowed size (${MAX_FILE_SIZE / 1024}KB)`
       )
     }
+    console.log('[Screenshot] File size too large, retrying with lower quality...')
   }
 
   // Final validation

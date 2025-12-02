@@ -259,7 +259,10 @@ export class IssueCollectorWidget {
               isConnected: element.isConnected,
             })
             
+            // Add progress logging
+            console.log('[SDK] Calling captureScreenshot...')
             const screenshot = await captureScreenshot(element)
+            console.log('[SDK] captureScreenshot returned successfully')
             console.log('[SDK] Screenshot captured successfully:', {
               width: screenshot.width,
               height: screenshot.height,
@@ -337,6 +340,28 @@ export class IssueCollectorWidget {
         }
         captureAsync().catch((err) => {
           console.error('[SDK] Unhandled error in screenshot capture:', err)
+          
+          // Ensure loading overlay is hidden even on unhandled errors
+          widgetInstance.hideLoadingOverlay()
+          
+          // Ensure inspect mode is stopped
+          widgetInstance.isInspectModeActive = false
+          if (widgetInstance.stopInspectMode) {
+            widgetInstance.stopInspectMode()
+            widgetInstance.stopInspectMode = null
+          }
+          
+          // Show error in panel
+          if ((panelRef as any).showScreenshotError) {
+            try {
+              ;(panelRef as any).showScreenshotError(
+                selector,
+                err instanceof Error ? err.message : 'Screenshot capture failed unexpectedly'
+              )
+            } catch (showError) {
+              console.error('[SDK] Failed to show screenshot error:', showError)
+            }
+          }
         })
       },
       () => {
