@@ -464,7 +464,7 @@ export class IssueService {
         fileSize: screenshot.fileSize,
         elementSelector: screenshot.elementSelector as any,
         createdAt: screenshot.createdAt.toISOString(),
-        url: storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType),
+        url: storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType) || undefined,
       })),
       logs: issue.logs.map(log => ({
         id: log.id,
@@ -632,7 +632,7 @@ export class IssueService {
         fileSize: screenshot.fileSize,
         elementSelector: screenshot.elementSelector as any,
         createdAt: screenshot.createdAt.toISOString(),
-        url: storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType),
+        url: storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType) || undefined,
       })),
       logs: issue.logs.map(log => ({
         id: log.id,
