@@ -45,62 +45,84 @@ console.log('🔐 CORS Configuration:', {
 // CORS configuration
 // Public API endpoints allow all origins (SDK can be embedded anywhere)
 // Admin/Member API endpoints use restricted CORS
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true)
+app.use((req, res, next) => {
+  // Check if this is a public API route
+  const isPublicApiRoute = req.path.startsWith('/api/public/v1')
+  
+  // For public API routes, use permissive CORS if ALLOW_PUBLIC_API_CORS is enabled
+  if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true') {
+    const origin = req.headers.origin
+    
+    // Set CORS headers for public API
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader('Access-Control-Max-Age', '86400') // 24 hours
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end()
     }
     
-    // Normalize origin (remove trailing slashes, lowercase for comparison)
-    const normalizedOrigin = origin.trim().toLowerCase().replace(/\/+$/, '')
-    const normalizedAllowedOrigins = allowedOrigins.map(o => o.trim().toLowerCase().replace(/\/+$/, ''))
-    
-    // In development, allow all localhost origins
-    if (process.env.NODE_ENV === 'development') {
-      if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) {
+    return next()
+  }
+  
+  // For non-public routes, use standard CORS middleware
+  return cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
         return callback(null, true)
       }
-    }
-    
-    // For public API, allow all origins (SDK can be embedded in any website)
-    // This is checked at route level, but we allow all here for simplicity
-    // In production, you may want to restrict this further
-    if (process.env.NODE_ENV === 'development' || process.env.ALLOW_PUBLIC_API_CORS === 'true') {
-      return callback(null, true)
-    }
-    
-    // Check if origin is in allowed list (exact match or wildcard)
-    // Use normalized comparison for case-insensitive matching
-    if (normalizedAllowedOrigins.includes(normalizedOrigin) || normalizedAllowedOrigins.includes('*')) {
-      return callback(null, true)
-    }
-    
-    // Log CORS rejection for debugging with detailed comparison
-    // Note: CORS callback doesn't have access to req object, so we can only log origin info
-    console.warn('🚫 CORS blocked:', {
-      origin,
-      normalizedOrigin,
-      allowedOrigins,
-      normalizedAllowedOrigins,
-      allowedOriginsCount: allowedOrigins.length,
-      exactMatch: normalizedAllowedOrigins.includes(normalizedOrigin),
-      hasWildcard: normalizedAllowedOrigins.includes('*'),
-      nodeEnv: process.env.NODE_ENV,
-      corsOriginEnv: process.env.CORS_ORIGIN || 'not set',
-      allowedOriginsEnv: process.env.ALLOWED_ORIGINS || 'not set',
-      hint: `Add "${origin}" to CORS_ORIGIN or ALLOWED_ORIGINS environment variable`,
-    })
-    
-    // Create a more descriptive CORS error
-    const corsError = new Error(`Not allowed by CORS: Origin "${origin}" is not in allowed origins list: ${allowedOrigins.join(', ')}`)
-    corsError.name = 'CorsError'
-    callback(corsError)
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}))
+      
+      // Normalize origin (remove trailing slashes, lowercase for comparison)
+      const normalizedOrigin = origin.trim().toLowerCase().replace(/\/+$/, '')
+      const normalizedAllowedOrigins = allowedOrigins.map(o => o.trim().toLowerCase().replace(/\/+$/, ''))
+      
+      // In development, allow all localhost origins
+      if (process.env.NODE_ENV === 'development') {
+        if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) {
+          return callback(null, true)
+        }
+      }
+      
+      // Check if origin is in allowed list (exact match or wildcard)
+      // Use normalized comparison for case-insensitive matching
+      if (normalizedAllowedOrigins.includes(normalizedOrigin) || normalizedAllowedOrigins.includes('*')) {
+        return callback(null, true)
+      }
+      
+      // Log CORS rejection for debugging with detailed comparison
+      // Note: CORS callback doesn't have access to req object, so we can only log origin info
+      console.warn('🚫 CORS blocked:', {
+        origin,
+        normalizedOrigin,
+        allowedOrigins,
+        normalizedAllowedOrigins,
+        allowedOriginsCount: allowedOrigins.length,
+        exactMatch: normalizedAllowedOrigins.includes(normalizedOrigin),
+        hasWildcard: normalizedAllowedOrigins.includes('*'),
+        nodeEnv: process.env.NODE_ENV,
+        corsOriginEnv: process.env.CORS_ORIGIN || 'not set',
+        allowedOriginsEnv: process.env.ALLOWED_ORIGINS || 'not set',
+        hint: `Add "${origin}" to CORS_ORIGIN or ALLOWED_ORIGINS environment variable`,
+      })
+      
+      // Create a more descriptive CORS error
+      const corsError = new Error(`Not allowed by CORS: Origin "${origin}" is not in allowed origins list: ${allowedOrigins.join(', ')}`)
+      corsError.name = 'CorsError'
+      callback(corsError)
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })(req, res, next)
+})
 
 // Body parsing
 app.use(express.json())
