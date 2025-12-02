@@ -252,12 +252,38 @@ export class IssueCollectorWidget {
               throw new Error('Element is no longer in DOM')
             }
             
+            // Get element position BEFORE capture to ensure we're capturing the right element
+            const elementRect = element.getBoundingClientRect()
             console.log('[SDK] Starting screenshot capture for element:', {
               tagName: element.tagName,
               id: element.id,
               className: element.className,
               isConnected: element.isConnected,
+              position: {
+                left: elementRect.left,
+                top: elementRect.top,
+                width: elementRect.width,
+                height: elementRect.height,
+              },
+              scroll: {
+                scrollX: window.scrollX,
+                scrollY: window.scrollY,
+              },
             })
+            
+            // Add small delay to ensure DOM is stable after inspect mode cleanup
+            // This prevents capturing while element position is still changing
+            await new Promise(resolve => setTimeout(resolve, 100))
+            
+            // Verify element position hasn't changed significantly
+            const newRect = element.getBoundingClientRect()
+            if (Math.abs(newRect.left - elementRect.left) > 5 || 
+                Math.abs(newRect.top - elementRect.top) > 5) {
+              console.warn('[SDK] Element position changed during delay:', {
+                old: { left: elementRect.left, top: elementRect.top },
+                new: { left: newRect.left, top: newRect.top },
+              })
+            }
             
             // Add progress logging
             console.log('[SDK] Calling captureScreenshot...')

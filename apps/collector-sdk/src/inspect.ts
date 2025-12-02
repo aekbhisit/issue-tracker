@@ -160,11 +160,21 @@ export function startInspectMode(
 
     const rect = element.getBoundingClientRect()
     highlight.style.display = 'block'
-    highlight.style.left = `${rect.left + window.scrollX}px`
-    highlight.style.top = `${rect.top + window.scrollY}px`
+    // CRITICAL: Highlight is inside a fixed overlay, so use viewport coordinates (getBoundingClientRect)
+    // NOT document coordinates (scrollX/scrollY) - fixed positioning is relative to viewport
+    highlight.style.left = `${rect.left}px`
+    highlight.style.top = `${rect.top}px`
     highlight.style.width = `${rect.width}px`
     highlight.style.height = `${rect.height}px`
     currentElement = element
+    
+    // Debug logging to verify position
+    console.log('[Inspect] Highlight updated:', {
+      element: element.tagName,
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      highlight: { left: highlight.style.left, top: highlight.style.top },
+      scroll: { scrollX: window.scrollX, scrollY: window.scrollY },
+    })
   }, 50) // Throttle to 50ms
 
   /**
@@ -213,15 +223,37 @@ export function startInspectMode(
 
       // Ensure it's an HTMLElement
       if (selectedElement instanceof HTMLElement) {
+        // CRITICAL: Get element position BEFORE stopping inspect mode
+        // This ensures we capture the correct element position
+        const finalRect = selectedElement.getBoundingClientRect()
+        console.log('[Inspect] Element clicked, final position:', {
+          tagName: selectedElement.tagName,
+          id: selectedElement.id,
+          rect: {
+            left: finalRect.left,
+            top: finalRect.top,
+            width: finalRect.width,
+            height: finalRect.height,
+          },
+          scroll: {
+            scrollX: window.scrollX,
+            scrollY: window.scrollY,
+          },
+        })
+        
         // CRITICAL: Show loading overlay IMMEDIATELY before stopping inspect mode
         // This ensures user sees feedback right away
         showLoadingOverlayImmediate()
         
-        // Stop inspect mode (removes inspect overlay)
-        stopInspectMode()
-        
-        // Call callback immediately - widget will handle panel opening
-        onElementSelected(selectedElement)
+        // Small delay to ensure overlay is rendered before stopping inspect mode
+        // This prevents visual glitches and ensures element position is stable
+        requestAnimationFrame(() => {
+          // Stop inspect mode (removes inspect overlay)
+          stopInspectMode()
+          
+          // Call callback immediately - widget will handle panel opening
+          onElementSelected(selectedElement)
+        })
       }
     }
   }
