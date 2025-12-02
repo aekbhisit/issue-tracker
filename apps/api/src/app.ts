@@ -16,8 +16,11 @@ import { getAllRoutes } from './shared/utils/route.util'
 const app: Application = express()
 
 // Security middlewares
+// Configure Helmet to allow CORS for public API
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  // Don't block OPTIONS requests (CORS preflight)
+  contentSecurityPolicy: false, // Disable CSP for now to avoid conflicts
 }))
 
 // CORS configuration
@@ -46,26 +49,39 @@ console.log('🔐 CORS Configuration:', {
 // Public API endpoints allow all origins (SDK can be embedded anywhere)
 // Admin/Member API endpoints use restricted CORS
 app.use((req, res, next) => {
-  // Check if this is a public API route
-  const isPublicApiRoute = req.path.startsWith('/api/public/v1')
+  // Check if this is a public API route (check both path and baseUrl)
+  const path = req.path || ''
+  const baseUrl = req.baseUrl || ''
+  const fullPath = baseUrl + path
+  const isPublicApiRoute = fullPath.startsWith('/api/public/v1') || path.startsWith('/api/public/v1')
   
   // For public API routes, use permissive CORS if ALLOW_PUBLIC_API_CORS is enabled
   if (isPublicApiRoute && process.env.ALLOW_PUBLIC_API_CORS === 'true') {
     const origin = req.headers.origin
     
     // Set CORS headers for public API
+    // IMPORTANT: When credentials: true, you CANNOT use '*' - must use specific origin
+    // For public API, we allow all origins but don't use credentials (SDK doesn't need them)
     if (origin) {
       res.setHeader('Access-Control-Allow-Origin', origin)
+      // Don't set credentials for public API (allows wildcard-like behavior)
+      // res.setHeader('Access-Control-Allow-Credentials', 'true')
     } else {
+      // If no origin, allow all
       res.setHeader('Access-Control-Allow-Origin', '*')
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-    res.setHeader('Access-Control-Allow-Credentials', 'true')
     res.setHeader('Access-Control-Max-Age', '86400') // 24 hours
     
-    // Handle preflight requests
+    // Handle preflight requests - MUST return before any other middleware
     if (req.method === 'OPTIONS') {
+      console.log('✅ CORS Preflight handled for public API:', {
+        origin: origin || 'none',
+        path: fullPath,
+        method: req.method,
+        allowPublicCors: process.env.ALLOW_PUBLIC_API_CORS,
+      })
       return res.status(200).end()
     }
     
