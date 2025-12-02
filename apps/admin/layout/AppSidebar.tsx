@@ -177,9 +177,10 @@ const AppSidebar: React.FC = () => {
     },
   ], [t]);
 
-  // Normalize path by removing /admin prefix if present
+  // Normalize database menu path by removing /admin prefix if present
   // With basePath='/admin', paths should NOT include /admin prefix
-  const normalizePath = (path: string | null | undefined): string | undefined => {
+  // This is different from the top-level normalizePath which handles general path normalization
+  const normalizeMenuPath = (path: string | null | undefined): string | undefined => {
     if (!path || path === '#') return path === '#' ? '#' : undefined;
     // Remove /admin prefix if present (database might have paths with /admin/ prefix)
     const normalized = path.startsWith('/admin/') 
@@ -237,7 +238,7 @@ const AppSidebar: React.FC = () => {
               .sort(sortBySequence)
               .map((child) => ({
                 name: getMenuName(child, t('admin.menu.fallback.subMenu')),
-                path: normalizePath(child.path) || '#',
+                path: normalizeMenuPath(child.path) || '#',
                 pro: false,
                 new: false,
               }))
@@ -246,7 +247,7 @@ const AppSidebar: React.FC = () => {
         return {
           name: getMenuName(menu, t('admin.menu.fallback.menu')),
           icon: getIconComponent(menu.icon),
-          path: subItems ? undefined : normalizePath(menu.path),
+          path: subItems ? undefined : normalizeMenuPath(menu.path),
           subItems,
         };
       });
