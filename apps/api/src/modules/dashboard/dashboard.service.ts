@@ -18,7 +18,24 @@ export class DashboardService {
    * @throws Error if critical operations fail
    */
   async getStatistics(): Promise<DashboardStatistics> {
+    // First, verify database connection is available
     try {
+      // Simple connection test - try a lightweight query
+      await db.$queryRaw`SELECT 1`
+    } catch (dbError) {
+      console.error('❌ Database connection check failed:', {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        name: dbError instanceof Error ? dbError.name : 'UnknownError',
+        stack: dbError instanceof Error ? dbError.stack : undefined,
+      })
+      // Re-throw as DatabaseConnectionError to be caught by error middleware
+      const connectionError = new Error(
+        `Database connection failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+      )
+      connectionError.name = 'DatabaseConnectionError'
+      throw connectionError
+    }
+
     // Helper function to safely execute a query with error handling
     const safeQuery = async <T>(
       queryName: string,
@@ -284,17 +301,6 @@ export class DashboardService {
       },
       recentIssues: formattedIssues,
       recentActivity: formattedActivity,
-    }
-    } catch (error) {
-      // Log the full error for debugging
-      console.error('❌ DashboardService.getStatistics - Critical error:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : 'UnknownError',
-      })
-      
-      // Re-throw to be handled by controller
-      throw error
     }
   }
 }

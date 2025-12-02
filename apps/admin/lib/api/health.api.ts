@@ -49,7 +49,8 @@ export async function checkApiHealth(): Promise<HealthCheckResponse | null> {
  */
 export async function getApiVersion(): Promise<VersionResponse | null> {
   try {
-    const url = getApiUrl('/version')
+    // Version endpoint moved to /api/version (was /version)
+    const url = getApiUrl('/api/version')
     const response = await axios.get<VersionResponse>(url, {
       timeout: 5000, // 5 second timeout
     })
