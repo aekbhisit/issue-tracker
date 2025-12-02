@@ -77,7 +77,7 @@ export default function TestSDKPage() {
 			showError({
 				message: "Invalid project ID",
 			});
-			router.push("/admin/projects");
+			router.push("/projects");
 			return;
 		}
 
@@ -94,7 +94,7 @@ export default function TestSDKPage() {
 				showError({
 					message: (error as Error).message || "Failed to load project",
 				});
-				router.push("/admin/projects");
+				router.push("/projects");
 			} finally {
 				if (mounted) {
 					setLoading(false);
@@ -202,8 +202,20 @@ export default function TestSDKPage() {
 		router.push(`/issues?projectId=${projectId}`);
 	}, [router, projectId]);
 
+	if (!isClient) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<span className="text-sm text-gray-500 dark:text-gray-400">Loading test environment...</span>
+			</div>
+		);
+	}
+
 	if (hasPermission === false || loading) {
-		return null;
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<span className="text-sm text-gray-500 dark:text-gray-400">Checking project permissions...</span>
+			</div>
+		);
 	}
 
 	if (!project) {
@@ -211,9 +223,9 @@ export default function TestSDKPage() {
 	}
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
-		{ label: t("common.label.projects"), href: "/admin/projects" },
-		{ label: project.name, href: `/admin/projects/${project.id}` },
+		{ label: t("common.label.dashboard"), href: "/dashboard" },
+		{ label: t("common.label.projects"), href: "/projects" },
+		{ label: project.name, href: `/projects/${project.id}` },
 		{ label: t("admin.project.form.testSDK") },
 	];
 

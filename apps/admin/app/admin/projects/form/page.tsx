@@ -59,7 +59,8 @@ export default function CreateProjectPage() {
 	);
 
 	const handleCancel = useCallback(() => {
-		router.push("/admin/projects");
+			router.push("/projects");
+			router.push("/projects");
 	}, [router]);
 
 	if (hasPermission === false) {

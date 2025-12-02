@@ -360,11 +360,9 @@ export class IssueCollectorWidget {
             }
             
             // Hide loading overlay even on error
-            console.log('[SDK] Screenshot capture failed, hiding loading overlay...')
-            setTimeout(() => {
-              widgetInstance.hideLoadingOverlay()
-              console.log('[SDK] Loading overlay hide called (error case)')
-            }, 50)
+            console.log('[SDK] Screenshot capture failed, hiding loading overlay immediately...')
+            widgetInstance.hideLoadingOverlay()
+            console.log('[SDK] Loading overlay hide called (error case)')
             
             // Show error message in the panel instead of alert
             if ((panelRef as any).showScreenshotError) {

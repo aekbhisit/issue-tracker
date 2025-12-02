@@ -356,8 +356,8 @@ export function ProjectForm({ initialProject, isEditMode = false, onSubmit, onCa
 	};
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
-		{ label: t("common.label.projects"), href: "/admin/projects" },
+		{ label: t("common.label.dashboard"), href: "/dashboard" },
+		{ label: t("common.label.projects"), href: "/projects" },
 		{ 
 			label: isEditMode 
 				? (initialProject?.name ? `${t("admin.project.form.editTitle")} ${initialProject.name}` : t("admin.project.form.editTitle"))

@@ -47,7 +47,7 @@ export default function EditProjectPage() {
 			showError({
 				message: "Invalid project ID",
 			});
-			router.push("/admin/projects");
+			router.push("/projects");
 			return;
 		}
 
@@ -64,7 +64,7 @@ export default function EditProjectPage() {
 				showError({
 					message: (error as Error).message || "Failed to load project",
 				});
-				router.push("/admin/projects");
+				router.push("/projects");
 			} finally {
 				if (mounted) {
 					setLoading(false);
@@ -105,7 +105,7 @@ export default function EditProjectPage() {
 	);
 
 	const handleCancel = useCallback(() => {
-		router.push("/admin/projects");
+		router.push("/projects");
 	}, [router]);
 
 	if (hasPermission === false || loading) {
