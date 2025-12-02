@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Link from "next/link";
 import Button from "@/components/ui/button/Button";
 import { useNotification } from "@/hooks/useNotification";
 import type { Project } from "../types";
@@ -107,12 +108,12 @@ export function EmbedScriptSection({ project }: EmbedScriptSectionProps) {
 			</div>
 
 			<div className="mt-3 flex items-center gap-2">
-				<a
+				<Link
 					href={`/projects/${project.id}/test`}
-					className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+					className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
 				>
 					Test SDK →
-				</a>
+				</Link>
 			</div>
 		</div>
 	);

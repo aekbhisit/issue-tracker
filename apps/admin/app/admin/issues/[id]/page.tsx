@@ -278,6 +278,227 @@ export default function IssueDetailPage() {
 		setIsEditing(false);
 	}, [issue]);
 
+	// Format issue data as markdown
+	const formatIssueAsMarkdown = useCallback((issueData: Issue): string => {
+		const formatDate = (date: Date | null | undefined): string => {
+			if (!date) return "N/A";
+			return new Date(date).toLocaleString("en-US", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
+				second: "2-digit",
+			});
+		};
+
+		const formatValue = (value: any): string => {
+			if (value === null || value === undefined) return "N/A";
+			if (typeof value === "boolean") return value ? "Yes" : "No";
+			return String(value);
+		};
+
+		const escapeMarkdown = (text: string): string => {
+			return text.replace(/\n/g, " ").replace(/\r/g, "");
+		};
+
+		let markdown = `# Issue: ${issueData.title || `Issue #${issueData.id}`}\n\n`;
+
+		// Basic Information
+		markdown += `## Basic Information\n`;
+		markdown += `- **ID**: ${issueData.id}\n`;
+		markdown += `- **Status**: ${formatValue(issueData.status)}\n`;
+		markdown += `- **Severity**: ${formatValue(issueData.severity)}\n`;
+		markdown += `- **Project**: ${issueData.project?.name || "N/A"}\n`;
+		markdown += `- **Assignee**: ${
+			issueData.assignee
+				? `${issueData.assignee.name || issueData.assignee.email || "Unknown"} (${issueData.assignee.email || "No email"})`
+				: "Unassigned"
+		}\n`;
+		markdown += `- **Created**: ${formatDate(issueData.createdAt)}\n`;
+		markdown += `- **Updated**: ${formatDate(issueData.updatedAt)}\n\n`;
+
+		// Description
+		markdown += `## Description\n`;
+		markdown += `${issueData.description || "No description provided"}\n\n`;
+
+		// Reporter Information
+		markdown += `## Reporter Information\n`;
+		if (issueData.reporterInfo) {
+			markdown += `- **Name**: ${formatValue(issueData.reporterInfo.name)}\n`;
+			markdown += `- **Email**: ${formatValue(issueData.reporterInfo.email)}\n`;
+			markdown += `- **ID**: ${formatValue(issueData.reporterInfo.id)}\n`;
+		} else {
+			markdown += `- **Name**: Unknown\n`;
+			markdown += `- **Email**: Unknown\n`;
+			markdown += `- **ID**: Unknown\n`;
+		}
+		markdown += `\n`;
+
+		// Environment Metadata
+		if (issueData.metadata) {
+			markdown += `## Environment Metadata\n`;
+			markdown += `- **URL**: ${formatValue(issueData.metadata.url)}\n`;
+			markdown += `- **User Agent**: ${formatValue(issueData.metadata.userAgent)}\n`;
+			if (issueData.metadata.viewport) {
+				markdown += `- **Viewport**: ${issueData.metadata.viewport.width} x ${issueData.metadata.viewport.height}\n`;
+			}
+			if (issueData.metadata.screen) {
+				markdown += `- **Screen**: ${issueData.metadata.screen.width} x ${issueData.metadata.screen.height}\n`;
+			}
+			markdown += `- **Language**: ${formatValue(issueData.metadata.language)}\n`;
+			markdown += `- **Timezone**: ${formatValue(issueData.metadata.timezone)}\n`;
+			markdown += `- **Timestamp**: ${formatValue(issueData.metadata.timestamp)}\n`;
+			markdown += `\n`;
+		}
+
+		// Screenshots
+		if (issueData.screenshots && issueData.screenshots.length > 0) {
+			markdown += `## Screenshots (${issueData.screenshots.length})\n\n`;
+			issueData.screenshots.forEach((screenshot, index) => {
+				markdown += `### Screenshot #${screenshot.id}${index > 0 ? ` (${index + 1})` : ""}\n`;
+				if (screenshot.width && screenshot.height) {
+					markdown += `- **Dimensions**: ${screenshot.width} x ${screenshot.height}\n`;
+				}
+				if (screenshot.fileSize) {
+					markdown += `- **File Size**: ${(screenshot.fileSize / 1024).toFixed(2)} KB\n`;
+				}
+				markdown += `- **Created**: ${formatDate(screenshot.createdAt)}\n`;
+
+				if (screenshot.elementSelector) {
+					markdown += `\n#### Element Selector\n`;
+					markdown += `- **CSS Selector**: \`${escapeMarkdown(screenshot.elementSelector.cssSelector)}\`\n`;
+					markdown += `- **XPath**: \`${escapeMarkdown(screenshot.elementSelector.xpath)}\`\n`;
+					if (screenshot.elementSelector.boundingBox) {
+						const bb = screenshot.elementSelector.boundingBox;
+						markdown += `- **Bounding Box**: x=${bb.x}, y=${bb.y}, width=${bb.width}, height=${bb.height}\n`;
+					}
+					if (screenshot.elementSelector.outerHTML) {
+						// Truncate very long HTML (limit to 2000 chars)
+						let html = screenshot.elementSelector.outerHTML;
+						if (html.length > 2000) {
+							html = html.substring(0, 2000) + "\n... (truncated)";
+						}
+						markdown += `- **Outer HTML**:\n`;
+						markdown += `\`\`\`html\n${html}\n\`\`\`\n`;
+					}
+				}
+				markdown += `\n`;
+			});
+		}
+
+		// Console Logs
+		const consoleLogs = issueData.logs?.filter((log) => log.logType === "console") || [];
+		if (consoleLogs.length > 0) {
+			markdown += `## Console Logs (${consoleLogs.length})\n\n`;
+			consoleLogs.forEach((log) => {
+				markdown += `### ${log.logType} - ${log.level || "log"} (${formatDate(log.timestamp)})\n`;
+				markdown += `**Message**: ${escapeMarkdown(log.message)}\n`;
+				if (log.stack) {
+					// Truncate very long stack traces (limit to 3000 chars)
+					let stack = log.stack;
+					if (stack.length > 3000) {
+						stack = stack.substring(0, 3000) + "\n... (truncated)";
+					}
+					markdown += `\n**Stack Trace**:\n`;
+					markdown += `\`\`\`\n${stack}\n\`\`\`\n`;
+				}
+				if (log.metadata) {
+					markdown += `\n**Metadata**:\n`;
+					markdown += `\`\`\`json\n${JSON.stringify(log.metadata, null, 2)}\n\`\`\`\n`;
+				}
+				markdown += `\n`;
+			});
+		}
+
+		// Error Logs
+		const errorLogs = issueData.logs?.filter((log) => log.logType === "error") || [];
+		if (errorLogs.length > 0) {
+			markdown += `## Error Logs (${errorLogs.length})\n\n`;
+			errorLogs.forEach((log) => {
+				markdown += `### Error - ${log.level || "error"} (${formatDate(log.timestamp)})\n`;
+				markdown += `**Message**: ${escapeMarkdown(log.message)}\n`;
+				if (log.stack) {
+					let stack = log.stack;
+					if (stack.length > 3000) {
+						stack = stack.substring(0, 3000) + "\n... (truncated)";
+					}
+					markdown += `\n**Stack Trace**:\n`;
+					markdown += `\`\`\`\n${stack}\n\`\`\`\n`;
+				}
+				if (log.metadata) {
+					markdown += `\n**Metadata**:\n`;
+					markdown += `\`\`\`json\n${JSON.stringify(log.metadata, null, 2)}\n\`\`\`\n`;
+				}
+				markdown += `\n`;
+			});
+		}
+
+		// Network Logs
+		const networkLogs = issueData.logs?.filter((log) => log.logType === "network") || [];
+		if (networkLogs.length > 0) {
+			markdown += `## Network Logs (${networkLogs.length})\n\n`;
+			networkLogs.forEach((log) => {
+				markdown += `### Network Request (${formatDate(log.timestamp)})\n`;
+				markdown += `**Message**: ${escapeMarkdown(log.message)}\n`;
+				if (log.metadata) {
+					const meta = log.metadata as any;
+					if (meta.url) markdown += `- **URL**: ${formatValue(meta.url)}\n`;
+					if (meta.method) markdown += `- **Method**: ${formatValue(meta.method)}\n`;
+					if (meta.status) markdown += `- **Status**: ${formatValue(meta.status)}\n`;
+					if (meta.statusText) markdown += `- **Status Text**: ${formatValue(meta.statusText)}\n`;
+					if (meta.responseTime) markdown += `- **Response Time**: ${formatValue(meta.responseTime)}ms\n`;
+					if (meta.size) markdown += `- **Size**: ${formatValue(meta.size)}\n`;
+					
+					// Include other metadata as JSON if there are additional fields
+					const otherMeta: any = {};
+					Object.keys(meta).forEach((key) => {
+						if (!["url", "method", "status", "statusText", "responseTime", "size"].includes(key)) {
+							otherMeta[key] = meta[key];
+						}
+					});
+					if (Object.keys(otherMeta).length > 0) {
+						markdown += `\n**Additional Metadata**:\n`;
+						markdown += `\`\`\`json\n${JSON.stringify(otherMeta, null, 2)}\n\`\`\`\n`;
+					}
+				}
+				markdown += `\n`;
+			});
+		}
+
+		// Comments
+		if (issueData.comments && issueData.comments.length > 0) {
+			markdown += `## Comments (${issueData.comments.length})\n\n`;
+			issueData.comments.forEach((comment) => {
+				const userName = comment.user?.name || comment.user?.email || "Unknown User";
+				markdown += `### ${userName} - ${formatDate(comment.createdAt)}\n`;
+				markdown += `${comment.content}\n\n`;
+			});
+		}
+
+		// Footer
+		markdown += `---\n`;
+		markdown += `*Generated from Issue Collector Platform - Issue #${issueData.id}*\n`;
+
+		return markdown;
+	}, []);
+
+	// Handle copy issue data
+	const handleCopyIssueData = useCallback(async () => {
+		if (!issue) {
+			showError({ message: "No issue data available to copy" });
+			return;
+		}
+
+		try {
+			const markdown = formatIssueAsMarkdown(issue);
+			await copyToClipboard(markdown, "Issue data");
+		} catch (error) {
+			logger.error("Failed to copy issue data", error);
+			showError({ message: "Failed to copy issue data to clipboard" });
+		}
+	}, [issue, formatIssueAsMarkdown, copyToClipboard, showError]);
+
 	const handleCancelNavigation = useCallback(() => {
 		router.push("/admin/issues");
 	}, [router]);
@@ -345,6 +566,9 @@ export default function IssueDetailPage() {
 				<>
 					<Button variant="outline" onClick={handleCancelNavigation}>
 						{t("common.button.back")}
+					</Button>
+					<Button variant="outline" onClick={handleCopyIssueData}>
+						{t("common.button.copy") || "Copy"}
 					</Button>
 					<Button variant="primary" onClick={() => setIsEditing(true)}>
 						{t("common.button.edit")}
@@ -615,16 +839,16 @@ export default function IssueDetailPage() {
 								const hasError = imageLoadErrors.has(screenshot.id);
 								const hasElementSelector = !!screenshot.elementSelector;
 								
-								// Debug: Log screenshot data
-								if (process.env.NODE_ENV === 'development') {
-									console.log('Screenshot data:', {
-										id: screenshot.id,
-										url: screenshot.url,
-										hasUrl: !!screenshot.url,
-										hasElementSelector,
-										elementSelector: screenshot.elementSelector,
-									});
-								}
+								// Debug: Log screenshot data (always log to help diagnose)
+								console.log('🔍 Screenshot data:', {
+									id: screenshot.id,
+									url: screenshot.url,
+									hasUrl: !!screenshot.url,
+									storagePath: screenshot.storagePath,
+									storageType: screenshot.storageType,
+									hasElementSelector,
+									elementSelector: screenshot.elementSelector,
+								});
 								
 								return (
 									<div
@@ -680,6 +904,11 @@ export default function IssueDetailPage() {
 													<p className="text-sm">{t("admin.issue.label.noImage")}</p>
 													{hasError && (
 														<p className="mt-1 text-xs text-red-500">Failed to load image</p>
+													)}
+													{!screenshot.url && (
+														<p className="mt-1 text-xs text-orange-500">
+															{screenshot.storagePath ? `File not found: ${screenshot.storagePath}` : 'No screenshot URL available'}
+														</p>
 													)}
 													{hasElementSelector && (
 														<div className="mt-2 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">

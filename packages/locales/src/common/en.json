@@ -20,7 +20,8 @@
       "moveDown": "Move Down",
       "clear": "Clear",
       "view": "View",
-      "add": "Add"
+      "add": "Add",
+      "copy": "Copy"
     },
     "label": {
       "email": "Email",

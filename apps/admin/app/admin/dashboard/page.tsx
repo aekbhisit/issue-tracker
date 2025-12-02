@@ -9,7 +9,14 @@ import { dashboardApiService, DashboardStatistics } from "@/lib/api/dashboard.ap
 import { logger } from "@workspace/utils";
 
 function formatNumber(num: number): string {
-  return new Intl.NumberFormat().format(num);
+  // Use default locale to ensure consistent formatting between server and client
+  // This prevents hydration mismatches from locale differences
+  try {
+    return new Intl.NumberFormat('en-US').format(num);
+  } catch {
+    // Fallback if Intl is not available
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 }
 
 function formatTimeAgo(date: Date | string): string {
@@ -92,15 +99,22 @@ function getActionColor(action: string): string {
 export default function DashboardPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  // Use useState with a function to ensure initial state is consistent
+  // Start with null to prevent hydration mismatch - will be set in useEffect
+  const [mounted, setMounted] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline' | null>(null);
   const [apiVersion, setApiVersion] = useState<string | null>(null);
   const [statistics, setStatistics] = useState<DashboardStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Mark as mounted (client-side only)
+    setMounted(true);
+    
     // Check API health on mount
     const checkHealth = async () => {
+      setApiStatus('checking');
       const health = await checkApiHealth();
       if (health) {
         setApiStatus('online');
@@ -150,14 +164,46 @@ export default function DashboardPage() {
       });
   };
 
+  // Don't render dynamic content until after hydration to prevent mismatch
+  // This ensures server and client render the same initial HTML
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {t('admin.dashboard.title')}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {t('admin.dashboard.welcome')}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Loading...</span>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('admin.dashboard.title')}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1" suppressHydrationWarning>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {t('admin.dashboard.welcome')}
           </p>
         </div>
@@ -175,11 +221,14 @@ export default function DashboardPage() {
             <div className={`w-2 h-2 rounded-full ${
               apiStatus === 'online' ? 'bg-green-500' : 
               apiStatus === 'offline' ? 'bg-red-500' : 
-              'bg-yellow-500 animate-pulse'
+              apiStatus === 'checking' ? 'bg-yellow-500 animate-pulse' :
+              'bg-gray-400'
             }`}></div>
-            <span className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
-              {apiStatus === 'checking' ? 'API Checking...' : apiStatus === 'online' ? 'API Online' : 'API Offline'}
-              {apiVersion && <span suppressHydrationWarning> (v{apiVersion})</span>}
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {apiStatus === null ? 'API Checking...' :
+               apiStatus === 'checking' ? 'API Checking...' : 
+               apiStatus === 'online' ? 'API Online' : 'API Offline'}
+              {apiVersion && <span> (v{apiVersion})</span>}
             </span>
           </div>
         </div>

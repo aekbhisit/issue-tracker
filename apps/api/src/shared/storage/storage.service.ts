@@ -197,6 +197,19 @@ export class StorageService {
     // This allows the API to continue working even if some files are missing
     if (!fs.existsSync(fullPath)) {
       console.warn(`⚠️  Screenshot file not found: ${storagePath} (expected at: ${fullPath})`)
+      // Also check if directory exists to help diagnose path issues
+      const dirPath = path.dirname(fullPath)
+      if (!fs.existsSync(dirPath)) {
+        console.warn(`⚠️  Screenshot directory not found: ${dirPath}`)
+      } else {
+        // Directory exists but file doesn't - list files in directory for debugging
+        try {
+          const filesInDir = fs.readdirSync(dirPath)
+          console.warn(`⚠️  Directory exists but file not found. Files in directory: ${filesInDir.join(', ')}`)
+        } catch (err) {
+          console.warn(`⚠️  Could not read directory: ${dirPath}`, err)
+        }
+      }
       return null
     }
 
