@@ -24,8 +24,12 @@ export function setToken(token: string, remember: boolean = false): void {
 
 /**
  * Get access token from cookies
+ * Safe for SSR - returns undefined on server side
  */
 export function getToken(): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
   return Cookies.get(TOKEN_KEY)
 }
 
@@ -77,8 +81,12 @@ export function removeUser(): void {
 
 /**
  * Check if user is authenticated
+ * Safe for SSR - returns false on server side
  */
 export function isAuthenticated(): boolean {
+  if (typeof window === 'undefined') {
+    return false
+  }
   return !!getToken()
 }
 
