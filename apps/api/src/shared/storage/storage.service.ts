@@ -209,7 +209,31 @@ export class StorageService {
 
     // Return signed URL (in production, this would be served by a secure endpoint)
     // For IC-5, we'll use a simple token-based approach
-    const baseUrl = process.env.API_URL || 'http://localhost:4501'
+    // Use API_URL if set, otherwise try to detect from request context or use default
+    // In production, API_URL should be set to the public API URL (e.g., https://issue.haahii.com)
+    let baseUrl = process.env.API_URL
+    
+    // If API_URL is not set, try to construct from other env vars or use default
+    if (!baseUrl) {
+      // Try to use NEXT_PUBLIC_API_URL if available (for consistency)
+      baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.PUBLIC_API_URL
+      
+      // If still not set, use default based on environment
+      if (!baseUrl) {
+        if (process.env.NODE_ENV === 'production') {
+          // In production, log warning if API_URL is not set
+          console.warn('⚠️  API_URL environment variable is not set. Screenshot URLs may be incorrect.')
+          // Try to use a sensible default (but this should be set explicitly)
+          baseUrl = 'http://localhost:4501' // Fallback - should be overridden
+        } else {
+          baseUrl = 'http://localhost:4501'
+        }
+      }
+    }
+    
+    // Remove trailing slash if present
+    baseUrl = baseUrl.replace(/\/+$/, '')
+    
     return `${baseUrl}/api/admin/v1/issues/screenshots/${encodeURIComponent(storagePath)}?token=${token}&expires=${expiresAt}`
   }
 

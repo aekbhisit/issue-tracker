@@ -221,9 +221,17 @@ export class IssueController {
       }
       const contentType = contentTypeMap[ext] || 'image/jpeg'
 
-      // Send file
+      // Send file with CORS headers to allow cross-origin image requests
       res.setHeader('Content-Type', contentType)
       res.setHeader('Cache-Control', 'private, max-age=3600') // Cache for 1 hour
+      
+      // Add CORS headers for screenshot images (needed when admin is on different origin)
+      const origin = req.headers.origin
+      if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin)
+        res.setHeader('Access-Control-Allow-Credentials', 'true')
+      }
+      
       res.sendFile(path.resolve(fullPath))
     } catch (error) {
       next(error)

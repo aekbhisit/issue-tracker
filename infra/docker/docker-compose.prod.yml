@@ -183,6 +183,16 @@ services:
       # Upload
       UPLOAD_DIR: /app/uploads
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      
+      # Storage Configuration
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      # API_URL is used to generate signed URLs for screenshots
+      # Should be set to the public API URL (e.g., https://issue.haahii.com)
+      # If not set, will try NEXT_PUBLIC_API_URL or default to localhost
+      API_URL: ${API_URL:-}
+      # SECRET_KEY is used to sign screenshot URLs for security
+      # Should be a strong random string (minimum 32 characters)
+      SECRET_KEY: ${SECRET_KEY:-${JWT_SECRET}}
 
     volumes:
       - api_uploads:/app/storage
