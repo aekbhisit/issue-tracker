@@ -125,11 +125,11 @@ export default function ProjectsPage() {
 	};
 
 	const handleAdd = () => {
-		pushWithOverlay("/admin/projects/form");
+		pushWithOverlay("/projects/form");
 	};
 
 	const handleEdit = (project: Project) => {
-		pushWithOverlay(`/admin/projects/${project.id}`);
+		pushWithOverlay(`/projects/${project.id}`);
 	};
 
 	const handleToggleStatus = async (project: Project) => {

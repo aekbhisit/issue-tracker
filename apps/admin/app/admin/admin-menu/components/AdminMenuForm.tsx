@@ -247,7 +247,7 @@ useEffect(() => {
 			}
 
 			// Redirect (don't hide loader - let it continue during redirect)
-			pushWithOverlay("/admin/admin-menu")
+			pushWithOverlay("/admin-menu")
 			// Reset submitting state after successful save
 			setIsSubmitting(false)
 		} catch (error) {

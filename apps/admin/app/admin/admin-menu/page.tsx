@@ -149,11 +149,11 @@ const { languageCodes } = useAdminLanguages()
 	}, [loadParentOptions])
 
 	const handleAdd = () => {
-		pushWithOverlay("/admin/admin-menu/form")
+		pushWithOverlay("/admin-menu/form")
 	}
 
 	const handleTreeSort = () => {
-		pushWithOverlay("/admin/admin-menu/tree")
+		pushWithOverlay("/admin-menu/tree")
 	}
 
 	const handleEdit = (menu: AdminMenu) => {

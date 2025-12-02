@@ -164,7 +164,7 @@ export default function AdminMenuTreePage() {
 	}, [hideLoading, showError, showLoading, showSuccess, t, tree])
 
 	const handleBack = useCallback(() => {
-		pushWithOverlay("/admin/admin-menu")
+		pushWithOverlay("/admin-menu")
 	}, [pushWithOverlay])
 
 	// Prevent rendering if permission check is not complete or denied

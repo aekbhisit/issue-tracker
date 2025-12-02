@@ -243,7 +243,7 @@ export function UserForm({ initialUser, roles, isEditMode = false }: UserFormPro
 				showSuccess({ message: t("admin.user.form.successCreate", { name: created.name || created.email }) });
 			}
 			// Redirect (don't hide loader - let it continue during redirect)
-			pushWithOverlay("/admin/user");
+			pushWithOverlay("/user");
 			// Reset submitting state after successful save
 			setIsSubmitting(false);
 		} catch (error) {
@@ -263,7 +263,7 @@ export function UserForm({ initialUser, roles, isEditMode = false }: UserFormPro
 			message: t("admin.user.form.confirmCancelMessage"),
 			confirmText: t("admin.user.form.confirmCancelConfirm"),
 			cancelText: t("common.button.cancel"),
-			onConfirm: () => pushWithOverlay("/admin/user"),
+			onConfirm: () => pushWithOverlay("/user"),
 		});
 	};
 

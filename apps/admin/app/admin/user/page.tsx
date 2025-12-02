@@ -179,7 +179,7 @@ function UserPageContent() {
 	};
 
 	const handleAdd = () => {
-		pushWithOverlay("/admin/user/form");
+		pushWithOverlay("/user/form");
 	};
 
 	const handleEdit = (user: User) => {
