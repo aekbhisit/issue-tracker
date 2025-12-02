@@ -163,6 +163,15 @@ services:
       # Note: This does NOT affect container startup or internal container-to-container communication
       # Must include both frontend (3412) and admin (3411) origins
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3412,http://localhost:3411}
+      
+      # ⚠️ REQUIRED FOR SDK: Allow public API CORS from any origin
+      # Set to 'true' to allow the Collector SDK to be embedded in any website
+      # This enables cross-origin requests to /api/public/v1/* endpoints
+      # Without this, SDK requests from external websites will be blocked by CORS
+      # 
+      # IMPORTANT: This only affects public API endpoints (/api/public/v1/*)
+      # Admin and member API endpoints still require proper CORS_ORIGIN configuration
+      ALLOW_PUBLIC_API_CORS: ${ALLOW_PUBLIC_API_CORS:-true}
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}

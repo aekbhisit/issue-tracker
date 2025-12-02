@@ -3,34 +3,20 @@
  * @description Extract CSS selectors, XPath, bounding box, and HTML from DOM elements
  */
 
-import * as CssSelectorGeneratorLib from 'css-selector-generator'
 import type { ElementSelector } from './types'
 
+// NOTE: css-selector-generator library is disabled due to "Invalid attempt to spread non-iterable instance" errors
+// The library throws errors when processing certain DOM elements (e.g., elements with special attributes).
+// We use a reliable fallback selector generator instead.
+
 /**
- * Extract CSS selector for an element using css-selector-generator
+ * Extract CSS selector for an element
+ * Uses a reliable fallback selector generator (css-selector-generator library disabled)
  */
 export function extractCSSSelector(element: HTMLElement): string {
-  try {
-    // Try to use css-selector-generator library
-    // The library exports a default function that returns a generator object
-    if (typeof CssSelectorGeneratorLib === 'function') {
-      const generator = (CssSelectorGeneratorLib as any)({
-        selectors: ['id', 'class', 'tag', 'nthchild'],
-        combineBetweenSelectors: ' ',
-        combineWithinSelector: '',
-        includeTag: true,
-      })
-      if (generator && typeof generator.getSelector === 'function') {
-        return generator.getSelector(element)
-      }
-    }
-    // If library doesn't work as expected, use fallback
-    return generateFallbackCSSSelector(element)
-  } catch (error) {
-    // Fallback to a simple selector if library fails
-    console.warn('Failed to generate CSS selector:', error)
-    return generateFallbackCSSSelector(element)
-  }
+  // Always use fallback - css-selector-generator has issues with certain DOM structures
+  // The fallback is more reliable and doesn't throw "attempt to spread non-iterable" errors
+  return generateFallbackCSSSelector(element)
 }
 
 /**
