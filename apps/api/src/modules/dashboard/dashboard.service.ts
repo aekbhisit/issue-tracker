@@ -235,18 +235,28 @@ export class DashboardService {
       metadata: issue.metadata as any,
       createdAt: issue.createdAt.toISOString(),
       updatedAt: issue.updatedAt.toISOString(),
-      screenshots: issue.screenshots.map((screenshot) => ({
-        id: screenshot.id,
-        storagePath: screenshot.storagePath,
-        storageType: screenshot.storageType,
-        mimeType: screenshot.mimeType,
-        width: screenshot.width,
-        height: screenshot.height,
-        fileSize: screenshot.fileSize,
-        elementSelector: screenshot.elementSelector as any,
-        createdAt: screenshot.createdAt.toISOString(),
-        url: storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType),
-      })),
+      screenshots: issue.screenshots
+        .map((screenshot) => {
+          const url = storageService.getScreenshotUrl(screenshot.storagePath, screenshot.storageType)
+          // Only include screenshot if URL was successfully generated (file exists)
+          if (!url) {
+            console.warn(`⚠️  Skipping screenshot ${screenshot.id}: file not found at ${screenshot.storagePath}`)
+            return null
+          }
+          return {
+            id: screenshot.id,
+            storagePath: screenshot.storagePath,
+            storageType: screenshot.storageType,
+            mimeType: screenshot.mimeType,
+            width: screenshot.width,
+            height: screenshot.height,
+            fileSize: screenshot.fileSize,
+            elementSelector: screenshot.elementSelector as any,
+            createdAt: screenshot.createdAt.toISOString(),
+            url,
+          }
+        })
+        .filter((screenshot): screenshot is NonNullable<typeof screenshot> => screenshot !== null),
       logs: [],
       project: {
         id: issue.project.id,

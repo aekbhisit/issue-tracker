@@ -187,14 +187,17 @@ export class StorageService {
 
   /**
    * Generate signed URL for local storage
+   * Returns null if file doesn't exist (graceful handling)
    */
-  private generateLocalSignedUrl(storagePath: string, expirySeconds: number = SIGNED_URL_EXPIRY): string {
+  private generateLocalSignedUrl(storagePath: string, expirySeconds: number = SIGNED_URL_EXPIRY): string | null {
     const rootDir = this.getStorageRootPath()
     const fullPath = path.join(rootDir, 'storage', 'uploads', storagePath)
     
-    // Check if file exists
+    // Check if file exists - return null instead of throwing error
+    // This allows the API to continue working even if some files are missing
     if (!fs.existsSync(fullPath)) {
-      throw new Error(`File not found: ${storagePath}`)
+      console.warn(`⚠️  Screenshot file not found: ${storagePath} (expected at: ${fullPath})`)
+      return null
     }
 
     // Generate token with expiration
@@ -221,8 +224,9 @@ export class StorageService {
 
   /**
    * Get signed URL for screenshot access
+   * Returns null if file doesn't exist (graceful handling)
    */
-  getScreenshotUrl(storagePath: string, storageType: string, expirySeconds: number = SIGNED_URL_EXPIRY): string {
+  getScreenshotUrl(storagePath: string, storageType: string, expirySeconds: number = SIGNED_URL_EXPIRY): string | null {
     if (storageType === 's3') {
       return this.generateS3SignedUrl(storagePath, expirySeconds)
     } else {
