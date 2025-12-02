@@ -63,10 +63,25 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Only run on client side
       if (typeof window !== 'undefined') {
-        // Unauthorized - redirect to login
-        // Clear admin token cookie
-        document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-        window.location.href = '/admin'
+        // Check if we're already on the login page to prevent redirect loops
+        const currentPath = window.location.pathname
+        const isLoginPage = currentPath === '/admin' || currentPath === '/admin/'
+        
+        // Only redirect if we're NOT already on the login page
+        if (!isLoginPage) {
+          // Unauthorized - redirect to login
+          // Clear admin token cookie
+          document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+          // Also clear localStorage user data
+          localStorage.removeItem('admin_user')
+          localStorage.removeItem('user')
+          window.location.href = '/admin'
+        } else {
+          // Already on login page - just clear the invalid token
+          document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+          localStorage.removeItem('admin_user')
+          localStorage.removeItem('user')
+        }
       }
     }
     return Promise.reject(error)

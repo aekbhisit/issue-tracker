@@ -19,6 +19,8 @@ export default function AdminLayout({
   // Normalize pathname by removing trailing slashes for comparison
   // Use useMemo to prevent unnecessary recalculations
   // IMPORTANT: Only use pathname from usePathname() to avoid hydration mismatches
+  // NOTE: With basePath='/admin', usePathname() returns paths WITHOUT the basePath prefix
+  // So /admin becomes '/', /admin/signup becomes '/signup', etc.
   const isAuthPage = useMemo(() => {
     // If pathname is not available, default to false (show sidebar)
     // Don't use window.location here as it causes hydration mismatches
@@ -29,12 +31,16 @@ export default function AdminLayout({
     const pathOnly = pathname.split('?')[0].split('#')[0];
     const normalized = pathOnly.replace(/\/+$/, '') || '/';
     
-    // Check if it's the login page (exactly /admin)
-    if (normalized === '/admin') return true;
+    // With basePath='/admin', usePathname() returns:
+    // - '/admin' → '/'
+    // - '/admin/signup' → '/signup'
+    // - '/admin/reset-password' → '/reset-password'
+    // So we check for root path '/' (login page) and auth paths without '/admin' prefix
+    if (normalized === '/' || normalized === '') return true; // Login page
     
-    // Check if it's an auth-related page
-    const authPaths = ['/admin/signup', '/admin/reset-password', '/admin/forgot-password'];
-    return authPaths.some(authPath => normalized.startsWith(authPath));
+    // Check if it's an auth-related page (without /admin prefix due to basePath)
+    const authPaths = ['/signup', '/reset-password', '/forgot-password'];
+    return authPaths.some(authPath => normalized === authPath || normalized.startsWith(authPath + '/'));
   }, [pathname]);
 
   // Dynamic class for main content margin based on sidebar state

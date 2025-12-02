@@ -7,13 +7,21 @@ export function middleware(request: NextRequest) {
   const isLoginPage = pathname === '/admin' || pathname === '/admin/'
   const isDashboardPath = pathname.startsWith('/admin/dashboard')
 
+  // Only redirect to dashboard if we have a token AND we're on login page
+  // BUT: Don't redirect if token might be invalid - let client-side handle validation
+  // This prevents redirect loops when token is expired/invalid
+  // The client-side will handle redirecting authenticated users after token validation
   if (token && isLoginPage) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    // Allow the page to load - client-side will validate token and redirect if valid
+    // This prevents loops when token is invalid
+    return NextResponse.next()
   }
 
+  // Redirect to login if no token and trying to access protected routes
   if (!token && isDashboardPath) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
+  
   return NextResponse.next()
 }
 
