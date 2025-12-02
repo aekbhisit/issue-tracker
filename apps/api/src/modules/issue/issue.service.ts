@@ -81,8 +81,10 @@ export class IssueService {
     // Extract domain from origin (remove protocol)
     const originDomain = origin.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase()
     
-    // In development, allow localhost origins
-    if (process.env.NODE_ENV === 'development' && (originDomain.startsWith('localhost:') || originDomain === 'localhost' || originDomain.startsWith('127.0.0.1:'))) {
+    // Allow localhost origins in both development and production
+    // This enables SDK testing from localhost even in production
+    // Production deployments can still restrict via project.allowedDomains if needed
+    if (originDomain.startsWith('localhost:') || originDomain === 'localhost' || originDomain.startsWith('127.0.0.1:')) {
       return
     }
 

@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Note: We don't use basePath because routes are already under app/admin/
-  // which creates routes at /admin/... automatically
-  // Asset prefix for static assets (CSS, JS, fonts, etc.)
-  // This ensures _next/static files are served from /admin/_next/static
-  assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || '/admin',
+  // Use basePath to ensure both routes and static assets use /admin prefix
+  // This is required because Next.js generates static assets relative to basePath
+  // Without basePath, assets are generated as /_next/static/... instead of /admin/_next/static/...
+  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // assetPrefix is deprecated when using basePath - basePath handles both routes and assets
+  // Keep assetPrefix for backward compatibility if needed, but basePath takes precedence
+  assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   images: {
     remotePatterns: [
