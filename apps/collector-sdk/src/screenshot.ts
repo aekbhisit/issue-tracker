@@ -295,8 +295,12 @@ export async function captureScreenshot(
 
     // Handle timeout separately
     if (message.includes('timed out') || message.includes('timeout')) {
-      console.warn('[Screenshot] Capture timed out, element may be too large or complex')
-      throw new Error(`Screenshot capture timed out after ${timeout}ms. The element may be too large or complex. Try selecting a smaller element.`)
+      console.warn('[Screenshot] Capture timed out, element may be too large or complex. Falling back to text snapshot.')
+      return createFallbackScreenshot(
+        element,
+        targetWidth || elementWidth,
+        targetHeight || elementHeight
+      )
     }
 
     // html2canvas currently cannot parse some modern CSS color functions (e.g. "oklch")
