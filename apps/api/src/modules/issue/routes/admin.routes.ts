@@ -28,6 +28,14 @@ const withPermission = (group: string, action: string) =>
 router.get('/', withPermission('view', 'get_data'), validate(issueValidation.list), controller.list)
 
 /**
+ * @route   GET /issues/screenshots/:path
+ * @desc    Serve screenshot with signed URL verification
+ * @access  Admin (signed URL token required)
+ * @note    This route MUST come before /:id to avoid route conflicts
+ */
+router.get('/screenshots/:path', controller.getScreenshot)
+
+/**
  * @route   GET /issues/:id
  * @desc    Get issue by ID with screenshots and logs
  * @access  Admin
@@ -40,13 +48,6 @@ router.get('/:id', withPermission('view', 'get_detail'), controller.getById)
  * @access  Admin
  */
 router.patch('/:id', withPermission('edit', 'edit_data'), validate(issueValidation.update), controller.update)
-
-/**
- * @route   GET /issues/screenshots/:path
- * @desc    Serve screenshot with signed URL verification
- * @access  Admin (signed URL token required)
- */
-router.get('/screenshots/:path', controller.getScreenshot)
 
 /**
  * @route   POST /issues/:id/comments

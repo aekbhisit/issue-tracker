@@ -27,8 +27,14 @@ export default function TestSDKPage() {
 	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 	const [sdkLoaded, setSdkLoaded] = useState(false);
 	const scriptLoadedRef = useRef(false);
+	const [isClient, setIsClient] = useState(false);
 
 	const projectId = params?.id ? parseInt(params.id as string, 10) : null;
+
+	// Prevent hydration mismatch by only rendering SDK-related content on client
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
 
 	// Get API URL using utility function
 	const apiUrl = useMemo(() => {
@@ -234,7 +240,9 @@ export default function TestSDKPage() {
 							<h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">How to Report an Issue</h3>
 							<div className="flex items-center gap-2">
 								<span className="text-sm font-medium text-blue-900 dark:text-blue-100">SDK Status:</span>
-								{sdkLoaded ? (
+								{!isClient ? (
+									<Badge variant="light" color="warning">⏳ Initializing...</Badge>
+								) : sdkLoaded ? (
 									<Badge variant="light" color="success">✓ Loaded</Badge>
 								) : (
 									<Badge variant="light" color="warning">⏳ Loading...</Badge>

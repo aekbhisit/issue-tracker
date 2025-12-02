@@ -235,9 +235,20 @@ export class StorageService {
       if (!baseUrl) {
         if (process.env.NODE_ENV === 'production') {
           // In production, log warning if API_URL is not set
-          console.warn('⚠️  API_URL environment variable is not set. Screenshot URLs may be incorrect.')
-          // Try to use a sensible default (but this should be set explicitly)
-          baseUrl = 'http://localhost:4501' // Fallback - should be overridden
+          console.error('❌ CRITICAL: API_URL environment variable is not set in production!')
+          console.error('   Screenshot URLs will be broken. Set API_URL=https://issue.haahii.com in your environment variables.')
+          console.error('   Current screenshot URL will use localhost fallback and will NOT work.')
+          // In production, try to infer from common production domains
+          // This is a last resort - API_URL should always be set explicitly
+          const inferredUrl = process.env.CORS_ORIGIN?.split(',')[0]?.trim() || null
+          if (inferredUrl && (inferredUrl.startsWith('https://') || inferredUrl.startsWith('http://'))) {
+            baseUrl = inferredUrl
+            console.warn(`⚠️  Using inferred API_URL from CORS_ORIGIN: ${baseUrl}`)
+            console.warn('   This may not be correct. Please set API_URL explicitly.')
+          } else {
+            baseUrl = 'http://localhost:4501' // Fallback - will NOT work in production
+            console.error('   Using localhost fallback - screenshot URLs will be broken!')
+          }
         } else {
           baseUrl = 'http://localhost:4501'
         }
@@ -247,7 +258,11 @@ export class StorageService {
     // Remove trailing slash if present
     baseUrl = baseUrl.replace(/\/+$/, '')
     
-    return `${baseUrl}/api/admin/v1/issues/screenshots/${encodeURIComponent(storagePath)}?token=${token}&expires=${expiresAt}`
+    // Encode storagePath only once - it should already be a clean path like "screenshots/2/12/filename.jpg"
+    // Don't double-encode - encodeURIComponent will handle special characters correctly
+    const encodedPath = encodeURIComponent(storagePath)
+    
+    return `${baseUrl}/api/admin/v1/issues/screenshots/${encodedPath}?token=${token}&expires=${expiresAt}`
   }
 
   /**
