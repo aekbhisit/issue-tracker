@@ -29,13 +29,26 @@ export default function AdminLayout({
     // Normalize pathname: remove trailing slashes, query strings, and hashes
     // Split by '?' and '#' to get just the path
     const pathOnly = pathname.split('?')[0].split('#')[0];
-    const normalized = pathOnly.replace(/\/+$/, '') || '/';
+    // Remove any double /admin/admin prefix that might occur due to routing issues
+    let cleanedPath = pathOnly.replace(/^\/admin\/admin(\/|$)/, '/admin$1');
     
-    // With basePath='/admin', usePathname() returns:
-    // - '/admin' → '/'
+    // With basePath='/admin', usePathname() should return paths WITHOUT the basePath prefix
+    // But handle both cases for safety (with and without /admin prefix)
+    // If path still starts with /admin/, remove it (shouldn't happen with basePath, but handle it)
+    if (cleanedPath.startsWith('/admin/')) {
+      cleanedPath = cleanedPath.substring('/admin'.length) || '/';
+    } else if (cleanedPath === '/admin') {
+      cleanedPath = '/';
+    }
+    
+    const normalized = cleanedPath.replace(/\/+$/, '') || '/';
+    
+    // With basePath='/admin', usePathname() returns paths WITHOUT the basePath prefix:
+    // - '/admin' → '/' (login page)
     // - '/admin/signup' → '/signup'
     // - '/admin/reset-password' → '/reset-password'
-    // So we check for root path '/' (login page) and auth paths without '/admin' prefix
+    // After cleaning, '/admin/admin' → '/admin' → '/' (login page)
+    // So we check for root path '/' (login page)
     if (normalized === '/' || normalized === '') return true; // Login page
     
     // Check if it's an auth-related page (without /admin prefix due to basePath)

@@ -26,25 +26,19 @@ export default function AdminPage() {
     }
   }, [router]);
 
-  // CRITICAL: Always render the same HTML structure on server and client
-  // The content inside can differ, but the structure must match exactly
-  // This prevents React from detecting HTML structure mismatches
+  // CRITICAL: Always render SignInForm to prevent hydration mismatch
+  // The form itself handles client-side only logic internally
+  // This ensures server and client render the exact same HTML structure
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
       <div className="w-full max-w-md" suppressHydrationWarning>
-        {isClient ? (
-          <Suspense fallback={
-            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8" suppressHydrationWarning>
-              <div className="text-center text-gray-500" suppressHydrationWarning>Loading...</div>
-            </div>
-          }>
-            <SignInForm />
-          </Suspense>
-        ) : (
+        <Suspense fallback={
           <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8" suppressHydrationWarning>
             <div className="text-center text-gray-500" suppressHydrationWarning>Loading...</div>
           </div>
-        )}
+        }>
+          <SignInForm />
+        </Suspense>
       </div>
     </div>
   );

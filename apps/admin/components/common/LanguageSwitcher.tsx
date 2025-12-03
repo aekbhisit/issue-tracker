@@ -46,7 +46,7 @@ export default function LanguageSwitcher() {
         className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
         title="Change Language"
       >
-        <span className="text-lg">{currentLanguage.flag}</span>
+        <span className="text-lg" suppressHydrationWarning>{currentLanguage.flag}</span>
       </button>
 
       {isOpen && (

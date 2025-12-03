@@ -321,7 +321,7 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
+                <span className={`menu-item-text`} suppressHydrationWarning>{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
@@ -349,7 +349,7 @@ const AppSidebar: React.FC = () => {
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
+                  <span className={`menu-item-text`} suppressHydrationWarning>{nav.name}</span>
                 )}
               </Link>
             )
@@ -617,6 +617,7 @@ const AppSidebar: React.FC = () => {
                     ? "lg:justify-center"
                     : "justify-start"
                     }`}
+                  suppressHydrationWarning
                 >
                   {isExpanded || isHovered || isMobileOpen ? (
                     t('admin.menu.menu')
@@ -647,6 +648,7 @@ const AppSidebar: React.FC = () => {
                       ? "lg:justify-center"
                       : "justify-start"
                       }`}
+                    suppressHydrationWarning
                   >
                     {isExpanded || isHovered || isMobileOpen ? (
                       t('admin.menu.systemMenu')
