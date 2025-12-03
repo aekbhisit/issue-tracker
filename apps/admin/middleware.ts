@@ -4,9 +4,8 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // NOTE: basePath removed - Nginx handles /admin prefix
-  // Next.js serves routes from app/admin/ folder directly
-  // Pathname in middleware will be like '/admin/dashboard' (from folder structure)
+  // NOTE: Without basePath, Next.js routes come from app/admin/ folder structure
+  // Pathname will be like '/admin/dashboard', '/admin/issues', etc.
   // We need to normalize it for auth checks by removing /admin prefix
   let normalizedPath = pathname
   
