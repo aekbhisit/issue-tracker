@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // NOTE: basePath removed - we use explicit /admin paths in code instead
-  // With app/admin/ folder structure, Next.js creates routes at /admin/* (from folder name)
-  // This is simpler than basePath + rewrites, and all code already uses /admin prefix
-  // RSC requests will be /admin/issues?_rsc=... if we use /admin paths in Link/router
+  // NOTE: basePath is required for Next.js Image optimization to generate /admin/_next/image URLs
+  // Without basePath, Next.js generates root-relative /_next/image URLs which go to frontend
+  // With basePath='/admin', Next.js generates /admin/_next/image URLs which route to admin container
+  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   
