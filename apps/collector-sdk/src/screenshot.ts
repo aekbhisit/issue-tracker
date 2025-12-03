@@ -9,7 +9,7 @@ import type { ScreenshotData } from './types'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const MAX_DIMENSION = 4096 // 4096x4096 pixels
 const DEFAULT_QUALITY = 0.85 // JPEG quality (0.8-0.9)
-const DEFAULT_TIMEOUT = 30000 // 30 seconds
+const DEFAULT_TIMEOUT = 15000 // 15 seconds (reduced from 30s for better UX)
 
 export interface CaptureOptions {
   maxWidth?: number
@@ -223,6 +223,7 @@ export async function captureScreenshot(
     logging: false,
     backgroundColor: '#ffffff',
     // Normalize unsupported CSS color functions (like oklch) in the cloned DOM
+    // OPTIMIZED: Only process essential stylesheets and elements to improve performance
     onclone: (clonedDoc: Document) => {
       try {
         const win = clonedDoc.defaultView || window
@@ -232,88 +233,76 @@ export async function captureScreenshot(
         const replaceOklchColor = (value: string): string => {
           if (!value || typeof value !== 'string') return value
           // Match oklch() color function and replace with a safe fallback
-          // oklch() format: oklch(L C H) or oklch(L C H / alpha)
           return value.replace(/oklch\([^)]+\)/gi, '#111827')
         }
         
-        // 1. Process stylesheets (CSS rules)
-        const styleSheets = Array.from(clonedDoc.styleSheets) as CSSStyleSheet[]
+        // OPTIMIZATION: Only process stylesheets that are actually used
+        // Limit to first 10 stylesheets to avoid processing too many
+        const styleSheets = Array.from(clonedDoc.styleSheets).slice(0, 10) as CSSStyleSheet[]
         for (const sheet of styleSheets) {
           let rules: CSSRuleList
           try {
             rules = sheet.cssRules
+            // OPTIMIZATION: Limit to first 1000 rules per stylesheet
+            const maxRules = Math.min(rules.length, 1000)
+            for (let i = 0; i < maxRules; i++) {
+              const rule = rules[i]
+              // Only touch regular style rules
+              if (StyleRule && rule instanceof StyleRule && (rule as CSSStyleRule).style) {
+                const style = (rule as CSSStyleRule).style
+                // OPTIMIZATION: Only check color-related properties
+                const colorProps = ['color', 'background-color', 'border-color', 'border-top-color',
+                                  'border-right-color', 'border-bottom-color', 'border-left-color']
+                for (const prop of colorProps) {
+                  const value = style.getPropertyValue(prop)
+                  if (value && value.includes('oklch(')) {
+                    const newValue = replaceOklchColor(value)
+                    style.setProperty(prop, newValue, style.getPropertyPriority(prop))
+                  }
+                }
+              }
+            }
           } catch {
             // Some stylesheets (e.g. cross-origin) may not be accessible
             continue
           }
-
-          for (let i = 0; i < rules.length; i++) {
-            const rule = rules[i]
-            // Only touch regular style rules
-            if (StyleRule && rule instanceof StyleRule && (rule as CSSStyleRule).style) {
-              const style = (rule as CSSStyleRule).style
-              for (let j = 0; j < style.length; j++) {
-                const prop = style[j]
-                const value = style.getPropertyValue(prop)
-                if (value && value.includes('oklch(')) {
-                  // Replace unsupported color with a safe fallback.
-                  // We only change the color value, not layout-related properties.
-                  const newValue = replaceOklchColor(value)
-                  style.setProperty(prop, newValue, style.getPropertyPriority(prop))
-                }
-              }
-            }
-          }
         }
         
-        // 2. Process inline styles on all elements
-        const allElements = clonedDoc.querySelectorAll('*')
-        for (let i = 0; i < allElements.length; i++) {
-          const element = allElements[i] as HTMLElement
-          if (element.style) {
-            // Check all style properties
-            for (let j = 0; j < element.style.length; j++) {
-              const prop = element.style[j]
-              const value = element.style.getPropertyValue(prop)
+        // OPTIMIZATION: Only process a limited number of elements with inline styles
+        // Process body and main content areas first (most likely to have oklch)
+        const body = clonedDoc.body || clonedDoc.documentElement
+        if (body) {
+          // Only process elements with inline styles (faster than querySelectorAll('*'))
+          const elementsWithStyles: HTMLElement[] = []
+          const walker = clonedDoc.createTreeWalker(body, NodeFilter.SHOW_ELEMENT)
+          let node: Node | null = walker.nextNode()
+          let count = 0
+          const maxElements = 200 // Limit to 200 elements for performance
+          
+          while (node && count < maxElements) {
+            const el = node as HTMLElement
+            if (el.style && el.style.length > 0) {
+              elementsWithStyles.push(el)
+              count++
+            }
+            node = walker.nextNode()
+          }
+          
+          // Only check color-related properties on elements with inline styles
+          const colorProps = ['color', 'background-color', 'border-color']
+          for (const el of elementsWithStyles) {
+            for (const prop of colorProps) {
+              const value = el.style.getPropertyValue(prop)
               if (value && value.includes('oklch(')) {
                 const newValue = replaceOklchColor(value)
-                element.style.setProperty(prop, newValue, element.style.getPropertyPriority(prop))
+                el.style.setProperty(prop, newValue, el.style.getPropertyPriority(prop))
               }
             }
           }
         }
         
-        // 3. Process computed styles (getComputedStyle) for elements that might have oklch
-        // This is a best-effort approach - we can't modify computed styles directly,
-        // but we can try to override them with inline styles
-        try {
-          const body = clonedDoc.body || clonedDoc.documentElement
-          if (body) {
-            const walker = clonedDoc.createTreeWalker(body, NodeFilter.SHOW_ELEMENT)
-            let node: Node | null = walker.nextNode()
-            while (node) {
-              const element = node as HTMLElement
-              if (element.style) {
-                const computedStyle = win.getComputedStyle(element)
-                // Check common color properties
-                const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 
-                                   'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-                                   'outlineColor', 'textDecorationColor', 'columnRuleColor']
-                for (const prop of colorProps) {
-                  const value = computedStyle.getPropertyValue(prop)
-                  if (value && value.includes('oklch(')) {
-                    // Override with inline style
-                    element.style.setProperty(prop, '#111827', 'important')
-                  }
-                }
-              }
-              node = walker.nextNode()
-            }
-          }
-        } catch (e) {
-          // Ignore errors in computed style processing
-          console.warn('[Screenshot] Could not process computed styles:', e)
-        }
+        // OPTIMIZATION: Skip computed style processing (too slow for large pages)
+        // html2canvas will handle most cases, and we have fallback for oklch errors
       } catch (e) {
         // Best-effort normalization; ignore any errors here
         console.warn('[Screenshot] Error in onclone normalization:', e)
@@ -417,13 +406,20 @@ export async function captureScreenshot(
   console.log('[Screenshot] Starting image compression...')
   let dataUrl: string | undefined = undefined
   let fileSize: number | undefined = undefined
-  let attempts = 0
-  const maxAttempts = 3
-
-  while (attempts < maxAttempts) {
-    const currentQuality = attempts === 0 ? quality : quality * (1 - attempts * 0.1)
-    console.log('[Screenshot] Compression attempt', attempts + 1, 'with quality', currentQuality)
-    dataUrl = await compressImage(canvas, Math.max(0.1, currentQuality), 'image/jpeg')
+  
+  // OPTIMIZATION: Start with lower quality (0.75) for faster compression and smaller file size
+  // Only retry if file size is still too large
+  let currentQuality = Math.min(quality, 0.75) // Cap at 0.75 for faster processing
+  const maxAttempts = 2 // Reduced from 3 to 2 for faster processing
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      // Reduce quality more aggressively on retry
+      currentQuality = Math.max(0.3, currentQuality * 0.7)
+    }
+    
+    console.log('[Screenshot] Compression attempt', attempt + 1, 'with quality', currentQuality.toFixed(2))
+    dataUrl = await compressImage(canvas, currentQuality, 'image/jpeg')
     fileSize = getDataUrlSize(dataUrl)
     console.log('[Screenshot] Compressed size:', Math.round(fileSize / 1024), 'KB')
 
@@ -433,13 +429,11 @@ export async function captureScreenshot(
       break
     }
 
-    attempts++
-    if (attempts >= maxAttempts) {
-      throw new Error(
-        `Screenshot file size (${Math.round(fileSize / 1024)}KB) exceeds maximum allowed size (${MAX_FILE_SIZE / 1024}KB)`
-      )
+    if (attempt === maxAttempts - 1) {
+      // Last attempt failed - use fallback or throw error
+      console.warn('[Screenshot] File size still too large after', maxAttempts, 'attempts')
+      // Don't throw - return the compressed image anyway (API will handle size validation)
     }
-    console.log('[Screenshot] File size too large, retrying with lower quality...')
   }
 
   // Final validation

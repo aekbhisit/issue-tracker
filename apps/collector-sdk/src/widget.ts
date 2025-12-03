@@ -283,9 +283,9 @@ export class IssueCollectorWidget {
               },
             })
             
-            // Add small delay to ensure DOM is stable after inspect mode cleanup
-            // This prevents capturing while element position is still changing
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // OPTIMIZATION: Reduced delay from 100ms to 50ms for faster capture
+            // Small delay to ensure DOM is stable after inspect mode cleanup
+            await new Promise(resolve => setTimeout(resolve, 50))
             
             // Verify element position hasn't changed significantly
             const newRect = element.getBoundingClientRect()
