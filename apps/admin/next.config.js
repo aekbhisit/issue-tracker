@@ -1,13 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use basePath to ensure both routes and static assets use /admin prefix
-  // This is required because Next.js generates static assets relative to basePath
-  // Without basePath, assets are generated as /_next/static/... instead of /admin/_next/static/...
-  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
-  // assetPrefix is deprecated when using basePath - basePath handles both routes and assets
-  // Keep assetPrefix for backward compatibility if needed, but basePath takes precedence
-  assetPrefix: process.env.NEXT_PUBLIC_ADMIN_ASSET_PREFIX || process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // NOTE: basePath removed - Nginx handles /admin prefix instead
+  // This prevents /admin/admin/ double prefix issue
+  // Next.js serves at root, Nginx proxies /admin/* to Next.js
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   images: {
     remotePatterns: [
@@ -44,59 +40,26 @@ const nextConfig = {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
                    (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4501')
     
-    const basePath = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'
-    
     const rewrites = [
       {
         source: '/storage/:path*',
         destination: apiUrl ? `${apiUrl}/storage/:path*` : '/storage/:path*'
       },
-      // CRITICAL: Rewrite public folder assets to include basePath
-      // With basePath='/admin', public assets need to be accessed with /admin prefix
-      // This rewrite allows /images/* to be accessed at /admin/images/*
+      // Rewrite /admin/images/ to /images/ for local dev
+      // In production, Nginx handles this routing
+      // This allows the same code to work in both dev and prod
       {
-        source: '/images/:path*',
-        destination: `${basePath}/images/:path*`
-      },
-      // CRITICAL: Rewrite collector.min.js to include basePath
-      // With basePath='/admin', collector.min.js needs to be accessed at /admin/collector.min.js
-      // This rewrite allows /collector.min.js to be accessed at /admin/collector.min.js
-      {
-        source: '/collector.min.js',
-        destination: `${basePath}/collector.min.js`
+        source: '/admin/images/:path*',
+        destination: '/images/:path*'
       }
+      // NOTE: No rewrites needed for collector.min.js
+      // Without basePath, these files are served directly from public/ folder
+      // Nginx handles /admin/collector.min.js routing in production
     ]
     
-    // CRITICAL: With basePath='/admin' and file structure app/admin/...
-    // Next.js creates routes like /admin/admin/dashboard (basePath + folder structure)
-    // We need to rewrite /admin/dashboard to /admin/admin/dashboard internally
-    // This allows users to access /admin/dashboard while the actual route is /admin/admin/dashboard
-    const routesToRewrite = [
-      '/dashboard',
-      '/issues',
-      '/projects',
-      '/user',
-      '/role',
-      '/permission',
-      '/activity-log',
-      '/file-manager',
-      '/admin-menu',
-      '/signup',
-      '/reset-password',
-    ]
-    
-    // Add rewrites for each route to map /admin/route to /admin/admin/route
-    routesToRewrite.forEach(route => {
-      rewrites.push({
-        source: `${route}/:path*`,
-        destination: `/admin${route}/:path*`
-      })
-      // Also handle route without trailing path
-      rewrites.push({
-        source: route,
-        destination: `/admin${route}`
-      })
-    })
+    // NOTE: Removed route rewrites that created /admin/admin/ paths
+    // With basePath removed, Next.js serves routes directly from app/admin/ folder
+    // Nginx handles /admin prefix, so /admin/dashboard works correctly
     
     return rewrites
   },

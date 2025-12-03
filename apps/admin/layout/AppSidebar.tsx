@@ -122,74 +122,74 @@ const AppSidebar: React.FC = () => {
   }, []);
 
   // Default main menu items (core functionality)
-  // NOTE: With basePath='/admin', paths should NOT include /admin prefix
-  // Next.js automatically adds basePath, so '/dashboard' becomes '/admin/dashboard'
+  // NOTE: Without basePath, all paths must explicitly include /admin prefix
+  // Routes are at /admin/* from app/admin/ folder structure
   const defaultMainMenuItems: NavItem[] = useMemo(() => [
     {
       icon: <GridIcon />,
       name: t('admin.menu.dashboard'),
-      path: "/dashboard",
+      path: "/admin/dashboard",
     },
     {
       icon: <FolderIcon />,
       name: t('admin.menu.projects') || 'Projects',
-      path: "/projects",
+      path: "/admin/projects",
     },
     {
       icon: <AlertCircleIcon />,
       name: t('admin.menu.issues') || 'Issues',
-      path: "/issues",
+      path: "/admin/issues",
     },
   ], [t]);
 
   // System menu items (administration only - for super admin)
-  // NOTE: With basePath='/admin', paths should NOT include /admin prefix
+  // NOTE: Without basePath, all paths must explicitly include /admin prefix
   const systemMenuItems: NavItem[] = useMemo(() => [
     {
       icon: <GridIcon />,
       name: t('admin.menu.admin_menu'),
-      path: "/admin-menu",
+      path: "/admin/admin-menu",
     },
     {
       icon: <UserCircleIcon />,
       name: t('admin.menu.user_management'),
-      path: "/user",
+      path: "/admin/user",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.roles'),
-      path: "/role/admin",
+      path: "/admin/role/admin",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.permissions'),
-      path: "/permission/admin",
+      path: "/admin/permission/admin",
     },
     {
       icon: <ListIcon />,
       name: t('admin.menu.activity_logs'),
-      path: "/activity-log",
+      path: "/admin/activity-log",
     },
     {
       icon: <BoxCubeIcon />,
       name: t('admin.menu.file_manager'),
-      path: "/file-manager",
+      path: "/admin/file-manager",
     },
   ], [t]);
 
-  // Normalize database menu path by removing /admin prefix if present
-  // With basePath='/admin', paths should NOT include /admin prefix
-  // This is different from the top-level normalizePath which handles general path normalization
+  // Normalize database menu path - ensure it has /admin prefix
+  // Without basePath, all paths must explicitly include /admin prefix
+  // Routes are at /admin/* from app/admin/ folder structure
   const normalizeMenuPath = (path: string | null | undefined): string | undefined => {
     if (!path || path === '#') return path === '#' ? '#' : undefined;
-    // Remove /admin prefix if present (database might have paths with /admin/ prefix)
-    const normalized = path.startsWith('/admin/') 
-      ? path.substring(7) // Remove '/admin/' (7 chars)
-      : path.startsWith('/admin') 
-        ? path.substring(6) // Remove '/admin' (6 chars)
-        : path;
     // Ensure path starts with /
-    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+    let normalized = path.startsWith('/') ? path : `/${path}`;
+    // If path doesn't start with /admin, add it
+    // This handles both database paths (might have /admin) and default paths (don't have /admin)
+    if (!normalized.startsWith('/admin')) {
+      normalized = `/admin${normalized}`;
+    }
+    return normalized;
   };
 
   // Convert DB menu to NavItem format
@@ -576,19 +576,19 @@ const AppSidebar: React.FC = () => {
         className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
           }`}
       >
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/admin" className="flex items-center gap-3">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
                 className="dark:hidden"
-                src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
+                src="/admin/images/logo/logo-icon.svg"
                 alt="Issue Collector"
                 width={32}
                 height={32}
               />
               <Image
                 className="hidden dark:block"
-                src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
+                src="/admin/images/logo/logo-icon.svg"
                 alt="Issue Collector"
                 width={32}
                 height={32}
@@ -599,7 +599,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/admin/images/logo/logo-icon.svg"
               alt="Issue Collector"
               width={32}
               height={32}

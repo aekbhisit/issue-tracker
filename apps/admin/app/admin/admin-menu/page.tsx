@@ -157,7 +157,7 @@ const { languageCodes } = useAdminLanguages()
 	}
 
 	const handleEdit = (menu: AdminMenu) => {
-		pushWithOverlay(`/admin/admin-menu/form?id=${menu.id}`)
+		pushWithOverlay(`/admin-menu/form?id=${menu.id}`)
 	}
 
 	const handleDelete = (menu: AdminMenu) => {

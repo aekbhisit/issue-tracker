@@ -46,7 +46,7 @@ export function useIssueTableColumns({
 					return (
 						<div className="flex flex-col">
 							<Link
-								href={`/issues/${issue.id}`}
+								href={`/admin/issues/${issue.id}`}
 								className="font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
 							>
 								{issue.title}
@@ -70,7 +70,7 @@ export function useIssueTableColumns({
 					}
 					return (
 						<Link
-							href={`/projects/${issue.project.id}`}
+							href={`/admin/projects/${issue.project.id}`}
 							className="text-sm font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
 						>
 							{issue.project.name}

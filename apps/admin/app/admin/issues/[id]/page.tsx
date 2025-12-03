@@ -500,7 +500,7 @@ export default function IssueDetailPage() {
 	}, [issue, formatIssueAsMarkdown, copyToClipboard, showError]);
 
 	const handleCancelNavigation = useCallback(() => {
-		router.push("/admin/issues");
+		router.push("/issues");
 	}, [router]);
 
 	const statusOptions: SelectOption[] = useMemo(

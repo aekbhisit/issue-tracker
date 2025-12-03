@@ -263,7 +263,7 @@ useEffect(() => {
 			title: t("common.message.confirmCancelTitle"),
 			message: t("common.message.confirmCancelMessage"),
 			onConfirm: () => {
-				pushWithOverlay("/admin/admin-menu")
+				pushWithOverlay("/admin-menu")
 			},
 		})
 	}

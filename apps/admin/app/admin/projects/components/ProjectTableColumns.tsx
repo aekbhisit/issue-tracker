@@ -36,7 +36,7 @@ export function useProjectTableColumns({
 					const project = row.original;
 					return (
 						<Link
-							href={`/projects/${project.id}`}
+							href={`/admin/projects/${project.id}`}
 							className="flex flex-col hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer group"
 						>
 							<span className="font-medium text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
@@ -61,7 +61,7 @@ export function useProjectTableColumns({
 					
 					return (
 						<Link
-							href={`/issues?projectId=${project.id}`}
+							href={`/admin/issues?projectId=${project.id}`}
 							className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-colors cursor-pointer group"
 						>
 							<span className="flex items-center gap-1">

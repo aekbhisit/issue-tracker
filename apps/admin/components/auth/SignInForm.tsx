@@ -38,9 +38,9 @@ export default function SignInForm() {
       console.log('📡 Calling login API...');
       const response = await login(credentials);
       console.log('✅ Login success:', response);
-      // Use relative path without /admin prefix since basePath is already /admin
-      // router.push() automatically adds basePath, so '/dashboard' becomes '/admin/dashboard'
-      router.push('/dashboard');
+      // Without basePath, we need to explicitly include /admin prefix
+      // Routes are at /admin/* from app/admin/ folder structure
+      router.push('/admin/dashboard');
     } catch (err) {
       console.error('❌ Login error:', err);
       const authError = err as AuthError;
@@ -165,7 +165,7 @@ export default function SignInForm() {
                     </span>
                   </div>
                   <Link
-                    href="/reset-password"
+                    href="/admin/reset-password"
                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
                     {t('admin.auth.forgotPassword')}
@@ -190,7 +190,7 @@ export default function SignInForm() {
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
                 {t('admin.auth.dontHaveAccount')} {""}
                 <Link
-                  href="/signup"
+                  href="/admin/signup"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium"
                 >
                   {t('admin.auth.signUp')}

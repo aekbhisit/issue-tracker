@@ -19,40 +19,25 @@ export default function AdminLayout({
   // Normalize pathname by removing trailing slashes for comparison
   // Use useMemo to prevent unnecessary recalculations
   // IMPORTANT: Only use pathname from usePathname() to avoid hydration mismatches
-  // NOTE: With basePath='/admin', usePathname() returns paths WITHOUT the basePath prefix
-  // So /admin becomes '/', /admin/signup becomes '/signup', etc.
+  // NOTE: Without basePath, usePathname() returns paths WITH /admin prefix (from folder structure)
+  // So /admin becomes '/admin', /admin/signup becomes '/admin/signup', etc.
   const isAuthPage = useMemo(() => {
     // If pathname is not available, default to false (show sidebar)
     // Don't use window.location here as it causes hydration mismatches
     if (!pathname) return false;
     
     // Normalize pathname: remove trailing slashes, query strings, and hashes
-    // Split by '?' and '#' to get just the path
     const pathOnly = pathname.split('?')[0].split('#')[0];
-    // Remove any double /admin/admin prefix that might occur due to routing issues
-    let cleanedPath = pathOnly.replace(/^\/admin\/admin(\/|$)/, '/admin$1');
+    const normalized = pathOnly.replace(/\/+$/, '') || '/';
     
-    // With basePath='/admin', usePathname() should return paths WITHOUT the basePath prefix
-    // But handle both cases for safety (with and without /admin prefix)
-    // If path still starts with /admin/, remove it (shouldn't happen with basePath, but handle it)
-    if (cleanedPath.startsWith('/admin/')) {
-      cleanedPath = cleanedPath.substring('/admin'.length) || '/';
-    } else if (cleanedPath === '/admin') {
-      cleanedPath = '/';
-    }
+    // Without basePath, paths come from app/admin/ folder structure:
+    // - '/admin' → login page
+    // - '/admin/signup' → signup page
+    // - '/admin/reset-password' → reset password page
+    if (normalized === '/admin' || normalized === '/') return true; // Login page
     
-    const normalized = cleanedPath.replace(/\/+$/, '') || '/';
-    
-    // With basePath='/admin', usePathname() returns paths WITHOUT the basePath prefix:
-    // - '/admin' → '/' (login page)
-    // - '/admin/signup' → '/signup'
-    // - '/admin/reset-password' → '/reset-password'
-    // After cleaning, '/admin/admin' → '/admin' → '/' (login page)
-    // So we check for root path '/' (login page)
-    if (normalized === '/' || normalized === '') return true; // Login page
-    
-    // Check if it's an auth-related page (without /admin prefix due to basePath)
-    const authPaths = ['/signup', '/reset-password', '/forgot-password'];
+    // Check if it's an auth-related page (with /admin prefix from folder structure)
+    const authPaths = ['/admin/signup', '/admin/reset-password', '/admin/forgot-password'];
     return authPaths.some(authPath => normalized === authPath || normalized.startsWith(authPath + '/'));
   }, [pathname]);
 

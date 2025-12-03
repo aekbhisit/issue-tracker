@@ -112,7 +112,7 @@ export function EmbedScriptSection({ project }: EmbedScriptSectionProps) {
 
 			<div className="mt-3 flex items-center gap-2">
 				<Link
-					href={`/projects/${project.id}/test`}
+					href={`/admin/projects/${project.id}/test`}
 					className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
 				>
 					Test SDK →

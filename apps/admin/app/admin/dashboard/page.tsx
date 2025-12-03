@@ -452,7 +452,7 @@ export default function DashboardPage() {
                   {t('admin.dashboard.sections.recentIssues', 'Recent Issues')}
                 </h2>
                 <Link
-                  href="/issues"
+                  href="/admin/issues"
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View all →
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                   {t('admin.dashboard.sections.recentActivity', 'Recent Activity')}
                 </h2>
                 <Link
-                  href="/activity-log"
+                  href="/admin/activity-log"
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   View all →

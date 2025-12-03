@@ -84,19 +84,19 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link href="/" className="lg:hidden flex items-center gap-2">
+          <Link href="/admin" className="lg:hidden flex items-center gap-2">
             <Image
               width={32}
               height={32}
               className="dark:hidden"
-              src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
+              src="/admin/images/logo/logo-icon.svg"
               alt="Issue Collector"
             />
             <Image
               width={32}
               height={32}
               className="hidden dark:block"
-              src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
+              src="/admin/images/logo/logo-icon.svg"
               alt="Issue Collector"
             />
             <span className="text-lg font-semibold text-gray-900 dark:text-white">

@@ -4,33 +4,13 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // CRITICAL: With basePath='/admin' and file structure app/admin/...
-  // Next.js creates routes like /admin/admin/dashboard (basePath + folder structure)
-  // We need to rewrite /admin/dashboard to /admin/admin/dashboard internally
-  // OR redirect /admin/admin/* to /admin/*
-  
-  // Handle double /admin/admin prefix - redirect to single /admin
-  if (pathname.startsWith('/admin/admin/')) {
-    const correctedPath = pathname.replace(/^\/admin\/admin/, '/admin')
-    const url = request.nextUrl.clone()
-    url.pathname = correctedPath
-    return NextResponse.redirect(url)
-  }
-  
-  // Also handle /admin/admin (without trailing slash)
-  if (pathname === '/admin/admin') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin'
-    return NextResponse.redirect(url)
-  }
-  
-  // Normalize pathname for internal checks
-  // With basePath='/admin', Next.js strips basePath in middleware
-  // So /admin/dashboard becomes '/dashboard' in middleware pathname
-  // But with app/admin/ structure, it becomes '/admin/dashboard' (folder structure)
+  // NOTE: basePath removed - Nginx handles /admin prefix
+  // Next.js serves routes from app/admin/ folder directly
+  // Pathname in middleware will be like '/admin/dashboard' (from folder structure)
+  // We need to normalize it for auth checks by removing /admin prefix
   let normalizedPath = pathname
   
-  // Remove /admin prefix if present (from folder structure, not basePath)
+  // Remove /admin prefix if present (from folder structure)
   if (normalizedPath.startsWith('/admin/')) {
     normalizedPath = normalizedPath.substring('/admin'.length) || '/'
   } else if (normalizedPath === '/admin') {
@@ -57,9 +37,9 @@ export function middleware(request: NextRequest) {
 
   // Redirect to login if no token and trying to access protected routes
   if (!token && isDashboardPath) {
-    // Use basePath-aware redirect: '' becomes '/admin' in browser
+    // Without basePath, redirect explicitly to /admin (login page)
     const url = request.nextUrl.clone()
-    url.pathname = '' // Empty pathname with basePath='/admin' becomes '/admin'
+    url.pathname = '/admin'
     return NextResponse.redirect(url)
   }
   
@@ -67,11 +47,9 @@ export function middleware(request: NextRequest) {
 }
 
 // Configure which paths the middleware should run on
-// CRITICAL: With basePath='/admin', Next.js strips the basePath from pathname in middleware
-// So '/admin/dashboard' becomes '/dashboard' in middleware
-// The matcher should match the actual file routes (without basePath prefix)
-// Since all routes are under app/admin/, they become /admin/* in URLs (with basePath)
-// But in middleware, basePath is stripped, so we match the routes as they appear in the file structure
+// NOTE: basePath removed - paths come from app/admin/ folder structure
+// Nginx proxies /admin/* to Next.js, so pathname will be /admin/dashboard, etc.
+// Middleware matches all paths except static files and API routes
 export const config = {
   matcher: [
     /*
