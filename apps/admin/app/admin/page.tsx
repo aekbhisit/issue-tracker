@@ -13,16 +13,22 @@ export default function AdminPage() {
   useEffect(() => {
     setIsClient(true);
     
-    // Check if user is already authenticated
-    // Only redirect if token exists and is valid (client-side validation)
-    // This prevents redirect loops - we let the API validate the token
-    // If token is invalid, API will return 401 and we'll stay on login page
-    if (isAuthenticated()) {
-      // User has token - redirect to dashboard
-      // If token is invalid, dashboard will get 401 and redirect back here
-      // Without basePath, we need to explicitly include /admin prefix
-      // Routes are at /admin/* from app/admin/ folder structure
-      router.push('/admin/dashboard');
+    // Use requestIdleCallback for non-critical redirect check (better performance)
+    // Falls back to setTimeout if requestIdleCallback is not available
+    // This doesn't block initial render, improving perceived performance
+    const checkAuth = () => {
+      if (isAuthenticated()) {
+        // User has token - redirect to dashboard
+        // If token is invalid, dashboard will get 401 and redirect back here
+        router.push('/admin/dashboard');
+      }
+    };
+    
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      requestIdleCallback(checkAuth, { timeout: 100 });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(checkAuth, 0);
     }
   }, [router]);
 

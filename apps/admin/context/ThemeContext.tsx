@@ -43,19 +43,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     
     localStorage.setItem("theme", theme);
     
-    // Apply theme class immediately but use a small delay to ensure hydration is complete
-    // This prevents React from detecting the DOM change during hydration
-    const timeoutId = setTimeout(() => {
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-        document.body.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        document.body.classList.remove("dark");
-      }
-    }, 0);
-    
-    return () => clearTimeout(timeoutId);
+    // Apply theme class immediately - no delay needed as hydration is already complete
+    // The blocking script in layout.tsx handles initial theme, this is for changes
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
+    }
   }, [theme, isInitialized, isMounted]);
 
   const toggleTheme = () => {

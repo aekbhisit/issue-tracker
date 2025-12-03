@@ -1,13 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // NOTE: basePath removed to avoid /admin/admin/ double prefix issue
-  // With basePath='/admin' + app/admin/ folder structure, Next.js creates /admin/admin/ routes
-  // Instead, we handle /admin prefix in Nginx and use assetPrefix for static assets
-  // RSC requests are handled by Nginx referer-based routing
-  // Images use rewrites to /admin/_next/image
+  // NOTE: basePath removed - we use explicit /admin paths in code instead
+  // With app/admin/ folder structure, Next.js creates routes at /admin/* (from folder name)
+  // This is simpler than basePath + rewrites, and all code already uses /admin prefix
+  // RSC requests will be /admin/issues?_rsc=... if we use /admin paths in Link/router
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
+  
+  // Performance optimizations for dev mode
+  // Use SWC compiler (faster than Babel)
+  swcMinify: true,
+  
+  // Experimental features for better performance
+  experimental: {
+    // Optimize package imports
+    optimizePackageImports: ['@workspace/types', '@workspace/utils', 'react-i18next'],
+  },
+  
+  // Compiler options
+  compiler: {
+    // Remove console.log in production (optional, can help with bundle size)
+    // removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   images: {
     remotePatterns: [
       {
@@ -48,10 +63,11 @@ const nextConfig = {
         source: '/storage/:path*',
         destination: apiUrl ? `${apiUrl}/storage/:path*` : '/storage/:path*'
       },
-      // NOTE: Without basePath, Next.js generates root-relative URLs
-      // RSC requests like /issues?_rsc=... are handled by Nginx (referer-based routing)
-      // Images like /_next/image?url=... are handled by Nginx location blocks
-      // For local dev, we rewrite /admin/images/ to /images/
+      // NOTE: No rewrites needed for routes!
+      // With app/admin/ folder structure, Next.js creates routes at /admin/* (from folder name)
+      // All code uses explicit /admin paths, so routes match directly
+      // 
+      // Rewrite /admin/images/ to /images/ for local dev (Nginx handles this in production)
       {
         source: '/admin/images/:path*',
         destination: '/images/:path*'

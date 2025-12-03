@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
   
   const token = request.cookies.get('admin_token')?.value
   
-  // Login page: '' or '/' (with basePath stripped)
+  // Login page: '' or '/' (after removing /admin prefix)
   const isLoginPage = normalizedPath === '' || normalizedPath === '/'
   
   // Dashboard path: '/dashboard' (with /admin prefix removed)

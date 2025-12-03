@@ -65,7 +65,7 @@ export default function IssueDetailPage() {
 					showError({
 						message: t("common.errors.noPermission"),
 					});
-					router.push("/issues");
+					router.push("/admin/issues");
 				}
 			}
 		).then(setHasPermission);
@@ -500,7 +500,7 @@ export default function IssueDetailPage() {
 	}, [issue, formatIssueAsMarkdown, copyToClipboard, showError]);
 
 	const handleCancelNavigation = useCallback(() => {
-		router.push("/issues");
+		router.push("/admin/issues");
 	}, [router]);
 
 	const statusOptions: SelectOption[] = useMemo(
@@ -546,8 +546,8 @@ export default function IssueDetailPage() {
 	}
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/dashboard" },
-		{ label: t("common.label.issues"), href: "/issues" },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.issues"), href: "/admin/issues" },
 		{ label: issue.title || `Issue #${issue.id}` },
 	];
 

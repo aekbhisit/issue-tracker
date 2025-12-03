@@ -484,7 +484,7 @@ export default function DashboardPage() {
                       <tr
                         key={issue.id}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                        onClick={() => router.push(`/issues/${issue.id}`)}
+                        onClick={() => router.push(`/admin/issues/${issue.id}`)}
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">

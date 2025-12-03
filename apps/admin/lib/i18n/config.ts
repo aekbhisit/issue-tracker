@@ -99,31 +99,16 @@ if (isClient) {
     lookupSessionStorage: false,
   } as any)
   
-  // Use requestAnimationFrame to ensure this runs after React hydration completes
-  // This is more reliable than setTimeout(0) as it waits for the browser to be ready
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(() => {
-      // Use another requestAnimationFrame to ensure React hydration is complete
-      requestAnimationFrame(() => {
-        const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
-        if (detectedLang !== i18nInstance.language) {
-          i18nInstance.changeLanguage(detectedLang).catch(() => {
-            // Silently fail if language change fails
-          })
-        }
+  // Use a single setTimeout with minimal delay for faster initialization
+  // Reduced from double requestAnimationFrame to improve performance
+  setTimeout(() => {
+    const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
+    if (detectedLang !== i18nInstance.language) {
+      i18nInstance.changeLanguage(detectedLang).catch(() => {
+        // Silently fail if language change fails
       })
-    })
-  } else {
-    // Fallback for environments without requestAnimationFrame
-    setTimeout(() => {
-      const detectedLang = i18nInstance.services.languageDetector?.detect() || 'th'
-      if (detectedLang !== i18nInstance.language) {
-        i18nInstance.changeLanguage(detectedLang).catch(() => {
-          // Silently fail if language change fails
-        })
-      }
-    }, 100) // Slightly longer delay to ensure hydration completes
-  }
+    }
+  }, 0) // Minimal delay - just enough to let hydration complete
 }
 
 export default i18nInstance

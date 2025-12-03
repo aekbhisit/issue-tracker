@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    // Performance: Enable incremental compilation (faster rebuilds)
+    "incremental": true,
+    // Performance: Skip type checking of declaration files (faster compilation)
+    "skipLibCheck": true,
     "target": "ES2022",
     "lib": [
       "ES2022",
