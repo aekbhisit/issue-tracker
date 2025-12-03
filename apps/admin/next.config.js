@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // NOTE: basePath removed to avoid /admin/admin/ double prefix issue
-  // For static images, we use unoptimized={true} on Image components
-  // This prevents Next.js from generating /_next/image URLs that would go to frontend
-  // Static images are served directly via Nginx /admin/images/ location block
+  // NOTE: basePath is required for Next.js to generate correct RSC request URLs with /admin prefix
+  // Without basePath, RSC requests are root-relative (/dashboard?_rsc=...) instead of (/admin/dashboard?_rsc=...)
+  // With app/admin/ folder structure, routes are already at /admin/*, so basePath just affects asset/RSC URLs
+  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   

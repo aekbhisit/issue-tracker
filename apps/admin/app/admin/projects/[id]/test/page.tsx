@@ -238,9 +238,9 @@ export default function TestSDKPage() {
 	}
 
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/dashboard" },
-		{ label: t("common.label.projects"), href: "/projects" },
-		{ label: project.name, href: `/projects/${project.id}` },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.projects"), href: "/admin/projects" },
+		{ label: project.name, href: `/admin/projects/${project.id}` },
 		{ label: t("admin.project.form.testSDK") },
 	];
 
