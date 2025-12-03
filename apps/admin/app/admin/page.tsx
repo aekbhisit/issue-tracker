@@ -28,16 +28,17 @@ export default function AdminPage() {
 
   // Render nothing on server side to prevent hydration mismatch
   // The client will render SignInForm after hydration
+  // Use suppressHydrationWarning to prevent React from complaining about the mismatch
   if (!isClient) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>
+        <div className="text-gray-500" suppressHydrationWarning>Loading...</div>
       </div>
     );
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>Loading...</div>}>
       <SignInForm />
     </Suspense>
   );
