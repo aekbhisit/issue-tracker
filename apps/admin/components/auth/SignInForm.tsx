@@ -51,24 +51,23 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-lg">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
-              {t('admin.auth.signIn')}
-            </h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400" suppressHydrationWarning>
-              {t('admin.auth.signInMessage')}
-            </p>
+    <div className="w-full space-y-8" suppressHydrationWarning>
+      <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-lg">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
+            {t('admin.auth.signIn')}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400" suppressHydrationWarning>
+            {t('admin.auth.signInMessage')}
+          </p>
+        </div>
+        {error && (
+          <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg dark:bg-error-500/10 dark:border-error-500/20" suppressHydrationWarning>
+            <p className="text-sm text-error-600 dark:text-error-400" suppressHydrationWarning>{error}</p>
           </div>
-          {error && (
-            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg dark:bg-error-500/10 dark:border-error-500/20">
-              <p className="text-sm text-error-600 dark:text-error-400">{error}</p>
-            </div>
-          )}
-          <div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+        )}
+        <div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-medium text-gray-700 transition-colors bg-gray-100 rounded-lg px-4 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-700">
                 <svg
                   width="20"
@@ -109,8 +108,8 @@ export default function SignInForm() {
                 </svg>
                 {t('admin.auth.signInWithX')}
               </button>
-            </div>
-            <div className="relative py-4">
+          </div>
+          <div className="relative py-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
               </div>
@@ -119,8 +118,8 @@ export default function SignInForm() {
                   {t('admin.auth.or')}
                 </span>
               </div>
-            </div>
-            <form onSubmit={handleSubmit}>
+          </div>
+          <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
@@ -185,9 +184,9 @@ export default function SignInForm() {
                   </Button>
                 </div>
               </div>
-            </form>
+          </form>
 
-            <div className="mt-6">
+          <div className="mt-6">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400">
                 {t('admin.auth.dontHaveAccount')} {""}
                 <Link
@@ -197,7 +196,6 @@ export default function SignInForm() {
                   {t('admin.auth.signUp')}
                 </Link>
               </p>
-            </div>
           </div>
         </div>
       </div>

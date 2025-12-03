@@ -26,18 +26,26 @@ export default function AdminPage() {
     }
   }, [router]);
 
-  // CRITICAL: Render the same structure on server and client to prevent hydration mismatch
-  // Return a consistent structure that matches what will be rendered after hydration
-  // Use suppressHydrationWarning on the outer container to tell React this is intentional
+  // CRITICAL: Always render the same HTML structure on server and client
+  // The content inside can differ, but the structure must match exactly
+  // This prevents React from detecting HTML structure mismatches
   return (
-    <div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>
-      {isClient ? (
-        <Suspense fallback={<div className="text-gray-500" suppressHydrationWarning>Loading...</div>}>
-          <SignInForm />
-        </Suspense>
-      ) : (
-        <div className="text-gray-500" suppressHydrationWarning>Loading...</div>
-      )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
+      <div className="w-full max-w-md" suppressHydrationWarning>
+        {isClient ? (
+          <Suspense fallback={
+            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8" suppressHydrationWarning>
+              <div className="text-center text-gray-500" suppressHydrationWarning>Loading...</div>
+            </div>
+          }>
+            <SignInForm />
+          </Suspense>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8" suppressHydrationWarning>
+            <div className="text-center text-gray-500" suppressHydrationWarning>Loading...</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

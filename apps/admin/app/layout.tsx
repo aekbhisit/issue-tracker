@@ -35,22 +35,25 @@ export default function AdminLayout({
         <title>Issue Collector - Admin Dashboard</title>
         <meta name="description" content="Issue Collector - Centralized issue reporting and management system" />
         <link rel="icon" type="image/x-icon" href="/admin/favicon.ico" />
-        {/* Blocking script to set theme before React hydration - prevents hydration mismatch */}
+        {/* CRITICAL: Blocking script to set theme BEFORE React hydration - prevents hydration mismatch */}
+        {/* This script runs synchronously before React starts, ensuring HTML matches between server and client */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
                   var theme = localStorage.getItem('theme');
+                  var html = document.documentElement;
+                  var body = document.body;
                   if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                    document.body.classList.add('dark');
+                    html.classList.add('dark');
+                    if (body) body.classList.add('dark');
                   } else {
-                    document.documentElement.classList.remove('dark');
-                    document.body.classList.remove('dark');
+                    html.classList.remove('dark');
+                    if (body) body.classList.remove('dark');
                   }
                 } catch (e) {
-                  // Ignore localStorage errors
+                  // Ignore localStorage errors (SSR, private browsing, etc.)
                 }
               })();
             `,
