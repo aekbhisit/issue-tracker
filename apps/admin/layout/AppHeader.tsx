@@ -89,14 +89,14 @@ const AppHeader: React.FC = () => {
               width={32}
               height={32}
               className="dark:hidden"
-              src="/images/logo/logo-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
               alt="Issue Collector"
             />
             <Image
               width={32}
               height={32}
               className="hidden dark:block"
-              src="/images/logo/logo-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
               alt="Issue Collector"
             />
             <span className="text-lg font-semibold text-gray-900 dark:text-white">

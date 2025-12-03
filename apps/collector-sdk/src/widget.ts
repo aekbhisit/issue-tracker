@@ -5,7 +5,7 @@
 
 import { createButton } from './button'
 import { createPanel, type PanelCallbacks } from './panel'
-import type { SDKConfig, ScreenshotMetadata, LogData } from './types'
+import type { SDKConfig, ScreenshotMetadata, LogData, ScreenshotData } from './types'
 import { startInspectMode } from './inspect'
 import { captureScreenshot } from './screenshot'
 import { extractElementSelector } from './selectors'
@@ -299,8 +299,38 @@ export class IssueCollectorWidget {
             
             // Add progress logging
             console.log('[SDK] Calling captureScreenshot...')
-            const screenshot = await captureScreenshot(element)
-            console.log('[SDK] captureScreenshot returned successfully')
+            // CRITICAL: captureScreenshot should never throw - it always returns a fallback
+            // But wrap in try-catch just in case to ensure loading overlay is always hidden
+            let screenshot: ScreenshotData
+            try {
+              screenshot = await captureScreenshot(element)
+              console.log('[SDK] captureScreenshot returned successfully')
+            } catch (captureError: any) {
+              // This should never happen since captureScreenshot always returns a fallback
+              // But if it does, create a minimal fallback screenshot
+              console.error('[SDK] captureScreenshot threw error (unexpected):', captureError)
+              // Create a minimal fallback screenshot
+              const rect = element.getBoundingClientRect()
+              const canvas = document.createElement('canvas')
+              canvas.width = Math.max(400, Math.min(rect.width, 1200))
+              canvas.height = Math.max(200, Math.min(rect.height, 800))
+              const ctx = canvas.getContext('2d')
+              if (ctx) {
+                ctx.fillStyle = '#ffffff'
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+                ctx.fillStyle = '#111827'
+                ctx.font = '14px sans-serif'
+                ctx.fillText('Screenshot unavailable', 20, 50)
+              }
+              screenshot = {
+                dataUrl: canvas.toDataURL('image/png'),
+                mimeType: 'image/png',
+                fileSize: 100,
+                width: canvas.width,
+                height: canvas.height,
+              }
+              console.log('[SDK] Using minimal fallback screenshot after unexpected error')
+            }
             console.log('[SDK] Screenshot captured successfully:', {
               width: screenshot.width,
               height: screenshot.height,
@@ -663,65 +693,83 @@ export class IssueCollectorWidget {
   
   /**
    * Hide loading overlay
+   * CRITICAL: This must ALWAYS work, even if there are errors
+   * Must be synchronous and immediate - no delays
    */
   private hideLoadingOverlay(): void {
-    // Try multiple ways to find and remove the overlay
-    const existingOverlay = document.getElementById('issue-collector-loading-overlay')
-    if (existingOverlay) {
-      console.log('[SDK] Hiding loading overlay, element:', existingOverlay)
-      console.log('[SDK] Overlay parent:', existingOverlay.parentNode)
-      
-      // Immediately hide visually (no animation delay)
-      existingOverlay.style.display = 'none'
-      existingOverlay.style.visibility = 'hidden'
-      existingOverlay.style.opacity = '0'
-      existingOverlay.style.pointerEvents = 'none'
-      
-      // Remove from DOM immediately (don't wait for animation)
-      try {
-        if (existingOverlay.parentNode) {
-          existingOverlay.parentNode.removeChild(existingOverlay)
-          console.log('[SDK] Loading overlay removed from DOM immediately')
-        }
-      } catch (removeError) {
-        console.warn('[SDK] Error removing overlay:', removeError)
-        // Try using remove() method as fallback
+    try {
+      // Try multiple ways to find the overlay
+      const existingOverlay = document.getElementById('issue-collector-loading-overlay')
+      if (existingOverlay) {
+        console.log('[SDK] Hiding loading overlay, element:', existingOverlay)
+        
+        // CRITICAL: Hide immediately and synchronously (no setTimeout, no delays)
+        existingOverlay.style.display = 'none'
+        existingOverlay.style.visibility = 'hidden'
+        existingOverlay.style.opacity = '0'
+        existingOverlay.style.pointerEvents = 'none'
+        existingOverlay.style.zIndex = '-1'
+        
+        // Remove from DOM immediately (synchronous)
         try {
-          existingOverlay.remove()
-          console.log('[SDK] Loading overlay removed using remove() method')
-        } catch (removeError2) {
-          console.error('[SDK] Failed to remove overlay:', removeError2)
+          if (existingOverlay.parentNode) {
+            existingOverlay.parentNode.removeChild(existingOverlay)
+            console.log('[SDK] Loading overlay removed from DOM immediately')
+          } else if (existingOverlay.remove) {
+            existingOverlay.remove()
+            console.log('[SDK] Loading overlay removed using remove() method')
+          }
+        } catch (removeError) {
+          console.warn('[SDK] Error removing overlay:', removeError)
+          // Force hide even if removal fails
+          existingOverlay.style.display = 'none'
+          existingOverlay.style.visibility = 'hidden'
+          existingOverlay.style.opacity = '0'
+          existingOverlay.style.pointerEvents = 'none'
+          existingOverlay.style.zIndex = '-1'
         }
-      }
-      
-      // Double-check and force remove if still exists
-      setTimeout(() => {
+        
+        // Double-check immediately (synchronous check)
         const stillExists = document.getElementById('issue-collector-loading-overlay')
         if (stillExists) {
-          console.error('[SDK] ERROR: Overlay still exists after removal attempt! Force removing...')
+          console.warn('[SDK] Overlay still exists after removal, forcing hide...')
+          stillExists.style.display = 'none'
+          stillExists.style.visibility = 'hidden'
+          stillExists.style.opacity = '0'
+          stillExists.style.pointerEvents = 'none'
+          stillExists.style.zIndex = '-1'
           try {
             if (stillExists.parentNode) {
               stillExists.parentNode.removeChild(stillExists)
-            } else {
+            } else if (stillExists.remove) {
               stillExists.remove()
             }
-            console.log('[SDK] Force removed overlay')
           } catch (forceError) {
             console.error('[SDK] Failed to force remove overlay:', forceError)
-            // Last resort: hide it completely
-            stillExists.style.display = 'none'
-            stillExists.style.visibility = 'hidden'
-            stillExists.style.opacity = '0'
-            stillExists.style.pointerEvents = 'none'
-            stillExists.style.zIndex = '-1'
           }
-        } else {
-          console.log('[SDK] Overlay successfully removed and verified')
         }
-      }, 100)
-    } else {
-      console.log('[SDK] No loading overlay found to hide (already removed or never created)')
+      } else {
+        console.log('[SDK] No loading overlay found to hide (already removed or never created)')
+      }
+    } catch (error) {
+      // CRITICAL: Even if there's an error, try to find and hide the overlay
+      console.error('[SDK] Error in hideLoadingOverlay:', error)
+      try {
+        const anyOverlay = document.getElementById('issue-collector-loading-overlay')
+        if (anyOverlay) {
+          anyOverlay.style.display = 'none'
+          anyOverlay.style.visibility = 'hidden'
+          anyOverlay.style.opacity = '0'
+          anyOverlay.style.pointerEvents = 'none'
+          anyOverlay.style.zIndex = '-1'
+          console.log('[SDK] Forced overlay to hide after error')
+        }
+      } catch (finalError) {
+        console.error('[SDK] Failed to force hide overlay:', finalError)
+      }
     }
+    
+    // Always clear the reference
     this.loadingOverlay = null
   }
 

@@ -36,7 +36,10 @@ export function EmbedScriptSection({ project }: EmbedScriptSectionProps) {
 			return envSdkUrl;
 		}
 		
-		// Client-side: use relative path or current origin
+		// Get basePath for admin app
+		const basePath = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin';
+		
+		// Client-side: use relative path with basePath prefix
 		if (typeof window !== "undefined") {
 			// In production, use relative path (works with nginx)
 			const isProduction = window.location.origin.startsWith('https://') || 
@@ -44,16 +47,16 @@ export function EmbedScriptSection({ project }: EmbedScriptSectionProps) {
 			                      !window.location.origin.includes('127.0.0.1'));
 			
 			if (isProduction) {
-				// Use relative path in production
-				return "/collector.min.js";
+				// Use relative path with basePath in production
+				return `${basePath}/collector.min.js`;
 			}
 			
-			// Development: use relative path (works with Next.js dev server)
-			return "/collector.min.js";
+			// Development: use relative path with basePath (works with Next.js dev server)
+			return `${basePath}/collector.min.js`;
 		}
 		
-		// Server-side fallback: use relative path
-		return "/collector.min.js";
+		// Server-side fallback: use relative path with basePath
+		return `${basePath}/collector.min.js`;
 	}, []);
 
 	// Generate embed script code

@@ -795,6 +795,44 @@
         "unassigned": "ไม่ได้มอบหมาย",
         "pending": "รอดำเนินการ",
         "total": "ทั้งหมด"
+      },
+      "label": {
+        "reporterInfo": "ข้อมูลผู้รายงาน",
+        "metadata": "ข้อมูลเมตาดาต้า",
+        "url": "URL",
+        "userAgent": "User Agent",
+        "viewport": "ขนาดหน้าจอ",
+        "screen": "หน้าจอ",
+        "language": "ภาษา",
+        "timezone": "เขตเวลา",
+        "timestamp": "เวลาที่บันทึก",
+        "screenshots": "ภาพหน้าจอ",
+        "noImage": "ไม่มีรูปภาพ",
+        "elementSelector": "ตรวจสอบองค์ประกอบ",
+        "elementInspectDetails": "รายละเอียดการตรวจสอบองค์ประกอบ",
+        "noScreenshots": "ไม่มีภาพหน้าจอ",
+        "screenshot": "ภาพหน้าจอ",
+        "logs": "บันทึก",
+        "stackTrace": "Stack Trace",
+        "noLogsFound": "ไม่พบบันทึกที่ตรงกับการค้นหา",
+        "noLogs": "ไม่มีบันทึก",
+        "comments": "ความคิดเห็น",
+        "addComment": "เพิ่มความคิดเห็น"
+      },
+      "status": {
+        "open": "เปิด",
+        "inProgress": "กำลังดำเนินการ",
+        "resolved": "แก้ไขแล้ว",
+        "closed": "ปิด"
+      },
+      "severity": {
+        "low": "ต่ำ",
+        "medium": "ปานกลาง",
+        "high": "สูง",
+        "critical": "วิกฤต"
+      },
+      "placeholder": {
+        "comment": "เขียนความคิดเห็น..."
       }
     },
     "activityLog": {

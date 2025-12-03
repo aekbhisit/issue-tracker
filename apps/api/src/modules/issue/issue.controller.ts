@@ -173,22 +173,67 @@ export class IssueController {
     try {
       const storagePath = decodeURIComponent(req.params.path)
       const token = req.query.token as string
-      const expires = req.query.expires ? parseInt(req.query.expires as string) : 0
+      const expiresParam = req.query.expires
+      const expires = expiresParam ? parseInt(String(expiresParam), 10) : 0
+
+      // Log request details for debugging
+      console.log('[Screenshot Controller] Request received:', {
+        url: req.url,
+        originalUrl: req.originalUrl,
+        path: req.params.path,
+        storagePath,
+        token: token ? `${token.substring(0, 10)}...` : 'missing',
+        tokenLength: token?.length,
+        expires,
+        expiresParam,
+        expiresType: typeof expiresParam,
+        hasToken: !!token,
+        hasExpires: !!expiresParam,
+        queryParams: Object.keys(req.query),
+        allQueryParams: req.query,
+      })
 
       // Verify token
-      if (!token || !expires) {
+      if (!token || !expires || isNaN(expires)) {
+        console.error('[Screenshot Controller] Missing token or expiration:', {
+          hasToken: !!token,
+          hasExpires: !!expiresParam,
+          expiresValue: expires,
+          isNaN: isNaN(expires),
+        })
         return res.status(401).json({
           error: 'Unauthorized',
           message: 'Missing token or expiration',
           status: 401,
+          debug: {
+            hasToken: !!token,
+            hasExpires: !!expiresParam,
+            expiresValue: expires,
+          },
         })
       }
 
-      if (!storageService.verifySignedUrlToken(storagePath, token, expires)) {
+      // Verify token signature
+      const isValid = storageService.verifySignedUrlToken(storagePath, token, expires)
+      console.log('[Screenshot Controller] Token verification:', {
+        storagePath,
+        isValid,
+        expires,
+        now: Math.floor(Date.now() / 1000),
+        expired: Math.floor(Date.now() / 1000) > expires,
+      })
+
+      if (!isValid) {
         return res.status(403).json({
           error: 'Forbidden',
           message: 'Invalid or expired token',
           status: 403,
+          debug: {
+            storagePath,
+            expires,
+            now: Math.floor(Date.now() / 1000),
+            expired: Math.floor(Date.now() / 1000) > expires,
+          },
         })
       }
 
@@ -201,12 +246,56 @@ export class IssueController {
         : rootDir
       const fullPath = path.join(projectRoot, 'storage', 'uploads', storagePath)
 
+      // Log path resolution for debugging
+      console.log('[Screenshot Controller] Serving screenshot:', {
+        storagePath,
+        rootDir,
+        projectRoot,
+        fullPath,
+        fileExists: fs.existsSync(fullPath),
+      })
+
       // Check if file exists
       if (!fs.existsSync(fullPath)) {
+        // Try alternative path resolution
+        const altPath = path.join(process.cwd(), 'storage', 'uploads', storagePath)
+        console.warn('[Screenshot Controller] File not found at primary path, trying alternative:', altPath)
+        
+        if (fs.existsSync(altPath)) {
+          console.log('[Screenshot Controller] Found file at alternative path, using it')
+          // Use alternative path
+          const ext = path.extname(altPath).toLowerCase()
+          const contentTypeMap: Record<string, string> = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.gif': 'image/gif',
+          }
+          const contentType = contentTypeMap[ext] || 'image/jpeg'
+          
+          res.setHeader('Content-Type', contentType)
+          res.setHeader('Cache-Control', 'private, max-age=3600')
+          const origin = req.headers.origin
+          if (origin) {
+            res.setHeader('Access-Control-Allow-Origin', origin)
+            res.setHeader('Access-Control-Allow-Credentials', 'true')
+          }
+          
+          return res.sendFile(path.resolve(altPath))
+        }
+        
         return res.status(404).json({
           error: 'NotFound',
           message: 'Screenshot not found',
           status: 404,
+          debug: {
+            storagePath,
+            primaryPath: fullPath,
+            alternativePath: altPath,
+            rootDir,
+            projectRoot,
+          },
         })
       }
 

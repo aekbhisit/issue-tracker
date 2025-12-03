@@ -27,6 +27,11 @@ export async function permissionMiddleware(
 	next: NextFunction
 ) {
 	try {
+		// Skip permission check for screenshot endpoints (they use signed URL tokens)
+		if (req.path.includes('/screenshots/') || req.originalUrl.includes('/screenshots/')) {
+			return next()
+		}
+
 		// Get user from auth middleware
 		if (!req.user || !req.user.roleId) {
 			return res.status(403).json({

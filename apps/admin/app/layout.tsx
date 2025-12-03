@@ -44,13 +44,34 @@ export default function AdminLayout({
                 try {
                   var theme = localStorage.getItem('theme');
                   var html = document.documentElement;
-                  var body = document.body;
+                  // Only modify html class - body will be handled after DOM is ready
                   if (theme === 'dark') {
                     html.classList.add('dark');
-                    if (body) body.classList.add('dark');
                   } else {
                     html.classList.remove('dark');
-                    if (body) body.classList.remove('dark');
+                  }
+                  // Apply to body when DOM is ready (body might not exist yet in <head>)
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                      var body = document.body;
+                      if (body) {
+                        if (theme === 'dark') {
+                          body.classList.add('dark');
+                        } else {
+                          body.classList.remove('dark');
+                        }
+                      }
+                    });
+                  } else {
+                    // DOM already loaded
+                    var body = document.body;
+                    if (body) {
+                      if (theme === 'dark') {
+                        body.classList.add('dark');
+                      } else {
+                        body.classList.remove('dark');
+                      }
+                    }
                   }
                 } catch (e) {
                   // Ignore localStorage errors (SSR, private browsing, etc.)

@@ -581,14 +581,14 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo-icon.svg"
+                src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
                 alt="Issue Collector"
                 width={32}
                 height={32}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-icon.svg"
+                src={`${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/images/logo/logo-icon.svg`}
                 alt="Issue Collector"
                 width={32}
                 height={32}

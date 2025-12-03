@@ -195,22 +195,48 @@ export class StorageService {
     
     // Check if file exists - return null instead of throwing error
     // This allows the API to continue working even if some files are missing
-    if (!fs.existsSync(fullPath)) {
-      console.warn(`⚠️  Screenshot file not found: ${storagePath} (expected at: ${fullPath})`)
-      // Also check if directory exists to help diagnose path issues
-      const dirPath = path.dirname(fullPath)
-      if (!fs.existsSync(dirPath)) {
-        console.warn(`⚠️  Screenshot directory not found: ${dirPath}`)
+    // Use the same path resolution logic as the controller
+    let fileExists = fs.existsSync(fullPath)
+    
+    if (!fileExists) {
+      // Try alternative path resolution (same as controller)
+      const rootDirAlt = process.cwd()
+      const projectRootAlt = rootDirAlt.endsWith('/apps/api') || rootDirAlt.endsWith('\\apps\\api')
+        ? path.resolve(rootDirAlt, '../..')
+        : rootDirAlt
+      const altPath = path.join(projectRootAlt, 'storage', 'uploads', storagePath)
+      
+      if (fs.existsSync(altPath)) {
+        fileExists = true
+        console.log(`✅ Screenshot file found at alternative path: ${storagePath} at ${altPath}`)
       } else {
-        // Directory exists but file doesn't - list files in directory for debugging
-        try {
-          const filesInDir = fs.readdirSync(dirPath)
-          console.warn(`⚠️  Directory exists but file not found. Files in directory: ${filesInDir.join(', ')}`)
-        } catch (err) {
-          console.warn(`⚠️  Could not read directory: ${dirPath}`, err)
+        console.warn(`⚠️  Screenshot file not found: ${storagePath}`)
+        console.warn(`   Primary path: ${fullPath}`)
+        console.warn(`   Alternative path: ${altPath}`)
+        console.warn(`   Root directory: ${rootDir}`)
+        console.warn(`   Current working directory: ${process.cwd()}`)
+        
+        // Also check if directory exists to help diagnose path issues
+        const dirPath = path.dirname(fullPath)
+        if (!fs.existsSync(dirPath)) {
+          console.warn(`⚠️  Screenshot directory not found: ${dirPath}`)
+        } else {
+          // Directory exists but file doesn't - list files in directory for debugging
+          try {
+            const filesInDir = fs.readdirSync(dirPath)
+            console.warn(`⚠️  Directory exists but file not found. Files in directory: ${filesInDir.join(', ')}`)
+            console.warn(`   Looking for: ${path.basename(storagePath)}`)
+          } catch (err) {
+            console.warn(`⚠️  Could not read directory: ${dirPath}`, err)
+          }
         }
+        return null
       }
-      return null
+    } else {
+      // Log successful file resolution for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Screenshot file found: ${storagePath} at ${fullPath}`)
+      }
     }
 
     // Generate token with expiration
@@ -310,16 +336,35 @@ export class StorageService {
     // Check expiration
     const now = Math.floor(Date.now() / 1000)
     if (now > expires) {
+      console.warn('[Storage Service] Token expired:', {
+        storagePath,
+        now,
+        expires,
+        expiredBy: now - expires,
+      })
       return false
     }
 
     // Verify token
+    const secretKey = process.env.SECRET_KEY || 'default-secret'
     const expectedToken = crypto
       .createHash('sha256')
-      .update(`${storagePath}:${expires}:${process.env.SECRET_KEY || 'default-secret'}`)
+      .update(`${storagePath}:${expires}:${secretKey}`)
       .digest('hex')
 
-    return token === expectedToken
+    const isValid = token === expectedToken
+    
+    if (!isValid) {
+      console.warn('[Storage Service] Token verification failed:', {
+        storagePath,
+        tokenLength: token?.length,
+        expectedTokenLength: expectedToken.length,
+        tokensMatch: token === expectedToken,
+        secretKeySet: !!process.env.SECRET_KEY,
+      })
+    }
+
+    return isValid
   }
 }
 

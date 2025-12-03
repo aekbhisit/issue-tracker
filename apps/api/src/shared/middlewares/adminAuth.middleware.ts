@@ -21,6 +21,10 @@ export async function adminAuthMiddleware(
 	res: Response,
 	next: NextFunction
 ) {
+	// Skip authentication for screenshot endpoints (they use signed URL tokens)
+	if (req.path.includes('/screenshots/') || req.originalUrl.includes('/screenshots/')) {
+		return next()
+	}
 	try {
 		// Get token from header
 		const authHeader = req.headers.authorization

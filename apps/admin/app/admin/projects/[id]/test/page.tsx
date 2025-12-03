@@ -27,6 +27,7 @@ export default function TestSDKPage() {
 	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 	const [sdkLoaded, setSdkLoaded] = useState(false);
 	const scriptLoadedRef = useRef(false);
+	const scriptLoadingRef = useRef(false);
 	const [isClient, setIsClient] = useState(false);
 
 	const projectId = params?.id ? parseInt(params.id as string, 10) : null;
@@ -51,10 +52,11 @@ export default function TestSDKPage() {
 		return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
 	}, []);
 
-	// Get SDK script URL
+	// Get SDK script URL with basePath prefix
+	const basePath = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin';
 	const sdkScriptUrl = typeof window !== "undefined"
-		? (process.env.NEXT_PUBLIC_SDK_URL || "/collector.min.js")
-		: "/collector.min.js";
+		? (process.env.NEXT_PUBLIC_SDK_URL || `${basePath}/collector.min.js`)
+		: `${basePath}/collector.min.js`;
 
 	// Check page permission
 	useEffect(() => {
@@ -120,6 +122,13 @@ export default function TestSDKPage() {
 			return;
 		}
 
+		// CRITICAL: Prevent multiple script loads
+		if (scriptLoadingRef.current) {
+			console.log("SDK script is already being loaded, skipping...");
+			return;
+		}
+		scriptLoadingRef.current = true;
+
 		const script = document.createElement("script");
 		script.src = sdkScriptUrl;
 		script.setAttribute("data-project-key", project.publicKey);
@@ -130,6 +139,7 @@ export default function TestSDKPage() {
 			console.log("SDK script loaded successfully", { src: script.src, projectKey: project.publicKey, apiUrl });
 			setSdkLoaded(true);
 			scriptLoadedRef.current = true;
+			scriptLoadingRef.current = false;
 			
 			// Wait a bit longer for auto-init, then check
 			setTimeout(() => {
@@ -157,9 +167,14 @@ export default function TestSDKPage() {
 
 		script.onerror = (error) => {
 			console.error("Failed to load SDK script", { src: script.src, error });
-			notification.showError({
-				message: `Failed to load SDK script from ${sdkScriptUrl}. Please check the script path.`,
-			});
+			scriptLoadingRef.current = false;
+			// Only show error once, don't retry
+			if (!scriptLoadedRef.current) {
+				notification.showError({
+					message: `Failed to load SDK script from ${sdkScriptUrl}. Please check the script path.`,
+				});
+				scriptLoadedRef.current = true; // Mark as attempted to prevent retries
+			}
 		};
 
 		if (document.body) {

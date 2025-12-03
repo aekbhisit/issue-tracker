@@ -227,8 +227,17 @@ export async function captureScreenshot(
       try {
         const win = clonedDoc.defaultView || window
         const StyleRule = (win as any).CSSStyleRule || (window as any).CSSStyleRule
+        
+        // Function to replace oklch() with a safe fallback color
+        const replaceOklchColor = (value: string): string => {
+          if (!value || typeof value !== 'string') return value
+          // Match oklch() color function and replace with a safe fallback
+          // oklch() format: oklch(L C H) or oklch(L C H / alpha)
+          return value.replace(/oklch\([^)]+\)/gi, '#111827')
+        }
+        
+        // 1. Process stylesheets (CSS rules)
         const styleSheets = Array.from(clonedDoc.styleSheets) as CSSStyleSheet[]
-
         for (const sheet of styleSheets) {
           let rules: CSSRuleList
           try {
@@ -249,14 +258,65 @@ export async function captureScreenshot(
                 if (value && value.includes('oklch(')) {
                   // Replace unsupported color with a safe fallback.
                   // We only change the color value, not layout-related properties.
-                  style.setProperty(prop, '#111827', style.getPropertyPriority(prop))
+                  const newValue = replaceOklchColor(value)
+                  style.setProperty(prop, newValue, style.getPropertyPriority(prop))
                 }
               }
             }
           }
         }
-      } catch {
+        
+        // 2. Process inline styles on all elements
+        const allElements = clonedDoc.querySelectorAll('*')
+        for (let i = 0; i < allElements.length; i++) {
+          const element = allElements[i] as HTMLElement
+          if (element.style) {
+            // Check all style properties
+            for (let j = 0; j < element.style.length; j++) {
+              const prop = element.style[j]
+              const value = element.style.getPropertyValue(prop)
+              if (value && value.includes('oklch(')) {
+                const newValue = replaceOklchColor(value)
+                element.style.setProperty(prop, newValue, element.style.getPropertyPriority(prop))
+              }
+            }
+          }
+        }
+        
+        // 3. Process computed styles (getComputedStyle) for elements that might have oklch
+        // This is a best-effort approach - we can't modify computed styles directly,
+        // but we can try to override them with inline styles
+        try {
+          const body = clonedDoc.body || clonedDoc.documentElement
+          if (body) {
+            const walker = clonedDoc.createTreeWalker(body, NodeFilter.SHOW_ELEMENT)
+            let node: Node | null = walker.nextNode()
+            while (node) {
+              const element = node as HTMLElement
+              if (element.style) {
+                const computedStyle = win.getComputedStyle(element)
+                // Check common color properties
+                const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 
+                                   'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+                                   'outlineColor', 'textDecorationColor', 'columnRuleColor']
+                for (const prop of colorProps) {
+                  const value = computedStyle.getPropertyValue(prop)
+                  if (value && value.includes('oklch(')) {
+                    // Override with inline style
+                    element.style.setProperty(prop, '#111827', 'important')
+                  }
+                }
+              }
+              node = walker.nextNode()
+            }
+          }
+        } catch (e) {
+          // Ignore errors in computed style processing
+          console.warn('[Screenshot] Could not process computed styles:', e)
+        }
+      } catch (e) {
         // Best-effort normalization; ignore any errors here
+        console.warn('[Screenshot] Error in onclone normalization:', e)
       }
     },
     // Skip cross-origin iframes
@@ -291,8 +351,7 @@ export async function captureScreenshot(
     console.log('[Screenshot] Capture completed successfully')
   } catch (error: any) {
     const message = error?.message || String(error || '')
-    console.error('[Screenshot] Capture failed:', message)
-
+    
     // Handle timeout separately
     if (message.includes('timed out') || message.includes('timeout')) {
       console.warn('[Screenshot] Capture timed out, element may be too large or complex. Falling back to text snapshot.')
@@ -305,8 +364,8 @@ export async function captureScreenshot(
 
     // html2canvas currently cannot parse some modern CSS color functions (e.g. "oklch")
     // Instead of failing, return a fallback image showing the element's text/HTML content
-    if (message.includes('unsupported color function "oklch"')) {
-      console.warn('Screenshot capture: falling back to element text due to unsupported color function "oklch"')
+    if (message.includes('unsupported color function "oklch"') || message.includes('oklch')) {
+      console.warn('[Screenshot] Unsupported color function "oklch" detected. This is expected and handled gracefully. Falling back to element text snapshot.')
       return createFallbackScreenshot(
         element,
         targetWidth || elementWidth,
@@ -314,7 +373,27 @@ export async function captureScreenshot(
       )
     }
 
-    throw new Error(`Failed to capture screenshot: ${message || 'Unknown error'}`)
+    // For other errors, log as error but still try fallback
+    // CRITICAL: Always return fallback instead of throwing to ensure loading overlay is hidden
+    console.error('[Screenshot] Capture failed:', message)
+    console.warn('[Screenshot] Attempting fallback screenshot with element text content...')
+    try {
+      return createFallbackScreenshot(
+        element,
+        targetWidth || elementWidth,
+        targetHeight || elementHeight
+      )
+    } catch (fallbackError) {
+      // Even if fallback fails, return a minimal screenshot to prevent throwing
+      console.error('[Screenshot] Fallback screenshot creation failed:', fallbackError)
+      return {
+        dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        mimeType: 'image/png',
+        fileSize: 100,
+        width: 1,
+        height: 1,
+      }
+    }
   }
 
   console.log('[Screenshot] Canvas captured, dimensions:', canvas.width, 'x', canvas.height)
