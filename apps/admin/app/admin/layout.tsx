@@ -53,7 +53,7 @@ export default function AdminLayout({
   // If it's an auth page, render without sidebar and header
   if (isAuthPage) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen" suppressHydrationWarning>
         {children}
       </div>
     );
@@ -61,18 +61,19 @@ export default function AdminLayout({
 
   // Regular admin layout with sidebar and header
   return (
-    <div className="min-h-screen xl:flex">
+    <div className="min-h-screen xl:flex" suppressHydrationWarning>
       {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
       {/* Main Content Area */}
       <div
         className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
+        suppressHydrationWarning
       >
         {/* Header */}
         <AppHeader />
         {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
+        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6" suppressHydrationWarning>{children}</div>
       </div>
     </div>
   );

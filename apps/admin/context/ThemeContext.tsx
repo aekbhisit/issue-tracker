@@ -17,26 +17,41 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [theme, setTheme] = useState<Theme>("light");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Mark as mounted after hydration to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
+    // Only run after component is mounted (client-side only)
+    if (!isMounted) return;
+    
     // This code will only run on the client side
     const savedTheme = localStorage.getItem("theme") as Theme | null;
     const initialTheme = savedTheme || "light"; // Default to light theme
 
     setTheme(initialTheme);
     setIsInitialized(true);
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("theme", theme);
+    // Only apply theme changes after initialization and mounting
+    // This prevents hydration mismatch by not modifying DOM during SSR
+    if (!isInitialized || !isMounted) return;
+    
+    localStorage.setItem("theme", theme);
+    
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
       if (theme === "dark") {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
       }
-    }
-  }, [theme, isInitialized]);
+    });
+  }, [theme, isInitialized, isMounted]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
