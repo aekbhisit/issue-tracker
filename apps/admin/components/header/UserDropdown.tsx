@@ -55,6 +55,7 @@ export default function UserDropdown() {
             height={44}
             src="/admin/images/user/owner.jpg"
             alt={user?.name || 'User'}
+            unoptimized={true}
           />
         </span>
 

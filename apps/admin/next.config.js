@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // NOTE: basePath is required for Next.js Image optimization to generate /admin/_next/image URLs
-  // Without basePath, Next.js generates root-relative /_next/image URLs which go to frontend
-  // With basePath='/admin', Next.js generates /admin/_next/image URLs which route to admin container
-  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // NOTE: basePath removed to avoid /admin/admin/ double prefix issue
+  // For static images, we use unoptimized={true} on Image components
+  // This prevents Next.js from generating /_next/image URLs that would go to frontend
+  // Static images are served directly via Nginx /admin/images/ location block
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   
