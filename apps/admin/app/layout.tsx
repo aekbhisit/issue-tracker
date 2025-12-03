@@ -35,8 +35,29 @@ export default function AdminLayout({
         <title>Issue Collector - Admin Dashboard</title>
         <meta name="description" content="Issue Collector - Centralized issue reporting and management system" />
         <link rel="icon" type="image/x-icon" href="/admin/favicon.ico" />
+        {/* Blocking script to set theme before React hydration - prevents hydration mismatch */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.body.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.body.classList.remove('dark');
+                  }
+                } catch (e) {
+                  // Ignore localStorage errors
+                }
+              })();
+            `,
+          }}
+        />
       </head>
-      <body className={`${outfit.className} dark:bg-gray-900`} suppressHydrationWarning>
+      <body className={`${outfit.className} bg-white dark:bg-gray-900`} suppressHydrationWarning>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <SidebarProvider>

@@ -26,21 +26,19 @@ export default function AdminPage() {
     }
   }, [router]);
 
-  // Render nothing on server side to prevent hydration mismatch
-  // The client will render SignInForm after hydration
-  // Use suppressHydrationWarning to prevent React from complaining about the mismatch
-  if (!isClient) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>
-        <div className="text-gray-500" suppressHydrationWarning>Loading...</div>
-      </div>
-    );
-  }
-
+  // CRITICAL: Render the same structure on server and client to prevent hydration mismatch
+  // Return a consistent structure that matches what will be rendered after hydration
+  // Use suppressHydrationWarning on the outer container to tell React this is intentional
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>Loading...</div>}>
-      <SignInForm />
-    </Suspense>
+    <div className="min-h-screen flex items-center justify-center" suppressHydrationWarning>
+      {isClient ? (
+        <Suspense fallback={<div className="text-gray-500" suppressHydrationWarning>Loading...</div>}>
+          <SignInForm />
+        </Suspense>
+      ) : (
+        <div className="text-gray-500" suppressHydrationWarning>Loading...</div>
+      )}
+    </div>
   );
 }
 
