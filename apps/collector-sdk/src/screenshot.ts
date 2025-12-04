@@ -9,7 +9,7 @@ import type { ScreenshotData } from './types'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const MAX_DIMENSION = 4096 // 4096x4096 pixels
 const DEFAULT_QUALITY = 0.85 // JPEG quality (0.8-0.9)
-const DEFAULT_TIMEOUT = 15000 // 15 seconds (reduced from 30s for better UX)
+const DEFAULT_TIMEOUT = 8000 // 8 seconds (optimized for faster UX - fallback to text snapshot if timeout)
 
 export interface CaptureOptions {
   maxWidth?: number
@@ -206,18 +206,26 @@ export async function captureScreenshot(
     }, timeout)
   })
 
+  // PERFORMANCE OPTIMIZATION: Use lower scale for very large elements to speed up capture
+  // For elements larger than 2000px, use scale 0.5 to reduce processing time
+  const optimizedScale = (elementWidth > 2000 || elementHeight > 2000) 
+    ? Math.min(scale, 0.5) 
+    : scale;
+  
   // Capture screenshot with html2canvas
   console.log('[Screenshot] Initializing html2canvas with options:', {
-    scale,
+    originalScale: scale,
+    optimizedScale: optimizedScale,
     width: elementWidth,
     height: elementHeight,
     timeout,
+    isLargeElement: elementWidth > 2000 || elementHeight > 2000,
   })
   
   const capturePromise = html2canvas(element, {
     useCORS: true,
     allowTaint: false,
-    scale: scale,
+    scale: optimizedScale, // Use optimized scale for large elements
     width: elementWidth,
     height: elementHeight,
     logging: false,

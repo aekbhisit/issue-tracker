@@ -283,9 +283,9 @@ export class IssueCollectorWidget {
               },
             })
             
-            // OPTIMIZATION: Reduced delay from 100ms to 50ms for faster capture
-            // Small delay to ensure DOM is stable after inspect mode cleanup
-            await new Promise(resolve => setTimeout(resolve, 50))
+            // OPTIMIZATION: Minimal delay (10ms) - just enough for DOM to stabilize after inspect mode cleanup
+            // Using requestAnimationFrame is faster than setTimeout for visual updates
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
             
             // Verify element position hasn't changed significantly
             const newRect = element.getBoundingClientRect()

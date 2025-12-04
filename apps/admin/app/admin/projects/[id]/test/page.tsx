@@ -52,11 +52,12 @@ export default function TestSDKPage() {
 		return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
 	}, []);
 
-	// Get SDK script URL with basePath prefix
-	const basePath = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin';
+	// Get SDK script URL
+	// Use root-level /collector.min.js for better compatibility (works in both dev and production)
+	// Nginx serves it from admin container, but at root level for external embedding
 	const sdkScriptUrl = typeof window !== "undefined"
-		? (process.env.NEXT_PUBLIC_SDK_URL || `${basePath}/collector.min.js`)
-		: `${basePath}/collector.min.js`;
+		? (process.env.NEXT_PUBLIC_SDK_URL || '/collector.min.js')
+		: '/collector.min.js';
 
 	// Check page permission
 	useEffect(() => {
@@ -166,14 +167,49 @@ export default function TestSDKPage() {
 		};
 
 		script.onerror = (error) => {
-			console.error("Failed to load SDK script", { src: script.src, error });
+			console.error("Failed to load SDK script", { 
+				src: script.src, 
+				error,
+				windowLocation: typeof window !== "undefined" ? window.location.href : "N/A",
+				basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH,
+				sdkUrl: process.env.NEXT_PUBLIC_SDK_URL
+			});
 			scriptLoadingRef.current = false;
 			// Only show error once, don't retry
 			if (!scriptLoadedRef.current) {
-				notification.showError({
-					message: `Failed to load SDK script from ${sdkScriptUrl}. Please check the script path.`,
-				});
-				scriptLoadedRef.current = true; // Mark as attempted to prevent retries
+				// Try alternative URL if first attempt failed
+				const alternativeUrl = script.src.includes('/admin/') 
+					? '/collector.min.js' 
+					: `${process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin'}/collector.min.js`;
+				
+				console.warn("Attempting alternative SDK URL:", alternativeUrl);
+				
+				// Retry with alternative URL once
+				const retryScript = document.createElement("script");
+				retryScript.src = alternativeUrl;
+				retryScript.setAttribute("data-project-key", project.publicKey);
+				retryScript.setAttribute("data-api-url", apiUrl);
+				retryScript.async = true;
+				
+				retryScript.onload = () => {
+					console.log("SDK script loaded successfully from alternative URL", { src: retryScript.src });
+					setSdkLoaded(true);
+					scriptLoadedRef.current = true;
+					scriptLoadingRef.current = false;
+				};
+				
+				retryScript.onerror = () => {
+					console.error("Failed to load SDK script from alternative URL", { src: alternativeUrl });
+					notification.showError({
+						message: `Failed to load SDK script. Please check if the SDK file exists at ${sdkScriptUrl} or ${alternativeUrl}.`,
+					});
+					scriptLoadedRef.current = true; // Mark as attempted to prevent retries
+					scriptLoadingRef.current = false;
+				};
+				
+				if (document.body) {
+					document.body.appendChild(retryScript);
+				}
 			}
 		};
 
