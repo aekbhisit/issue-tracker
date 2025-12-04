@@ -545,9 +545,11 @@ export default function IssueDetailPage() {
 		return null;
 	}
 
+	// NOTE: With basePath='/admin', Next.js Link automatically prepends basePath to hrefs
+	// So we use paths without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
-		{ label: t("common.label.issues"), href: "/admin/issues" },
+		{ label: t("common.label.dashboard"), href: "/dashboard" },
+		{ label: t("common.label.issues"), href: "/issues" },
 		{ label: issue.title || `Issue #${issue.id}` },
 	];
 

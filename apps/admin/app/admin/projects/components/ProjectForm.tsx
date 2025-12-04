@@ -355,9 +355,11 @@ export function ProjectForm({ initialProject, isEditMode = false, onSubmit, onCa
 		}
 	};
 
+	// NOTE: With basePath='/admin', Next.js Link automatically prepends basePath to hrefs
+	// So we use paths without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
-		{ label: t("common.label.projects"), href: "/admin/projects" },
+		{ label: t("common.label.dashboard"), href: "/dashboard" },
+		{ label: t("common.label.projects"), href: "/projects" },
 		{ 
 			label: isEditMode 
 				? (initialProject?.name ? `${t("admin.project.form.editTitle")} ${initialProject.name}` : t("admin.project.form.editTitle"))
