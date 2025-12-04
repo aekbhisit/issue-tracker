@@ -40,7 +40,9 @@ export default function SignInForm() {
       console.log('✅ Login success:', response);
       // Without basePath, we need to explicitly include /admin prefix
       // Routes are at /admin/* from app/admin/ folder structure
-      router.push('/admin/dashboard');
+      // NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
+      // So use path without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
+      router.push('/dashboard');
     } catch (err) {
       console.error('❌ Login error:', err);
       const authError = err as AuthError;

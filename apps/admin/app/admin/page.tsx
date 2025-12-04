@@ -20,7 +20,9 @@ export default function AdminPage() {
       if (isAuthenticated()) {
         // User has token - redirect to dashboard
         // If token is invalid, dashboard will get 401 and redirect back here
-        router.push('/admin/dashboard');
+        // NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
+        // So use path without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
+        router.push('/dashboard');
       }
     };
     

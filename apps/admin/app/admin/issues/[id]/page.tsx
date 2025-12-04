@@ -65,7 +65,8 @@ export default function IssueDetailPage() {
 					showError({
 						message: t("common.errors.noPermission"),
 					});
-					router.push("/admin/issues");
+					// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
+					router.push("/issues");
 				}
 			}
 		).then(setHasPermission);
@@ -500,7 +501,8 @@ export default function IssueDetailPage() {
 	}, [issue, formatIssueAsMarkdown, copyToClipboard, showError]);
 
 	const handleCancelNavigation = useCallback(() => {
-		router.push("/admin/issues");
+		// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
+		router.push("/issues");
 	}, [router]);
 
 	const statusOptions: SelectOption[] = useMemo(

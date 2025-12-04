@@ -66,7 +66,8 @@ export default function PermissionPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					})
-					router.push("/admin/dashboard")
+					// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
+					router.push("/dashboard")
 				}
 			}
 		).then(setHasPermission)

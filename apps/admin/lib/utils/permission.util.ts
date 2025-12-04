@@ -219,7 +219,8 @@ export function checkPermission(
  * ```tsx
  * const hasPermission = await checkPagePermission("user", "get_data", "admin");
  * if (!hasPermission) {
- *   router.push("/admin/dashboard");
+ *   // NOTE: With basePath='/admin', use path without /admin prefix
+ *   router.push("/dashboard");
  * }
  * ```
  */
@@ -252,7 +253,8 @@ export async function checkPagePermission(
  *     (denied) => {
  *       if (denied) {
  *         showError({ message: "No permission" });
- *         router.push("/admin/dashboard");
+ *         // NOTE: With basePath='/admin', use path without /admin prefix
+ *         router.push("/dashboard");
  *       }
  *     }
  *   );
