@@ -35,7 +35,7 @@ export default function EditProjectPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					router.push("/projects");
+					router.push("/admin/projects");
 				}
 			}
 		).then(setHasPermission);
@@ -47,7 +47,7 @@ export default function EditProjectPage() {
 			showError({
 				message: "Invalid project ID",
 			});
-			router.push("/projects");
+			router.push("/admin/projects");
 			return;
 		}
 
@@ -64,7 +64,7 @@ export default function EditProjectPage() {
 				showError({
 					message: (error as Error).message || "Failed to load project",
 				});
-				router.push("/projects");
+				router.push("/admin/projects");
 			} finally {
 				if (mounted) {
 					setLoading(false);
@@ -105,7 +105,7 @@ export default function EditProjectPage() {
 	);
 
 	const handleCancel = useCallback(() => {
-		router.push("/projects");
+		router.push("/admin/projects");
 	}, [router]);
 
 	if (hasPermission === false || loading) {

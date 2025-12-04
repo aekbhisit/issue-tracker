@@ -64,12 +64,12 @@ export default function TestSDKPage() {
 		checkPageAccess(
 			{ module: "project", action: "get_data", type: "admin" },
 			(denied) => {
-				if (denied) {
-					showError({
-						message: t("common.errors.noPermission"),
-					});
-					router.push("/projects");
-				}
+			if (denied) {
+				showError({
+					message: t("common.errors.noPermission"),
+				});
+				router.push("/admin/projects");
+			}
 			}
 		).then(setHasPermission);
 	}, [router, showError, t]);
@@ -80,7 +80,7 @@ export default function TestSDKPage() {
 			showError({
 				message: "Invalid project ID",
 			});
-			router.push("/projects");
+			router.push("/admin/projects");
 			return;
 		}
 
@@ -97,7 +97,7 @@ export default function TestSDKPage() {
 				showError({
 					message: (error as Error).message || "Failed to load project",
 				});
-				router.push("/projects");
+				router.push("/admin/projects");
 			} finally {
 				if (mounted) {
 					setLoading(false);
@@ -246,11 +246,11 @@ export default function TestSDKPage() {
 	}, [project?.publicKey, apiUrl, sdkScriptUrl, notification]);
 
 	const handleBack = useCallback(() => {
-		router.push(`/projects/${projectId}`);
+		router.push(`/admin/projects/${projectId}`);
 	}, [router, projectId]);
 
 	const handleViewIssues = useCallback(() => {
-		router.push(`/issues?projectId=${projectId}`);
+		router.push(`/admin/issues?projectId=${projectId}`);
 	}, [router, projectId]);
 
 	if (!isClient) {
