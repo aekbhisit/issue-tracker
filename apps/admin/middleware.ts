@@ -4,12 +4,12 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // NOTE: With basePath='/admin', Next.js automatically strips basePath from pathname in middleware
-  // So '/admin/dashboard' becomes '/dashboard' in middleware
-  // But we still need to handle cases where pathname might include /admin prefix
+  // NOTE: Without basePath, Next.js routes come from app/admin/ folder structure
+  // Pathname will be like '/admin/dashboard', '/admin/issues', etc.
+  // We need to normalize it for auth checks by removing /admin prefix
   let normalizedPath = pathname
   
-  // Remove /admin prefix if present (Next.js should do this automatically with basePath, but handle both cases)
+  // Remove /admin prefix if present (from folder structure)
   if (normalizedPath.startsWith('/admin/')) {
     normalizedPath = normalizedPath.substring('/admin'.length) || '/'
   } else if (normalizedPath === '/admin') {
@@ -36,8 +36,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect to login if no token and trying to access protected routes
   if (!token && isDashboardPath) {
-    // With basePath='/admin', redirect to /admin (login page)
-    // Next.js will automatically add basePath prefix
+    // Without basePath, redirect explicitly to /admin (login page)
     const url = request.nextUrl.clone()
     url.pathname = '/admin'
     return NextResponse.redirect(url)
@@ -47,8 +46,8 @@ export function middleware(request: NextRequest) {
 }
 
 // Configure which paths the middleware should run on
-// NOTE: With basePath='/admin', Next.js automatically strips basePath from pathname in middleware
-// Nginx proxies /admin/* to Next.js, Next.js strips basePath, so pathname in middleware is /dashboard, etc.
+// NOTE: basePath removed - paths come from app/admin/ folder structure
+// Nginx proxies /admin/* to Next.js, so pathname will be /admin/dashboard, etc.
 // Middleware matches all paths except static files and API routes
 export const config = {
   matcher: [

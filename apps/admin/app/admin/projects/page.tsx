@@ -61,7 +61,6 @@ export default function ProjectsPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					});
-					// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
 					router.push("/dashboard");
 				}
 			}

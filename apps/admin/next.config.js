@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // NOTE: basePath is required for Next.js to generate correct RSC request URLs with /admin prefix
-  // Without basePath, RSC requests are root-relative (/dashboard?_rsc=...) instead of (/admin/dashboard?_rsc=...)
-  // With app/admin/ folder structure, routes are already at /admin/*, so basePath just affects asset/RSC URLs
-  basePath: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
+  // NOTE: basePath removed to avoid /admin/admin/ double prefix issue
+  // With app/admin/ folder structure, Next.js creates routes at /admin/* (from folder name)
+  // If we add basePath='/admin', it creates /admin/admin/* routes (double prefix)
+  // RSC requests will be root-relative, but Nginx smart routing handles them based on referer
+  // assetPrefix is kept for static assets only (doesn't affect routes)
   assetPrefix: process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || '/admin',
   transpilePackages: ['@workspace/types', '@workspace/utils'],
   

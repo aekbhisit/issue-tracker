@@ -237,12 +237,10 @@ export default function TestSDKPage() {
 		return null;
 	}
 
-	// NOTE: With basePath='/admin', Next.js Link automatically prepends basePath to hrefs
-	// So we use paths without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/dashboard" },
-		{ label: t("common.label.projects"), href: "/projects" },
-		{ label: project.name, href: `/projects/${project.id}` },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.projects"), href: "/admin/projects" },
+		{ label: project.name, href: `/admin/projects/${project.id}` },
 		{ label: t("admin.project.form.testSDK") },
 	];
 

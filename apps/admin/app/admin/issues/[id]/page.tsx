@@ -65,8 +65,7 @@ export default function IssueDetailPage() {
 					showError({
 						message: t("common.errors.noPermission"),
 					});
-					// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
-					router.push("/issues");
+					router.push("/admin/issues");
 				}
 			}
 		).then(setHasPermission);
@@ -501,8 +500,7 @@ export default function IssueDetailPage() {
 	}, [issue, formatIssueAsMarkdown, copyToClipboard, showError]);
 
 	const handleCancelNavigation = useCallback(() => {
-		// NOTE: With basePath='/admin', Next.js router.push automatically prepends basePath
-		router.push("/issues");
+		router.push("/admin/issues");
 	}, [router]);
 
 	const statusOptions: SelectOption[] = useMemo(
@@ -547,11 +545,9 @@ export default function IssueDetailPage() {
 		return null;
 	}
 
-	// NOTE: With basePath='/admin', Next.js Link automatically prepends basePath to hrefs
-	// So we use paths without /admin prefix (e.g., "/dashboard" not "/admin/dashboard")
 	const breadcrumbs = [
-		{ label: t("common.label.dashboard"), href: "/dashboard" },
-		{ label: t("common.label.issues"), href: "/issues" },
+		{ label: t("common.label.dashboard"), href: "/admin/dashboard" },
+		{ label: t("common.label.issues"), href: "/admin/issues" },
 		{ label: issue.title || `Issue #${issue.id}` },
 	];
 
