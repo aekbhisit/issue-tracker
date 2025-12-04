@@ -3,7 +3,7 @@
  * @description Chat-style widget panel with tabbed interface for issue reporting
  */
 
-import type { Severity, IssuePayload, ScreenshotMetadata, ElementSelector } from './types'
+import type { Severity, IssuePayload, ScreenshotMetadata, ElementSelector, ScreenshotData } from './types'
 import { submitIssue, fetchIssues, fetchProjectDetails } from './api'
 import { collectMetadata, getUserInfo, collectStorageData } from './metadata'
 
@@ -15,8 +15,47 @@ export interface PanelCallbacks {
   onReopen: () => void
   onSubmit: (payload: IssuePayload) => Promise<void>
   onStartInspect?: () => void
-  onCaptureFullScreen?: () => void
   getLogs?: () => import('./types').LogData | undefined
+}
+
+/**
+ * Convert File to ScreenshotData
+ */
+function convertFileToScreenshotData(file: File): Promise<ScreenshotData> {
+  return new Promise((resolve, reject) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      reject(new Error('Invalid file type. Please select an image file (JPEG, PNG, or WebP).'))
+      return
+    }
+    
+    // Validate file size (10MB max)
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      reject(new Error(`File size exceeds 10MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`))
+      return
+    }
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      const img = new Image()
+      img.onload = () => {
+        resolve({
+          dataUrl,
+          mimeType: file.type,
+          fileSize: file.size,
+          width: img.width,
+          height: img.height,
+        })
+      }
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = dataUrl
+    }
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
 }
 
 /**
@@ -754,30 +793,69 @@ function initializeSubmitTab(
     }
   })
   
-  // Capture Screenshot button
-  const captureButton = document.createElement('button')
-  captureButton.type = 'button'
-  captureButton.className = 'issue-collector-action-button'
-  captureButton.innerHTML = `
+  // Upload Image button
+  const uploadButton = document.createElement('button')
+  uploadButton.type = 'button'
+  uploadButton.className = 'issue-collector-action-button'
+  uploadButton.innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-      <circle cx="12" cy="13" r="4"></circle>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
     </svg>
-    Capture Screenshot
+    Upload Image
   `
-  captureButton.setAttribute('title', 'Capture entire screen')
-  captureButton.addEventListener('click', (e) => {
+  uploadButton.setAttribute('title', 'Upload an image file')
+  
+  // Hidden file input
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'image/jpeg,image/jpg,image/png,image/webp'
+  fileInput.style.display = 'none'
+  fileInput.setAttribute('aria-label', 'Upload image file')
+  
+  // File upload handler
+  uploadButton.addEventListener('click', (e) => {
     e.preventDefault()
     e.stopPropagation()
+    fileInput.click()
+  })
+  
+  fileInput.addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    
     const panel = content.closest('.issue-collector-panel') as any
-    if (panel && panel.callbacks && panel.callbacks.onCaptureFullScreen) {
-      panel.callbacks.onCaptureFullScreen()
+    if (!panel) return
+    
+    try {
+      // Convert file to ScreenshotData
+      const screenshotData = await convertFileToScreenshotData(file)
+      
+      // Create ScreenshotMetadata without selector (uploaded images don't have selectors)
+      const screenshotMetadata: ScreenshotMetadata = {
+        screenshot: screenshotData,
+        // selector is optional, so we can omit it for uploaded images
+      }
+      
+      // Update panel with uploaded image
+      if ((panel as any).updateScreenshot) {
+        ;(panel as any).updateScreenshot(screenshotMetadata)
+      }
+    } catch (error) {
+      console.error('[SDK] Failed to process uploaded image:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Failed to process image'
+      alert(`Error: ${errorMsg}`)
+    } finally {
+      // Reset file input to allow selecting the same file again
+      fileInput.value = ''
     }
   })
   
   actionsContainer.appendChild(inspectButton)
-  actionsContainer.appendChild(captureButton)
+  actionsContainer.appendChild(uploadButton)
   content.appendChild(actionsContainer)
+  content.appendChild(fileInput)
   
   // Form
   const form = document.createElement('form')
@@ -939,6 +1017,10 @@ function initializeSubmitTab(
           // Valid: has selector but no screenshot (screenshot capture failed)
           // This is acceptable - selector data is still useful
           validScreenshot = currentScreenshot
+        } else if (currentScreenshot.screenshot && !currentScreenshot.selector) {
+          // Valid: has screenshot but no selector (uploaded image)
+          // This is acceptable - uploaded images don't have selectors
+          validScreenshot = currentScreenshot
         }
       }
       
@@ -1047,6 +1129,9 @@ function updateScreenshotPreview(content: HTMLElement, isLoading: boolean = fals
       selectorSummary.length > 80 ? selectorSummary.slice(0, 77) + '…' : selectorSummary
 
     const outerHtml = selector?.outerHTML || ''
+    
+    // For uploaded images (no selector), show a different message
+    const isUploadedImage = hasScreenshot && !selector
     const maxOuterHtmlLength = 800
     const truncatedOuterHtml =
       outerHtml.length > maxOuterHtmlLength
@@ -1158,7 +1243,17 @@ ${escapeHtml(truncatedOuterHtml)}
     screenshotPreview.innerHTML = `
       <img src="${currentScreenshot.screenshot.dataUrl}" alt="Screenshot preview" style="max-width: 100%; height: auto; border-radius: 6px;" />
       ${
-        truncatedSelector
+        isUploadedImage
+          ? `<div style="margin-top: 12px; padding: 12px; background-color: #eff6ff; border-radius: 6px; border: 1px solid #bfdbfe;">
+               <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">Uploaded Image</div>
+               <div style="font-size: 11px; color: #3b82f6;">
+                 ${currentScreenshot.screenshot.width} × ${currentScreenshot.screenshot.height} pixels • ${(currentScreenshot.screenshot.fileSize / 1024).toFixed(1)} KB
+               </div>
+             </div>`
+          : ''
+      }
+      ${
+        truncatedSelector && !isUploadedImage
           ? `<div style="margin-top: 4px; font-size: 12px; color: #4b5563;">
                <div style="font-weight: 500; margin-bottom: 2px;">Selected element</div>
                <div style="font-family: monospace; word-break: break-all;">
@@ -1168,7 +1263,7 @@ ${escapeHtml(truncatedOuterHtml)}
           : ''
       }
       ${
-        truncatedOuterHtml
+        truncatedOuterHtml && !isUploadedImage
           ? `<div style="margin-top: 6px; font-size: 12px; color: #4b5563;">
                <div style="font-weight: 500; margin-bottom: 2px;">Selected element HTML</div>
                <pre style="max-height: 160px; overflow: auto; padding: 8px; background-color: #f3f4f6; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all;">
@@ -1178,22 +1273,39 @@ ${escapeHtml(truncatedOuterHtml)}
           : ''
       }
       <div class="issue-collector-screenshot-preview-actions">
-        <button type="button" class="issue-collector-button issue-collector-button-secondary" data-action="retake" style="flex: 1;">
-          Retake
-        </button>
+        ${isUploadedImage 
+          ? `<button type="button" class="issue-collector-button issue-collector-button-secondary" data-action="change" style="flex: 1;">
+               Change Image
+             </button>`
+          : `<button type="button" class="issue-collector-button issue-collector-button-secondary" data-action="retake" style="flex: 1;">
+               Retake
+             </button>`
+        }
         <button type="button" class="issue-collector-button issue-collector-button-secondary" data-action="remove" style="flex: 1;">
           Remove
         </button>
       </div>
     `
     
-    // Handle retake button
-    screenshotPreview.querySelector('[data-action="retake"]')?.addEventListener('click', () => {
-      const panel = content.closest('.issue-collector-panel') as any
-      if (panel && panel.callbacks && panel.callbacks.onStartInspect) {
-        panel.callbacks.onStartInspect()
-      }
-    })
+    // Handle change/retake button
+    const changeRetakeButton = screenshotPreview.querySelector('[data-action="change"], [data-action="retake"]')
+    if (changeRetakeButton) {
+      changeRetakeButton.addEventListener('click', () => {
+        if (isUploadedImage) {
+          // For uploaded images, trigger file input again
+          const fileInput = content.querySelector('input[type="file"]') as HTMLInputElement
+          if (fileInput) {
+            fileInput.click()
+          }
+        } else {
+          // For inspect element, start inspect mode again
+          const panel = content.closest('.issue-collector-panel') as any
+          if (panel && panel.callbacks && panel.callbacks.onStartInspect) {
+            panel.callbacks.onStartInspect()
+          }
+        }
+      })
+    }
     
     // Handle remove button
     screenshotPreview.querySelector('[data-action="remove"]')?.addEventListener('click', () => {

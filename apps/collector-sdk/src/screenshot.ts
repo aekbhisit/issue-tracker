@@ -9,7 +9,7 @@ import type { ScreenshotData } from './types'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const MAX_DIMENSION = 4096 // 4096x4096 pixels
 const DEFAULT_QUALITY = 0.85 // JPEG quality (0.8-0.9)
-const DEFAULT_TIMEOUT = 8000 // 8 seconds (optimized for faster UX - fallback to text snapshot if timeout)
+const DEFAULT_TIMEOUT = 20000 // 20 seconds (increased to ensure proper capture, still faster than original 30s)
 
 export interface CaptureOptions {
   maxWidth?: number
@@ -176,6 +176,16 @@ export async function captureScreenshot(
     timeout = DEFAULT_TIMEOUT,
   } = options
 
+  // CRITICAL: Validate element before capture
+  if (!element || !element.isConnected) {
+    throw new Error('Element is not connected to DOM')
+  }
+  
+  // CRITICAL: Don't capture the widget itself
+  if (element.id === 'issue-collector-widget' || element.closest('#issue-collector-widget')) {
+    throw new Error('Cannot capture the widget element itself')
+  }
+
   // Get element dimensions
   const rect = element.getBoundingClientRect()
   const isRootElement = element === document.documentElement || element === document.body
@@ -188,6 +198,11 @@ export async function captureScreenshot(
 
   const elementWidth = Math.round(baseWidth)
   const elementHeight = Math.round(baseHeight)
+  
+  // Validate dimensions
+  if (elementWidth <= 0 || elementHeight <= 0) {
+    throw new Error(`Element has invalid dimensions: ${elementWidth}x${elementHeight}`)
+  }
 
   // Calculate scale if element is too large
   const scale = calculateScale(elementWidth, elementHeight, maxWidth, maxHeight)
@@ -206,12 +221,11 @@ export async function captureScreenshot(
     }, timeout)
   })
 
-  // PERFORMANCE OPTIMIZATION: Use lower scale for very large elements to speed up capture
-  // For elements larger than 2000px, use scale 0.5 to reduce processing time
-  const optimizedScale = (elementWidth > 2000 || elementHeight > 2000) 
-    ? Math.min(scale, 0.5) 
-    : scale;
-  
+  // QUALITY-FIRST: Use original scale for all elements to ensure proper screenshots
+  // Only reduce scale if element exceeds MAX_DIMENSION (calculated by calculateScale)
+  // This ensures html2canvas captures with proper colors and quality
+  const optimizedScale = scale // Always use calculated scale - preserves quality and ensures proper capture
+
   // Capture screenshot with html2canvas
   console.log('[Screenshot] Initializing html2canvas with options:', {
     originalScale: scale,
@@ -219,106 +233,254 @@ export async function captureScreenshot(
     width: elementWidth,
     height: elementHeight,
     timeout,
-    isLargeElement: elementWidth > 2000 || elementHeight > 2000,
   })
+  
+  // Validate html2canvas is available
+  if (typeof html2canvas === 'undefined' || !html2canvas) {
+    throw new Error('html2canvas is not available. Make sure it is properly imported.')
+  }
+  
+  console.log('[Screenshot] html2canvas available:', typeof html2canvas, html2canvas)
+  
+  // Store original inline styles to restore later (for elements we modify)
+  const originalStyles = new Map<HTMLElement, Map<string, string>>()
+  
+  // CRITICAL: Process the element and ALL its descendants to replace oklch in computed styles
+  // html2canvas processes the entire subtree, so we must process all descendants too
+  try {
+    const replaceUnsupportedColors = (value: string): string => {
+      if (!value || typeof value !== 'string') return value
+      let result = value.replace(/oklch\([^)]+\)/gi, '#111827')
+      result = result.replace(/lab\([^)]+\)/gi, '#111827')
+      result = result.replace(/lch\([^)]+\)/gi, '#111827')
+      return result
+    }
+    
+    // Process the target element AND all its descendants
+    // Also process parent elements that might affect the element's styling
+    const elementsToProcess: HTMLElement[] = []
+    
+    // Add the target element
+    elementsToProcess.push(element)
+    
+    // Add all descendants
+    const descendants = element.querySelectorAll('*') as NodeListOf<HTMLElement>
+    for (let i = 0; i < descendants.length; i++) {
+      elementsToProcess.push(descendants[i])
+    }
+    
+    // Add parent elements up to body (html2canvas reads inherited styles)
+    let parent: HTMLElement | null = element.parentElement
+    while (parent && parent !== document.body && parent !== document.documentElement) {
+      elementsToProcess.push(parent)
+      parent = parent.parentElement
+    }
+    
+    let totalReplaced = 0
+    
+    for (let i = 0; i < elementsToProcess.length; i++) {
+      const el = elementsToProcess[i]
+      // Skip the widget itself
+      if (el.id === 'issue-collector-widget' || el.closest('#issue-collector-widget')) {
+        continue
+      }
+      
+      try {
+        const computedStyle = window.getComputedStyle(el)
+        if (computedStyle) {
+          // Store original inline styles before modifying
+          if (!originalStyles.has(el)) {
+            originalStyles.set(el, new Map())
+          }
+          const originalStyleMap = originalStyles.get(el)!
+          
+          // Check ALL computed properties (html2canvas reads all of them)
+          const allProps = Array.from(computedStyle)
+          
+          for (const prop of allProps) {
+            try {
+              const value = computedStyle.getPropertyValue(prop)
+              if (value && (value.includes('oklch(') || value.includes('lab(') || value.includes('lch('))) {
+                // Store original value if not already stored
+                if (!originalStyleMap.has(prop)) {
+                  originalStyleMap.set(prop, el.style.getPropertyValue(prop))
+                }
+                
+                const newValue = replaceUnsupportedColors(value)
+                el.style.setProperty(prop, newValue, 'important')
+                totalReplaced++
+              }
+            } catch (e) {
+              continue
+            }
+          }
+        }
+      } catch (e) {
+        continue
+      }
+    }
+    
+    if (totalReplaced > 0) {
+      console.log('[Screenshot] Pre-processed element tree: replaced', totalReplaced, 'oklch instances in', elementsToProcess.length, 'elements')
+    }
+  } catch (e) {
+    console.warn('[Screenshot] Error pre-processing element tree:', e)
+  }
   
   const capturePromise = html2canvas(element, {
     useCORS: true,
     allowTaint: false,
-    scale: optimizedScale, // Use optimized scale for large elements
+    scale: optimizedScale, // Use calculated scale for quality
     width: elementWidth,
     height: elementHeight,
-    logging: false,
+    logging: true, // Enable logging to debug issues
     backgroundColor: '#ffffff',
-    // Normalize unsupported CSS color functions (like oklch) in the cloned DOM
-    // OPTIMIZED: Only process essential stylesheets and elements to improve performance
+    // Ensure proper rendering
+    removeContainer: false, // Keep container for proper rendering
+    // CRITICAL: Normalize unsupported CSS color functions (like oklch) in the cloned DOM
+    // html2canvas cannot parse oklch(), so we must replace it before capture
     onclone: (clonedDoc: Document) => {
       try {
         const win = clonedDoc.defaultView || window
         const StyleRule = (win as any).CSSStyleRule || (window as any).CSSStyleRule
         
-        // Function to replace oklch() with a safe fallback color
-        const replaceOklchColor = (value: string): string => {
+        // Function to replace oklch() and other unsupported color functions with safe fallback
+        const replaceUnsupportedColors = (value: string): string => {
           if (!value || typeof value !== 'string') return value
-          // Match oklch() color function and replace with a safe fallback
-          return value.replace(/oklch\([^)]+\)/gi, '#111827')
+          // Replace oklch() with a safe fallback color (#111827 is dark gray)
+          let result = value.replace(/oklch\([^)]+\)/gi, '#111827')
+          // Also replace other modern color functions that html2canvas might not support
+          result = result.replace(/lab\([^)]+\)/gi, '#111827')
+          result = result.replace(/lch\([^)]+\)/gi, '#111827')
+          return result
         }
         
-        // OPTIMIZATION: Only process stylesheets that are actually used
-        // Limit to first 10 stylesheets to avoid processing too many
-        const styleSheets = Array.from(clonedDoc.styleSheets).slice(0, 10) as CSSStyleSheet[]
+        // Process ALL stylesheets (not just first 10) to catch all oklch instances
+        const styleSheets = Array.from(clonedDoc.styleSheets) as CSSStyleSheet[]
+        console.log('[Screenshot] Processing', styleSheets.length, 'stylesheets for oklch replacement')
+        
         for (const sheet of styleSheets) {
           let rules: CSSRuleList
           try {
             rules = sheet.cssRules
-            // OPTIMIZATION: Limit to first 1000 rules per stylesheet
-            const maxRules = Math.min(rules.length, 1000)
-            for (let i = 0; i < maxRules; i++) {
+            // Process ALL rules (not limited) to ensure we catch all oklch instances
+            for (let i = 0; i < rules.length; i++) {
               const rule = rules[i]
-              // Only touch regular style rules
+              // Process style rules
               if (StyleRule && rule instanceof StyleRule && (rule as CSSStyleRule).style) {
                 const style = (rule as CSSStyleRule).style
-                // OPTIMIZATION: Only check color-related properties
-                const colorProps = ['color', 'background-color', 'border-color', 'border-top-color',
-                                  'border-right-color', 'border-bottom-color', 'border-left-color']
-                for (const prop of colorProps) {
+                // Check ALL style properties (not just color-related) since oklch can appear anywhere
+                for (let j = 0; j < style.length; j++) {
+                  const prop = style[j]
                   const value = style.getPropertyValue(prop)
-                  if (value && value.includes('oklch(')) {
-                    const newValue = replaceOklchColor(value)
+                  if (value && (value.includes('oklch(') || value.includes('lab(') || value.includes('lch('))) {
+                    const newValue = replaceUnsupportedColors(value)
                     style.setProperty(prop, newValue, style.getPropertyPriority(prop))
                   }
                 }
               }
             }
-          } catch {
-            // Some stylesheets (e.g. cross-origin) may not be accessible
+          } catch (e) {
+            // Some stylesheets (e.g. cross-origin) may not be accessible - skip them
             continue
           }
         }
         
-        // OPTIMIZATION: Only process a limited number of elements with inline styles
-        // Process body and main content areas first (most likely to have oklch)
+        // Process ALL elements - both inline styles AND computed styles
         const body = clonedDoc.body || clonedDoc.documentElement
         if (body) {
-          // Only process elements with inline styles (faster than querySelectorAll('*'))
-          const elementsWithStyles: HTMLElement[] = []
-          const walker = clonedDoc.createTreeWalker(body, NodeFilter.SHOW_ELEMENT)
-          let node: Node | null = walker.nextNode()
-          let count = 0
-          const maxElements = 200 // Limit to 200 elements for performance
+          // Use querySelectorAll to get all elements
+          const allElements = body.querySelectorAll('*') as NodeListOf<HTMLElement>
+          console.log('[Screenshot] Processing', allElements.length, 'elements for oklch replacement')
           
-          while (node && count < maxElements) {
-            const el = node as HTMLElement
+          const win = clonedDoc.defaultView || window
+          
+          for (let i = 0; i < allElements.length; i++) {
+            const el = allElements[i]
+            
+            // 1. Process inline styles
             if (el.style && el.style.length > 0) {
-              elementsWithStyles.push(el)
-              count++
-            }
-            node = walker.nextNode()
-          }
-          
-          // Only check color-related properties on elements with inline styles
-          const colorProps = ['color', 'background-color', 'border-color']
-          for (const el of elementsWithStyles) {
-            for (const prop of colorProps) {
-              const value = el.style.getPropertyValue(prop)
-              if (value && value.includes('oklch(')) {
-                const newValue = replaceOklchColor(value)
-                el.style.setProperty(prop, newValue, el.style.getPropertyPriority(prop))
+              // Check ALL inline style properties
+              for (let j = 0; j < el.style.length; j++) {
+                const prop = el.style[j]
+                const value = el.style.getPropertyValue(prop)
+                if (value && (value.includes('oklch(') || value.includes('lab(') || value.includes('lch('))) {
+                  const newValue = replaceUnsupportedColors(value)
+                  el.style.setProperty(prop, newValue, el.style.getPropertyPriority(prop))
+                }
               }
+            }
+            
+            // 2. Process computed styles (html2canvas uses these)
+            try {
+              const computedStyle = win.getComputedStyle(el)
+              if (computedStyle) {
+                // Check all color-related computed properties
+                const colorProps = [
+                  'color', 'background-color', 'border-color', 'border-top-color',
+                  'border-right-color', 'border-bottom-color', 'border-left-color',
+                  'outline-color', 'text-decoration-color', 'column-rule-color',
+                  'caret-color', 'fill', 'stroke'
+                ]
+                
+                for (const prop of colorProps) {
+                  try {
+                    const value = computedStyle.getPropertyValue(prop)
+                    if (value && (value.includes('oklch(') || value.includes('lab(') || value.includes('lch('))) {
+                      // Replace in inline style to override computed style
+                      const newValue = replaceUnsupportedColors(value)
+                      el.style.setProperty(prop, newValue, 'important')
+                    }
+                  } catch (e) {
+                    // Some properties might not be accessible, skip them
+                    continue
+                  }
+                }
+              }
+            } catch (e) {
+              // Some elements might not have accessible computed styles
+              continue
+            }
+            
+            // 3. Process CSS custom properties (CSS variables) that might contain oklch
+            try {
+              const computedStyle = win.getComputedStyle(el)
+              if (computedStyle) {
+                // Get all CSS custom properties
+                const allProps = Array.from(computedStyle)
+                for (const prop of allProps) {
+                  if (prop.startsWith('--')) {
+                    // This is a CSS variable
+                    const value = computedStyle.getPropertyValue(prop)
+                    if (value && (value.includes('oklch(') || value.includes('lab(') || value.includes('lch('))) {
+                      // Replace the CSS variable value
+                      const newValue = replaceUnsupportedColors(value)
+                      el.style.setProperty(prop, newValue, 'important')
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              // CSS variables might not be accessible, skip
+              continue
             }
           }
         }
         
-        // OPTIMIZATION: Skip computed style processing (too slow for large pages)
-        // html2canvas will handle most cases, and we have fallback for oklch errors
+        console.log('[Screenshot] onclone normalization completed (processed inline, computed, and CSS variables)')
       } catch (e) {
-        // Best-effort normalization; ignore any errors here
+        // Best-effort normalization; log error but continue
         console.warn('[Screenshot] Error in onclone normalization:', e)
       }
     },
-    // Skip cross-origin iframes
+    // Skip cross-origin iframes and the widget itself
     ignoreElements: (el) => {
       try {
+        // CRITICAL: Always ignore the widget element to prevent interference
+        if (el.id === 'issue-collector-widget' || el.closest('#issue-collector-widget')) {
+          return true
+        }
+        
         // Check if element is in cross-origin iframe
         if (el.ownerDocument !== document) {
           try {
@@ -334,7 +496,7 @@ export async function captureScreenshot(
           }
         }
       } catch (e) {
-        // Ignore errors when checking iframe
+        // Ignore errors when checking
       }
       return false
     },
@@ -343,26 +505,211 @@ export async function captureScreenshot(
   let canvas: HTMLCanvasElement
   try {
     console.log('[Screenshot] Starting capture with timeout:', timeout, 'ms')
+    console.log('[Screenshot] Element details:', {
+      tagName: element.tagName,
+      id: element.id,
+      className: element.className,
+      dimensions: { width: elementWidth, height: elementHeight },
+      scale: optimizedScale,
+    })
     // Race between capture and timeout
     canvas = await Promise.race([capturePromise, timeoutPromise])
-    console.log('[Screenshot] Capture completed successfully')
+    console.log('[Screenshot] Capture completed successfully, canvas size:', canvas.width, 'x', canvas.height)
   } catch (error: any) {
-    const message = error?.message || String(error || '')
+    // Enhanced error logging to handle various error types
+    let errorDetails: any = {}
+    try {
+      errorDetails = {
+        message: error?.message || 'No message',
+        name: error?.name || 'Unknown',
+        stack: error?.stack || 'No stack',
+        toString: String(error || 'Unknown error'),
+        type: typeof error,
+        constructor: error?.constructor?.name || 'Unknown',
+      }
+      
+      // Try to extract more properties
+      if (error && typeof error === 'object') {
+        try {
+          errorDetails.keys = Object.keys(error)
+          errorDetails.json = JSON.stringify(error, Object.getOwnPropertyNames(error))
+        } catch (e) {
+          errorDetails.jsonError = String(e)
+        }
+      }
+    } catch (logError) {
+      errorDetails.logError = String(logError)
+      errorDetails.rawError = error
+    }
+    
+    // Log full error details for debugging
+    console.error('[Screenshot] Capture failed with error:', errorDetails)
+    console.error('[Screenshot] Raw error object:', error)
+    
+    const message = errorDetails.message || errorDetails.toString || 'Unknown error'
+    
+    // Restore original styles on error
+    try {
+      for (const [el, styleMap] of originalStyles.entries()) {
+        for (const [prop, originalValue] of styleMap.entries()) {
+          if (originalValue) {
+            el.style.setProperty(prop, originalValue)
+          } else {
+            el.style.removeProperty(prop)
+          }
+        }
+        // Clear important overrides
+        const allProps = Array.from(el.style)
+        for (const prop of allProps) {
+          if (el.style.getPropertyPriority(prop) === 'important' && styleMap.has(prop)) {
+            const original = styleMap.get(prop)
+            if (original) {
+              el.style.setProperty(prop, original)
+            } else {
+              el.style.removeProperty(prop)
+            }
+          }
+        }
+      }
+      originalStyles.clear()
+      console.log('[Screenshot] Restored original styles (after error)')
+    } catch (e) {
+      console.warn('[Screenshot] Error restoring styles on error:', e)
+    }
     
     // Handle timeout separately
     if (message.includes('timed out') || message.includes('timeout')) {
-      console.warn('[Screenshot] Capture timed out, element may be too large or complex. Falling back to text snapshot.')
+      console.warn('[Screenshot] Capture timed out after', timeout, 'ms. Element may be too large or complex.')
+      console.warn('[Screenshot] Element dimensions:', elementWidth, 'x', elementHeight, 'scale:', optimizedScale)
+      // Try one more time with a longer timeout for important elements
+      if (timeout < 30000 && (elementWidth < 2000 && elementHeight < 2000)) {
+        console.log('[Screenshot] Retrying with extended timeout for smaller element...')
+        try {
+          const extendedTimeout = 30000
+          const extendedTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+              reject(new Error(`Screenshot capture timed out after ${extendedTimeout}ms`))
+            }, extendedTimeout)
+          })
+          const retryPromise = html2canvas(element, {
+            useCORS: true,
+            allowTaint: false,
+            scale: optimizedScale,
+            width: elementWidth,
+            height: elementHeight,
+            logging: true,
+            backgroundColor: '#ffffff',
+            removeContainer: false,
+            onclone: (clonedDoc: Document) => {
+              // Use same onclone logic as above
+              try {
+                const win = clonedDoc.defaultView || window
+                const StyleRule = (win as any).CSSStyleRule || (window as any).CSSStyleRule
+                const replaceOklchColor = (value: string): string => {
+                  if (!value || typeof value !== 'string') return value
+                  return value.replace(/oklch\([^)]+\)/gi, '#111827')
+                }
+                const styleSheets = Array.from(clonedDoc.styleSheets).slice(0, 10) as CSSStyleSheet[]
+                for (const sheet of styleSheets) {
+                  let rules: CSSRuleList
+                  try {
+                    rules = sheet.cssRules
+                    const maxRules = Math.min(rules.length, 1000)
+                    for (let i = 0; i < maxRules; i++) {
+                      const rule = rules[i]
+                      if (StyleRule && rule instanceof StyleRule && (rule as CSSStyleRule).style) {
+                        const style = (rule as CSSStyleRule).style
+                        const colorProps = ['color', 'background-color', 'border-color', 'border-top-color',
+                                          'border-right-color', 'border-bottom-color', 'border-left-color']
+                        for (const prop of colorProps) {
+                          const value = style.getPropertyValue(prop)
+                          if (value && value.includes('oklch(')) {
+                            const newValue = replaceOklchColor(value)
+                            style.setProperty(prop, newValue, style.getPropertyPriority(prop))
+                          }
+                        }
+                      }
+                    }
+                  } catch {
+                    continue
+                  }
+                }
+              } catch (e) {
+                console.warn('[Screenshot] Error in onclone normalization (retry):', e)
+              }
+            },
+            ignoreElements: (el) => {
+              try {
+                if (el.ownerDocument !== document) {
+                  try {
+                    const iframe = el.ownerDocument.defaultView?.frameElement as HTMLIFrameElement | null
+                    if (iframe && iframe.contentDocument !== el.ownerDocument) {
+                      return true
+                    }
+                  } catch (e) {
+                    return true
+                  }
+                }
+              } catch (e) {
+              }
+              return false
+            },
+          })
+          canvas = await Promise.race([retryPromise, extendedTimeoutPromise])
+          console.log('[Screenshot] Retry successful!')
+        } catch (retryError) {
+          console.error('[Screenshot] Retry also failed:', retryError)
+          return createFallbackScreenshot(
+            element,
+            targetWidth || elementWidth,
+            targetHeight || elementHeight
+          )
+        }
+      } else {
       return createFallbackScreenshot(
         element,
         targetWidth || elementWidth,
         targetHeight || elementHeight
       )
+      }
     }
 
+    // Restore original styles before returning fallback
+    try {
+      for (const [el, styleMap] of originalStyles.entries()) {
+        for (const [prop, originalValue] of styleMap.entries()) {
+          if (originalValue) {
+            el.style.setProperty(prop, originalValue)
+          } else {
+            el.style.removeProperty(prop)
+          }
+        }
+        // Clear important overrides
+        const allProps = Array.from(el.style)
+        for (const prop of allProps) {
+          if (el.style.getPropertyPriority(prop) === 'important' && styleMap.has(prop)) {
+            const original = styleMap.get(prop)
+            if (original) {
+              el.style.setProperty(prop, original)
+            } else {
+              el.style.removeProperty(prop)
+            }
+          }
+        }
+      }
+      originalStyles.clear()
+    } catch (e) {
+      console.warn('[Screenshot] Error restoring styles before fallback:', e)
+    }
+    
     // html2canvas currently cannot parse some modern CSS color functions (e.g. "oklch")
-    // Instead of failing, return a fallback image showing the element's text/HTML content
-    if (message.includes('unsupported color function "oklch"') || message.includes('oklch')) {
-      console.warn('[Screenshot] Unsupported color function "oklch" detected. This is expected and handled gracefully. Falling back to element text snapshot.')
+    // The onclone callback should have replaced these, but if it didn't catch all instances,
+    // we fall back to a text snapshot
+    if (message.includes('unsupported color function') || 
+        message.includes('oklch') || 
+        message.includes('Attempting to parse an unsupported color function')) {
+      console.warn('[Screenshot] Unsupported color function (oklch/lab/lch) detected despite normalization.')
+      console.warn('[Screenshot] This means some oklch colors were not caught. Falling back to element text snapshot.')
       return createFallbackScreenshot(
         element,
         targetWidth || elementWidth,
@@ -393,11 +740,49 @@ export async function captureScreenshot(
     }
   }
 
+  // Restore original styles after capture
+  try {
+    let restoredCount = 0
+    for (const [el, styleMap] of originalStyles.entries()) {
+      for (const [prop, originalValue] of styleMap.entries()) {
+        if (originalValue) {
+          el.style.setProperty(prop, originalValue)
+        } else {
+          el.style.removeProperty(prop)
+        }
+        restoredCount++
+      }
+      // Clear all important overrides we added
+      const allProps = Array.from(el.style)
+      for (const prop of allProps) {
+        if (el.style.getPropertyPriority(prop) === 'important' && styleMap.has(prop)) {
+          // This was one we modified, restore it
+          const original = styleMap.get(prop)
+          if (original) {
+            el.style.setProperty(prop, original)
+          } else {
+            el.style.removeProperty(prop)
+          }
+        }
+      }
+    }
+    originalStyles.clear()
+    if (restoredCount > 0) {
+      console.log('[Screenshot] Restored', restoredCount, 'original style properties')
+    }
+  } catch (e) {
+    console.warn('[Screenshot] Error restoring original styles:', e)
+  }
+  
   console.log('[Screenshot] Canvas captured, dimensions:', canvas.width, 'x', canvas.height)
   
-  // Resize canvas if needed
-  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-    console.log('[Screenshot] Resizing canvas from', canvas.width, 'x', canvas.height, 'to', targetWidth, 'x', targetHeight)
+  // CRITICAL: Only resize DOWN if canvas is larger than target (never upscale - causes quality loss)
+  // If canvas is smaller than target, keep it as-is to preserve quality
+  let finalWidth = canvas.width
+  let finalHeight = canvas.height
+  
+  if (canvas.width > targetWidth || canvas.height > targetHeight) {
+    console.log('[Screenshot] Resizing canvas DOWN from', canvas.width, 'x', canvas.height, 'to', targetWidth, 'x', targetHeight)
     const resizedCanvas = document.createElement('canvas')
     resizedCanvas.width = targetWidth
     resizedCanvas.height = targetHeight
@@ -407,7 +792,18 @@ export async function captureScreenshot(
     }
     ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight)
     canvas = resizedCanvas
+    finalWidth = targetWidth
+    finalHeight = targetHeight
     console.log('[Screenshot] Canvas resized successfully')
+  } else if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    // Canvas is smaller than target - don't upscale, use actual canvas dimensions
+    console.log('[Screenshot] Canvas is smaller than target, keeping original size to preserve quality:', canvas.width, 'x', canvas.height)
+    finalWidth = canvas.width
+    finalHeight = canvas.height
+  } else {
+    // Canvas matches target exactly
+    finalWidth = targetWidth
+    finalHeight = targetHeight
   }
 
   // Compress image
@@ -415,10 +811,10 @@ export async function captureScreenshot(
   let dataUrl: string | undefined = undefined
   let fileSize: number | undefined = undefined
   
-  // OPTIMIZATION: Start with lower quality (0.75) for faster compression and smaller file size
-  // Only retry if file size is still too large
-  let currentQuality = Math.min(quality, 0.75) // Cap at 0.75 for faster processing
-  const maxAttempts = 2 // Reduced from 3 to 2 for faster processing
+  // Start with the requested quality for best image quality
+  // Only reduce if file size is too large
+  let currentQuality = quality // Use requested quality for best results
+  const maxAttempts = 3 // Allow 3 attempts to balance quality and file size
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     if (attempt > 0) {
@@ -457,8 +853,8 @@ export async function captureScreenshot(
     dataUrl: dataUrl!,
     mimeType: 'image/jpeg',
     fileSize: fileSize!,
-    width: targetWidth,
-    height: targetHeight,
+    width: finalWidth,
+    height: finalHeight,
   }
 }
 

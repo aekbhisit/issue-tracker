@@ -136,9 +136,6 @@ export class IssueCollectorWidget {
       onStartInspect: () => {
         this.startInspectMode()
       },
-      onCaptureFullScreen: () => {
-        this.captureFullScreen()
-      },
       getLogs: () => {
         return this.getLogs()
       },
@@ -297,8 +294,28 @@ export class IssueCollectorWidget {
               })
             }
             
+            // CRITICAL: Temporarily hide widget during capture to prevent interference
+            // html2canvas may have issues with fixed positioned elements overlaying the target
+            const widgetElement = document.getElementById('issue-collector-widget')
+            const widgetOriginalDisplay = widgetElement ? window.getComputedStyle(widgetElement).display : null
+            const widgetOriginalVisibility = widgetElement ? window.getComputedStyle(widgetElement).visibility : null
+            const widgetOriginalPointerEvents = widgetElement ? window.getComputedStyle(widgetElement).pointerEvents : null
+            const widgetOriginalZIndex = widgetElement ? window.getComputedStyle(widgetElement).zIndex : null
+            
+            // Hide widget temporarily if it's not the element being captured
+            if (widgetElement && !widgetElement.contains(element) && element !== widgetElement) {
+              console.log('[SDK] Temporarily hiding widget during screenshot capture')
+              widgetElement.style.display = 'none'
+            }
+            
             // Add progress logging
             console.log('[SDK] Calling captureScreenshot...')
+            console.log('[SDK] Element to capture:', {
+              tagName: element.tagName,
+              id: element.id,
+              isWidget: element === widgetElement || widgetElement?.contains(element),
+              widgetHidden: widgetElement && widgetElement.style.display === 'none',
+            })
             // CRITICAL: captureScreenshot should never throw - it always returns a fallback
             // But wrap in try-catch just in case to ensure loading overlay is always hidden
             let screenshot: ScreenshotData
@@ -306,6 +323,25 @@ export class IssueCollectorWidget {
               screenshot = await captureScreenshot(element)
               console.log('[SDK] captureScreenshot returned successfully')
             } catch (captureError: any) {
+              // Restore widget visibility on error
+              if (widgetElement && !widgetElement.contains(element) && element !== widgetElement) {
+                console.log('[SDK] Restoring widget visibility after capture error')
+                if (widgetOriginalDisplay !== null) {
+                  widgetElement.style.display = widgetOriginalDisplay
+                } else {
+                  widgetElement.style.display = ''
+                }
+                if (widgetOriginalVisibility !== null) {
+                  widgetElement.style.visibility = widgetOriginalVisibility
+                }
+                if (widgetOriginalPointerEvents !== null) {
+                  widgetElement.style.pointerEvents = widgetOriginalPointerEvents
+                }
+                if (widgetOriginalZIndex !== null) {
+                  widgetElement.style.zIndex = widgetOriginalZIndex
+                }
+              }
+              
               // This should never happen since captureScreenshot always returns a fallback
               // But if it does, create a minimal fallback screenshot
               console.error('[SDK] captureScreenshot threw error (unexpected):', captureError)
@@ -349,6 +385,25 @@ export class IssueCollectorWidget {
               hasSelector: !!screenshotMetadata.selector,
             })
             
+            // Restore widget visibility after capture
+            if (widgetElement && !widgetElement.contains(element) && element !== widgetElement) {
+              console.log('[SDK] Restoring widget visibility after screenshot capture')
+              if (widgetOriginalDisplay !== null) {
+                widgetElement.style.display = widgetOriginalDisplay
+              } else {
+                widgetElement.style.display = ''
+              }
+              if (widgetOriginalVisibility !== null) {
+                widgetElement.style.visibility = widgetOriginalVisibility
+              }
+              if (widgetOriginalPointerEvents !== null) {
+                widgetElement.style.pointerEvents = widgetOriginalPointerEvents
+              }
+              if (widgetOriginalZIndex !== null) {
+                widgetElement.style.zIndex = widgetOriginalZIndex
+              }
+            }
+            
             // Update panel with complete screenshot metadata (replaces loading state)
             if ((panelRef as any).updateScreenshot) {
               ;(panelRef as any).updateScreenshot(screenshotMetadata)
@@ -370,6 +425,25 @@ export class IssueCollectorWidget {
             }
           } catch (error) {
             console.error('[SDK] Failed to capture screenshot:', error)
+            
+            // Restore widget visibility even on error
+            if (widgetElement && !widgetElement.contains(element) && element !== widgetElement) {
+              console.log('[SDK] Restoring widget visibility after screenshot error')
+              if (widgetOriginalDisplay !== null) {
+                widgetElement.style.display = widgetOriginalDisplay
+              } else {
+                widgetElement.style.display = ''
+              }
+              if (widgetOriginalVisibility !== null) {
+                widgetElement.style.visibility = widgetOriginalVisibility
+              }
+              if (widgetOriginalPointerEvents !== null) {
+                widgetElement.style.pointerEvents = widgetOriginalPointerEvents
+              }
+              if (widgetOriginalZIndex !== null) {
+                widgetElement.style.zIndex = widgetOriginalZIndex
+              }
+            }
             
             // Even if screenshot capture fails, store the selector data (without screenshot)
             // This allows users to submit issues with selector info even if screenshot fails
@@ -454,64 +528,6 @@ export class IssueCollectorWidget {
     )
   }
 
-  /**
-   * Capture full screen screenshot
-   */
-  private async captureFullScreen(): Promise<void> {
-    if (!this.panel) {
-      return
-    }
-
-    const panelRef = this.panel
-
-    // Remember current button display so we can restore it
-    let previousButtonDisplay: string | undefined
-
-    try {
-      // Minimize panel (and keep floating button) while capturing
-      if ((panelRef as any).minimize) {
-        ;(panelRef as any).minimize()
-      }
-
-      // Temporarily hide the floating button so it isn't captured
-      if (this.button) {
-        this.button.style.display = 'none'
-      }
-
-      // Capture the entire viewport
-      const elementToCapture = document.documentElement || document.body
-      const screenshot = await captureScreenshot(elementToCapture as HTMLElement)
-      const selector = extractElementSelector(elementToCapture as HTMLElement)
-      
-      const screenshotMetadata: ScreenshotMetadata = {
-        screenshot,
-        selector,
-      }
-      
-      // Update panel with screenshot preview and make sure we're on Submit tab
-      if ((panelRef as any).updateScreenshot) {
-        ;(panelRef as any).updateScreenshot(screenshotMetadata)
-      }
-      if ((panelRef as any).switchTab) {
-        ;(panelRef as any).switchTab('submit')
-      }
-      if ((panelRef as any).reopen) {
-        ;(panelRef as any).reopen()
-      }
-    } catch (error) {
-      console.error('Failed to capture full screen screenshot:', error)
-      alert(`Failed to capture screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      // Attempt to reopen panel even on error
-      if ((this.panel as any)?.reopen) {
-        ;(this.panel as any).reopen()
-      }
-    } finally {
-      // Restore button visibility
-      if (this.button) {
-        this.button.style.display = previousButtonDisplay ?? ''
-      }
-    }
-  }
 
   /**
    * Close the panel

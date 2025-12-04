@@ -100,12 +100,17 @@ export const issueValidation = {
         if (value) {
           // Screenshot object must have either screenshot data OR selector (or both)
           // This allows submission when screenshot capture fails but selector is available
+          // Also allows uploaded images which have screenshot data but no selector
           const hasScreenshotData = value.screenshot && typeof value.screenshot === 'object'
           const hasSelector = value.selector && typeof value.selector === 'object'
           
           if (!hasScreenshotData && !hasSelector) {
             throw new Error('Screenshot must include either screenshot data or selector (or both)')
           }
+          
+          // If only selector is provided (no screenshot data), that's acceptable
+          // If only screenshot data is provided (no selector), that's also acceptable (uploaded images)
+          // If both are provided, that's also acceptable (inspect element flow)
           
           // If screenshot data is provided, validate it
           if (hasScreenshotData) {
@@ -123,8 +128,8 @@ export const issueValidation = {
             if (!screenshot.mimeType || typeof screenshot.mimeType !== 'string') {
               throw new Error('Screenshot mimeType is required')
             }
-            if (!['image/jpeg', 'image/png'].includes(screenshot.mimeType)) {
-              throw new Error('Screenshot mimeType must be image/jpeg or image/png')
+            if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(screenshot.mimeType)) {
+              throw new Error('Screenshot mimeType must be image/jpeg, image/png, or image/webp')
             }
             
             // Validate file size (max 10MB)

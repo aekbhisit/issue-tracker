@@ -54,7 +54,7 @@ export interface ElementSelector {
 
 export interface ScreenshotMetadata {
   screenshot: ScreenshotData
-  selector: ElementSelector
+  selector?: ElementSelector  // Optional - not needed for uploaded images, but used for inspect element flow
 }
 
 export type LogLevel = 'log' | 'warn' | 'error'
