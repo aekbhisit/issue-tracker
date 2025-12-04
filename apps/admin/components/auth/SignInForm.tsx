@@ -38,9 +38,9 @@ export default function SignInForm() {
       console.log('📡 Calling login API...');
       const response = await login(credentials);
       console.log('✅ Login success:', response);
-      // Without basePath, we need to explicitly include /admin prefix
       // Routes are at /admin/* from app/admin/ folder structure
-      router.push('/dashboard');
+      // Must use full path with /admin prefix in router.push()
+      router.push('/admin/dashboard');
     } catch (err) {
       console.error('❌ Login error:', err);
       const authError = err as AuthError;

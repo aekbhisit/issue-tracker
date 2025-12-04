@@ -66,7 +66,7 @@ export default function PermissionPage() {
 					showError({
 						message: t("common.errors.noPermission") || "You do not have permission to access this page",
 					})
-					router.push("/dashboard")
+					router.push("/admin/dashboard")
 				}
 			}
 		).then(setHasPermission)

@@ -20,7 +20,8 @@ export default function AdminPage() {
       if (isAuthenticated()) {
         // User has token - redirect to dashboard
         // If token is invalid, dashboard will get 401 and redirect back here
-        router.push('/dashboard');
+        // Routes are at /admin/* from app/admin/ folder structure
+        router.push('/admin/dashboard');
       }
     };
     
